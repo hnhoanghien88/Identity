@@ -1,0 +1,5 @@
+identity-client/bin/
+identity-client/obj/
+identity-client/node_modules/
+identity-api/bin/
+identity-api/obj/

@@ -1,5 +1,55 @@
-identity-client/bin/
-identity-client/obj/
-identity-client/node_modules/
-identity-api/bin/
-identity-api/obj/
+# Build outputs and generated files
+**/[Bb]in/
+**/[Oo]bj/
+**/[Dd]ebug/
+**/[Rr]elease/
+artifacts/
+
+# IDE and editor settings
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test results and code coverage
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# Logs and temporary files
+logs/
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
+
+# Front-end dependencies and generated output
+node_modules/
+.pnpm-store/
+.yarn/
+dist/
+build/
+.next/
+.nuxt/
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini

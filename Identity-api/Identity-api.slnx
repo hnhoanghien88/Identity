@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Identity.Api/Identity.Api.csproj" Id="dda6e613-51d7-4fef-91d3-e78e190e58ea" />
+    <Project Path="src/Identity.Application/Identity.Application.csproj" Id="e6cf4fe5-31a4-4c09-b3f0-aca74477de8d" />
+    <Project Path="src/Identity.Domain/Identity.Domain.csproj" Id="fa83536a-ba5b-4793-b84a-1e8142c51b44" />
+    <Project Path="src/Identity.Infrastructure/Identity.Infrastructure.csproj" Id="3e751a38-9a05-49d7-b95d-5c39623c1aa4" />
+  </Folder>
+</Solution>

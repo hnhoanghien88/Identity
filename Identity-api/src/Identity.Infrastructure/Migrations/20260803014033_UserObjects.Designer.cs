@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Identity.Infrastructure.Persistence.Migrations
+namespace Identity.Infrastructure.Migrations
 {
     [DbContext(typeof(IdentityDbContext))]
-    [Migration("20260730084747_InitialIdentitySchema")]
-    partial class InitialIdentitySchema
+    [Migration("20260803014033_UserObjects")]
+    partial class UserObjects
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,27 +27,27 @@ namespace Identity.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)")
-                        .HasColumnName("id");
+                        .HasColumnName("Id");
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)")
-                        .HasColumnName("code");
+                        .HasColumnName("Code");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime(6)")
-                        .HasColumnName("created_date");
+                        .HasColumnName("CreatedDate");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)")
-                        .HasColumnName("is_active");
+                        .HasColumnName("IsActive");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("Name");
 
                     b.HasKey("Id");
 

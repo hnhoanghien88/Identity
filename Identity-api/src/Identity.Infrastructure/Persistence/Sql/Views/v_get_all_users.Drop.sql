@@ -1,1 +1,0 @@
-DROP VIEW IF EXISTS v_get_all_users;

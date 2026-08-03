@@ -1,8 +1,9 @@
-CREATE OR REPLACE VIEW v_get_all_users AS
+CREATE PROCEDURE sp_get_users1()
 SELECT
     Id,
     Code,
     Name,
     CreatedDate,
     IsActive
-FROM users;
+FROM users
+WHERE IsActive = 1;

@@ -18,3 +18,15 @@ folder is a no-op, so regular table migrations continue to work.
 
 Never edit SQL files belonging to an applied migration. Add a new migration folder
 for every database-object change.
+
+dotnet ef migrations add UserObjectsV1 `  --project src\Identity.Infrastructure`
+--startup-project src\Identity.Api `
+--context IdentityDbContext
+
+dotnet ef database update `  --project src\Identity.Infrastructure`
+--startup-project src\Identity.Api `
+--context IdentityDbContext
+
+dotnet ef database update UserObjectsV1 `  --project src\Identity.Infrastructure`
+--startup-project src\Identity.Api `
+--context IdentityDbContext

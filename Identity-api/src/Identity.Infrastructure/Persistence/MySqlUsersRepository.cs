@@ -15,6 +15,12 @@ public sealed class MySqlUsersRepository(IdentityDbContext db) : IUsersRepositor
     public Task<UsersEntity?> GetByIdAsync(Guid id, CancellationToken ct) =>
         db.Users.SingleOrDefaultAsync(x => x.Id == id, ct);
 
+
+    public Task<UsersEntity?> GetByCodeAsync(string code, CancellationToken ct)
+    {
+        var value = code.Trim();
+        return db.Users.SingleOrDefaultAsync(x => x.Code == value, ct);
+    }
     public Task<bool> CodeExistsAsync(string code, Guid? excludingId, CancellationToken ct)
     {
         var value = code.Trim();

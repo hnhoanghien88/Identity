@@ -3,5 +3,5 @@ using MediatR;
 
 namespace Identity.Application.Users.CreateUsers;
 
-public sealed record CreateUsersCommand(string Code, string Name) : IRequest<UsersDto>;
+public sealed record CreateUsersCommand(string Code, string Name, string Password) : IRequest<UsersDto>;
 

@@ -8,6 +8,7 @@ namespace Identity.Application.Users.CreateUsers;
 
 public sealed class CreateUsersCommandHandler(
     IUsersRepository repository,
+    IPasswordHasher passwordHasher,
     IValidator<CreateUsersCommand> validator) : IRequestHandler<CreateUsersCommand, UsersDto>
 {
     public async Task<UsersDto> Handle(CreateUsersCommand request, CancellationToken cancellationToken)
@@ -24,6 +25,7 @@ public sealed class CreateUsersCommandHandler(
             Code = request.Code.Trim(),
             Name = request.Name.Trim(),
             CreatedDate = DateTime.UtcNow,
+            Password = passwordHasher.Hash(request.Password),
             IsActive = true
         };
 

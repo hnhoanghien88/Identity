@@ -29,6 +29,14 @@ public sealed class InMemoryUsersRepository : IUsersRepository
         return Task.FromResult(user);
     }
 
+
+    public Task<UsersEntity?> GetByCodeAsync(string code, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var user = _users.Values.SingleOrDefault(x =>
+            string.Equals(x.Code, code.Trim(), StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(user);
+    }
     public Task<bool> CodeExistsAsync(string code, Guid? excludingId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();

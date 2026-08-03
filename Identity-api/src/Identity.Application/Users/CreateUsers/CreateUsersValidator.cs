@@ -13,5 +13,10 @@ public sealed class CreateUsersValidator : AbstractValidator<CreateUsersCommand>
         RuleFor(x => x.Name)
             .NotEmpty()
             .MaximumLength(200);
+
+        RuleFor(x => x.Password)
+            .NotEmpty()
+            .MinimumLength(8)
+            .MaximumLength(128);
     }
 }

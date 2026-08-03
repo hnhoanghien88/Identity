@@ -1,4 +1,5 @@
 using Identity.Application.Users.ActivateUsers;
+using Identity.Application.Users.AuthenticateUser;
 using Identity.Application.Users.CreateUsers;
 using Identity.Application.Users.DeleteUsers;
 using Identity.Application.Users.GetUsers;
@@ -23,6 +24,13 @@ public sealed class UsersController(ISender sender) : ControllerBase
             nameof(GetById),
             new { id = user.Id },
             new ApiResponse<UsersDto>(true, user, "User created successfully."));
+    }
+
+    [HttpPost("authenticate")]
+    public async Task<ActionResult<ApiResponse<UsersDto>>> Authenticate(AuthenticateUserQuery query, CancellationToken ct)
+    {
+        var user = await sender.Send(query, ct);
+        return Ok(new ApiResponse<UsersDto>(true, user, "Credentials are valid."));
     }
 
     [HttpGet("{id:guid}")]

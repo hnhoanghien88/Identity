@@ -10,7 +10,7 @@ namespace Identity.Api.Authentication;
 
 public interface IJwtTokenService
 {
-    LoginTokens CreateTokens(UsersDto user);
+    LoginTokens CreateTokens(UsersDto user, IReadOnlyCollection<string> roles);
     ulong ValidateRefreshToken(string refreshToken);
     void RevokeRefreshToken(string refreshToken);
     void RevokeAccessToken(ClaimsPrincipal principal);
@@ -22,13 +22,13 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
 {
     private readonly JwtOptions _options = options.Value;
     private readonly ConcurrentDictionary<string, DateTime> _revokedTokens = new();
-    public LoginTokens CreateTokens(UsersDto user)
+    public LoginTokens CreateTokens(UsersDto user, IReadOnlyCollection<string> roles)
     {
         var now = DateTime.UtcNow;
         var accessExpiry = now.AddMinutes(_options.AccessTokenMinutes);
         var refreshExpiry = now.AddDays(_options.RefreshTokenDays);
-        return new(CreateToken(user, "access", now, accessExpiry), accessExpiry,
-            CreateToken(user, "refresh", now, refreshExpiry), refreshExpiry);
+        return new(CreateToken(user, roles, "access", now, accessExpiry), accessExpiry,
+            CreateToken(user, roles, "refresh", now, refreshExpiry), refreshExpiry);
     }
 
     public ulong ValidateRefreshToken(string refreshToken)
@@ -108,11 +108,17 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
         ClockSkew = TimeSpan.Zero
     };
 
-    private string CreateToken(UsersDto user, string type, DateTime now, DateTime expiry)
+    private string CreateToken(
+        UsersDto user,
+        IReadOnlyCollection<string> roles,
+        string type,
+        DateTime now,
+        DateTime expiry)
     {
-        Claim[] claims = [new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+        List<Claim> claims = [new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, user.Code), new(ClaimTypes.Name, user.Name),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), new("token_type", type)];
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
         var credentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key)), SecurityAlgorithms.HmacSha256);
         return new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(_options.Issuer, _options.Audience,
             claims, now, expiry, credentials));

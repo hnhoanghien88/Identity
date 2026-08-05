@@ -7,6 +7,7 @@ using Identity.Application.Users.GetUsersById;
 using Identity.Application.Users.UpdateUsers;
 using Identity.Application.Users.Dtos;
 using Identity.Api.Models;
+using Identity.Application.Common.Authorization;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +16,7 @@ namespace Identity.Api.Controllers;
 
 [ApiController]
 [Route("api/users")]
-[Authorize]
+[Authorize(Roles = RoleGroups.All)]
 public sealed class UsersController(ISender sender) : ControllerBase
 {
     [AllowAnonymous]
@@ -38,6 +39,7 @@ public sealed class UsersController(ISender sender) : ControllerBase
     }
 
     [HttpGet("{id:long}")]
+    [Authorize(Roles = RoleGroups.Management)]
     public async Task<ActionResult<ApiResponse<UsersDto>>> GetById(ulong id, CancellationToken ct)
     {
         var user = await sender.Send(new GetUsersByIdQuery(id), ct);
@@ -92,6 +94,7 @@ public sealed class UsersController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{id:long}")]
+    [Authorize(Roles = RoleGroups.Management)]
     public async Task<ActionResult<ApiResponse<UsersDto>>> Update(ulong id, UpdateRequest request, CancellationToken ct)
     {
         var user = await sender.Send(new UpdateUsersCommand(id, request.Code, request.Name), ct);
@@ -99,6 +102,7 @@ public sealed class UsersController(ISender sender) : ControllerBase
     }
 
     [HttpDelete("{id:long}")]
+    [Authorize(Roles = RoleNames.Admin)]
     public async Task<IActionResult> Delete(ulong id, CancellationToken ct)
     {
         await sender.Send(new DeleteUsersCommand(id), ct);
@@ -106,6 +110,7 @@ public sealed class UsersController(ISender sender) : ControllerBase
     }
 
     [HttpPatch("{id:long}/activation")]
+    [Authorize(Roles = RoleNames.Admin)]
     public async Task<IActionResult> Activate(ulong id, ActivationRequest request, CancellationToken ct)
     {
         await sender.Send(new ActivateUsersCommand(id, request.IsActive), ct);
@@ -116,4 +121,3 @@ public sealed class UsersController(ISender sender) : ControllerBase
 
     public sealed record ActivationRequest(bool IsActive);
 }
-

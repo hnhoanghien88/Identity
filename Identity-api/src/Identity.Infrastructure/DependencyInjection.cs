@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton(new MySqlConnectionFactory(connectionString));
         services.AddScoped<IUsersReadRepository, DapperUsersReadRepository>();
+        services.AddScoped<IUserRolesReadRepository, DapperUserRolesReadRepository>();
         return services;
     }
 }

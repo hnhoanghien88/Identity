@@ -7,7 +7,11 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.Api.Authentication;
 
-public interface IJwtTokenService { LoginTokens CreateTokens(UsersDto user); }
+public interface IJwtTokenService
+{
+    LoginTokens CreateTokens(UsersDto user);
+    ulong ValidateRefreshToken(string refreshToken);
+}
 public sealed record LoginTokens(string AccessToken, DateTime AccessTokenExpiresAtUtc, string RefreshToken, DateTime RefreshTokenExpiresAtUtc);
 
 public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
@@ -21,6 +25,45 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
         return new(CreateToken(user, "access", now, accessExpiry), accessExpiry,
             CreateToken(user, "refresh", now, refreshExpiry), refreshExpiry);
     }
+
+    public ulong ValidateRefreshToken(string refreshToken)
+    {
+        try
+        {
+            var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
+            var principal = handler.ValidateToken(refreshToken, CreateValidationParameters(), out _);
+
+            if (principal.FindFirst("token_type")?.Value != "refresh")
+                throw new UnauthorizedAccessException("Only refresh tokens are accepted.");
+
+            var subject = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            if (!ulong.TryParse(subject, out var userId))
+                throw new UnauthorizedAccessException("The refresh token subject is invalid.");
+
+            return userId;
+        }
+        catch (SecurityTokenException exception)
+        {
+            throw new UnauthorizedAccessException("The refresh token is invalid or expired.", exception);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new UnauthorizedAccessException("The refresh token is invalid.", exception);
+        }
+    }
+
+    private TokenValidationParameters CreateValidationParameters() => new()
+    {
+        ValidateIssuer = true,
+        ValidIssuer = _options.Issuer,
+        ValidateAudience = true,
+        ValidAudience = _options.Audience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key)),
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+
     private string CreateToken(UsersDto user, string type, DateTime now, DateTime expiry)
     {
         Claim[] claims = [new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),

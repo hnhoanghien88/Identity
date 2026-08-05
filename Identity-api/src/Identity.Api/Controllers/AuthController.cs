@@ -1,6 +1,7 @@
 using Identity.Api.Authentication;
 using Identity.Application.Users.AuthenticateUser;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
@@ -8,6 +9,7 @@ namespace Identity.Api.Controllers;
 [ApiController]
 public sealed class AuthController(ISender sender, IJwtTokenService tokens) : ControllerBase
 {
+    [AllowAnonymous]
     [HttpPost("/login")]
     public async Task<IActionResult> Login(LoginRequest request, CancellationToken ct)
     {

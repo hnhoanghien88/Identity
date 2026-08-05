@@ -37,6 +37,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         return Task.CompletedTask;
     }};
 });
+builder.Services.AddAuthorization();
 builder.Services.AddSwaggerGen(options => {
     options.SwaggerDoc(
         "v1",

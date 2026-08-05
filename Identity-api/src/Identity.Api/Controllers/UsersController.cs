@@ -8,14 +8,17 @@ using Identity.Application.Users.UpdateUsers;
 using Identity.Application.Users.Dtos;
 using Identity.Api.Models;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
 
 [ApiController]
 [Route("api/users")]
+[Authorize]
 public sealed class UsersController(ISender sender) : ControllerBase
 {
+    [AllowAnonymous]
     [HttpPost]
     public async Task<IActionResult> Create(CreateUsersCommand command, CancellationToken ct)
     {
@@ -26,6 +29,7 @@ public sealed class UsersController(ISender sender) : ControllerBase
             new ApiResponse<UsersDto>(true, user, "User created successfully."));
     }
 
+    [AllowAnonymous]
     [HttpPost("authenticate")]
     public async Task<ActionResult<ApiResponse<UsersDto>>> Authenticate(AuthenticateUserQuery query, CancellationToken ct)
     {
@@ -112,5 +116,4 @@ public sealed class UsersController(ISender sender) : ControllerBase
 
     public sealed record ActivationRequest(bool IsActive);
 }
-
 

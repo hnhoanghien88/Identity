@@ -28,9 +28,21 @@ public sealed class AuthController(ISender sender, IJwtTokenService tokens) : Co
         if (!user.IsActive)
             throw new UnauthorizedAccessException("The user account is inactive.");
 
-        return Ok(tokens.CreateTokens(user));
+        var newTokens = tokens.CreateTokens(user);
+        tokens.RevokeRefreshToken(request.RefreshToken);
+        return Ok(newTokens);
+    }
+
+    [Authorize]
+    [HttpPost("/logout")]
+    public IActionResult Logout(LogoutRequest request)
+    {
+        tokens.RevokeRefreshToken(request.RefreshToken);
+        tokens.RevokeAccessToken(User);
+        return NoContent();
     }
 
     public sealed record LoginRequest(string Code, string Password);
     public sealed record RefreshRequest(string RefreshToken);
+    public sealed record LogoutRequest(string RefreshToken);
 }

@@ -34,6 +34,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     {
         if (context.Principal?.FindFirst("token_type")?.Value != "access")
             context.Fail("Only access tokens are accepted.");
+        else if (context.HttpContext.RequestServices
+                     .GetRequiredService<IJwtTokenService>()
+                     .IsAccessTokenRevoked(context.Principal))
+            context.Fail("The access token has been revoked.");
         return Task.CompletedTask;
     }};
 });
@@ -46,6 +50,17 @@ builder.Services.AddSwaggerGen(options => {
             Title = "Identity API",
             Version = "v1"
         });
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Enter the access token returned by POST /login."
+    });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document, null)] = []
+    });
     var xmlFile = $"{typeof(Program).Assembly.GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     options.IncludeXmlComments(xmlPath);

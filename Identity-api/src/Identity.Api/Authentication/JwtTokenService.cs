@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Collections.Concurrent;
 using System.Security.Claims;
 using System.Text;
 using Identity.Application.Users.Dtos;
@@ -11,12 +12,16 @@ public interface IJwtTokenService
 {
     LoginTokens CreateTokens(UsersDto user);
     ulong ValidateRefreshToken(string refreshToken);
+    void RevokeRefreshToken(string refreshToken);
+    void RevokeAccessToken(ClaimsPrincipal principal);
+    bool IsAccessTokenRevoked(ClaimsPrincipal principal);
 }
 public sealed record LoginTokens(string AccessToken, DateTime AccessTokenExpiresAtUtc, string RefreshToken, DateTime RefreshTokenExpiresAtUtc);
 
 public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
 {
     private readonly JwtOptions _options = options.Value;
+    private readonly ConcurrentDictionary<string, DateTime> _revokedTokens = new();
     public LoginTokens CreateTokens(UsersDto user)
     {
         var now = DateTime.UtcNow;
@@ -28,6 +33,49 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
 
     public ulong ValidateRefreshToken(string refreshToken)
     {
+        var principal = ValidateRefreshTokenPrincipal(refreshToken);
+        var jwtId = principal.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+
+        if (string.IsNullOrWhiteSpace(jwtId) || _revokedTokens.ContainsKey(jwtId))
+            throw new UnauthorizedAccessException("The refresh token has been revoked.");
+
+        var subject = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        if (!ulong.TryParse(subject, out var userId))
+            throw new UnauthorizedAccessException("The refresh token subject is invalid.");
+
+        return userId;
+    }
+
+    public void RevokeRefreshToken(string refreshToken)
+    {
+        var principal = ValidateRefreshTokenPrincipal(refreshToken);
+        RevokeToken(principal);
+    }
+
+    public void RevokeAccessToken(ClaimsPrincipal principal) => RevokeToken(principal);
+
+    public bool IsAccessTokenRevoked(ClaimsPrincipal principal)
+    {
+        var jwtId = principal.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+        return string.IsNullOrWhiteSpace(jwtId) || _revokedTokens.ContainsKey(jwtId);
+    }
+
+    private void RevokeToken(ClaimsPrincipal principal)
+    {
+        var jwtId = principal.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+        var expiration = principal.FindFirst(JwtRegisteredClaimNames.Exp)?.Value;
+
+        if (string.IsNullOrWhiteSpace(jwtId) || !long.TryParse(expiration, out var expirationSeconds))
+            throw new UnauthorizedAccessException("The token claims are invalid.");
+
+        _revokedTokens[jwtId] = DateTimeOffset.FromUnixTimeSeconds(expirationSeconds).UtcDateTime;
+
+        foreach (var token in _revokedTokens.Where(x => x.Value <= DateTime.UtcNow))
+            _revokedTokens.TryRemove(token.Key, out _);
+    }
+
+    private ClaimsPrincipal ValidateRefreshTokenPrincipal(string refreshToken)
+    {
         try
         {
             var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
@@ -36,11 +84,7 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
             if (principal.FindFirst("token_type")?.Value != "refresh")
                 throw new UnauthorizedAccessException("Only refresh tokens are accepted.");
 
-            var subject = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-            if (!ulong.TryParse(subject, out var userId))
-                throw new UnauthorizedAccessException("The refresh token subject is invalid.");
-
-            return userId;
+            return principal;
         }
         catch (SecurityTokenException exception)
         {

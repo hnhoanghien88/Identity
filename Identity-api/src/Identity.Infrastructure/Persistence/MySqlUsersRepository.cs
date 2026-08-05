@@ -12,19 +12,19 @@ public sealed class MySqlUsersRepository(IdentityDbContext db) : IUsersRepositor
         await db.SaveChangesAsync(ct);
     }
 
-    public Task<UsersEntity?> GetByIdAsync(Guid id, CancellationToken ct) =>
+    public Task<UsersEntity?> GetByIdAsync(ulong id, CancellationToken ct) =>
         db.Users.SingleOrDefaultAsync(x => x.Id == id, ct);
 
 
     public Task<UsersEntity?> GetByCodeAsync(string code, CancellationToken ct)
     {
-        var value = code.Trim();
-        return db.Users.SingleOrDefaultAsync(x => x.Code == value, ct);
+        var value = code.Trim().ToUpperInvariant();
+        return db.Users.SingleOrDefaultAsync(x => x.NormalizedEmail == value, ct);
     }
-    public Task<bool> CodeExistsAsync(string code, Guid? excludingId, CancellationToken ct)
+    public Task<bool> CodeExistsAsync(string code, ulong? excludingId, CancellationToken ct)
     {
-        var value = code.Trim();
-        return db.Users.AnyAsync(x => x.Id != excludingId && x.Code == value, ct);
+        var value = code.Trim().ToUpperInvariant();
+        return db.Users.AnyAsync(x => x.Id != excludingId && x.NormalizedEmail == value, ct);
     }
 
     public async Task UpdateAsync(UsersEntity user, CancellationToken ct) =>

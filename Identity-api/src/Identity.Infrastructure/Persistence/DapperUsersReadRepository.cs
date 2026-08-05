@@ -10,11 +10,11 @@ public sealed class DapperUsersReadRepository(MySqlConnectionFactory connectionF
     : IUsersReadRepository
 {
     private const string SelectUsers = """
-        SELECT Id, Code, Name, CreatedDate, IsActive
+        SELECT Id, Email AS Code, DisplayName AS Name, CreatedDate, IsActive
         FROM users
         """;
 
-    public async Task<UsersDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<UsersDto?> GetByIdAsync(ulong id, CancellationToken cancellationToken)
     {
         await using var connection = connectionFactory.CreateConnection();
         return await connection.QuerySingleOrDefaultAsync<UsersDto>(
@@ -54,8 +54,8 @@ public sealed class DapperUsersReadRepository(MySqlConnectionFactory connectionF
             parameters.Add("Ids", filter.Ids);
         }
 
-        AddStringFilter(sql, parameters, "Code", filter.Code);
-        AddStringFilter(sql, parameters, "Name", filter.Name);
+        AddStringFilter(sql, parameters, "Email", filter.Code);
+        AddStringFilter(sql, parameters, "DisplayName", filter.Name);
 
         AddFilter(sql, parameters, "CreatedDate >= @CreatedDateFrom", "CreatedDateFrom", filter.CreatedDateFrom);
         AddFilter(sql, parameters, "CreatedDate <= @CreatedDateTo", "CreatedDateTo", filter.CreatedDateTo);
@@ -115,8 +115,8 @@ public sealed class DapperUsersReadRepository(MySqlConnectionFactory connectionF
             var column = sort.Column switch
             {
                 UsersSortColumn.Id => "Id",
-                UsersSortColumn.Code => "Code",
-                UsersSortColumn.Name => "Name",
+                UsersSortColumn.Code => "Email",
+                UsersSortColumn.Name => "DisplayName",
                 UsersSortColumn.CreatedDate => "CreatedDate",
                 UsersSortColumn.IsActive => "IsActive",
                 _ => throw new ArgumentOutOfRangeException(nameof(sort.Column))

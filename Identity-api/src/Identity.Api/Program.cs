@@ -1,5 +1,9 @@
 ﻿using FluentValidation;
 using Identity.Api.Middleware;
+using System.Text;
+using Identity.Api.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 using Identity.Application.Users.CreateUsers;
 using Identity.Infrastructure;
@@ -10,6 +14,29 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
+var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+    ?? throw new InvalidOperationException("JWT configuration is missing.");
+if (Encoding.UTF8.GetByteCount(jwt.Key) < 32)
+    throw new InvalidOperationException("Jwt:Key must contain at least 32 bytes.");
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true, ValidIssuer = jwt.Issuer,
+        ValidateAudience = true, ValidAudience = jwt.Audience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
+        ValidateLifetime = true, ClockSkew = TimeSpan.Zero
+    };
+    options.Events = new JwtBearerEvents { OnTokenValidated = context =>
+    {
+        if (context.Principal?.FindFirst("token_type")?.Value != "access")
+            context.Fail("Only access tokens are accepted.");
+        return Task.CompletedTask;
+    }};
+});
 builder.Services.AddSwaggerGen(options => {
     options.SwaggerDoc(
         "v1",
@@ -41,6 +68,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

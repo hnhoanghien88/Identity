@@ -3,6 +3,6 @@ using MediatR;
 
 namespace Identity.Application.Users.GetUsersById;
 
-public sealed record GetUsersByIdQuery(Guid Id) : IRequest<UsersDto>;
+public sealed record GetUsersByIdQuery(ulong Id) : IRequest<UsersDto>;
 
 

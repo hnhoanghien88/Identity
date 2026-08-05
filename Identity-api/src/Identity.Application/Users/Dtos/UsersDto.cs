@@ -1,7 +1,7 @@
 namespace Identity.Application.Users.Dtos;
 
 public sealed record UsersDto(
-    Guid Id,
+    ulong Id,
     string Code,
     string Name,
     DateTime CreatedDate,

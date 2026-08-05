@@ -33,8 +33,8 @@ public sealed class UsersController(ISender sender) : ControllerBase
         return Ok(new ApiResponse<UsersDto>(true, user, "Credentials are valid."));
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<UsersDto>>> GetById(Guid id, CancellationToken ct)
+    [HttpGet("{id:long}")]
+    public async Task<ActionResult<ApiResponse<UsersDto>>> GetById(ulong id, CancellationToken ct)
     {
         var user = await sender.Send(new GetUsersByIdQuery(id), ct);
         return Ok(new ApiResponse<UsersDto>(true, user, "User retrieved successfully."));
@@ -87,22 +87,22 @@ public sealed class UsersController(ISender sender) : ControllerBase
         return Ok(new ApiResponse<IReadOnlyList<UsersDto>>(true, users, "Users retrieved successfully."));
     }
 
-    [HttpPut("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<UsersDto>>> Update(Guid id, UpdateRequest request, CancellationToken ct)
+    [HttpPut("{id:long}")]
+    public async Task<ActionResult<ApiResponse<UsersDto>>> Update(ulong id, UpdateRequest request, CancellationToken ct)
     {
         var user = await sender.Send(new UpdateUsersCommand(id, request.Code, request.Name), ct);
         return Ok(new ApiResponse<UsersDto>(true, user, "User updated successfully."));
     }
 
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    [HttpDelete("{id:long}")]
+    public async Task<IActionResult> Delete(ulong id, CancellationToken ct)
     {
         await sender.Send(new DeleteUsersCommand(id), ct);
         return Ok(new ApiResponse<object>(true, null, "User deleted successfully."));
     }
 
-    [HttpPatch("{id:guid}/activation")]
-    public async Task<IActionResult> Activate(Guid id, ActivationRequest request, CancellationToken ct)
+    [HttpPatch("{id:long}/activation")]
+    public async Task<IActionResult> Activate(ulong id, ActivationRequest request, CancellationToken ct)
     {
         await sender.Send(new ActivateUsersCommand(id, request.IsActive), ct);
         return Ok(new ApiResponse<object>(true, null, "User activation status updated successfully."));
@@ -112,6 +112,5 @@ public sealed class UsersController(ISender sender) : ControllerBase
 
     public sealed record ActivationRequest(bool IsActive);
 }
-
 
 

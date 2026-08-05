@@ -6,17 +6,19 @@ namespace Identity.Infrastructure.Persistence.Configurations;
 
 public sealed class UsersConfiguration : IEntityTypeConfiguration<Users>
 {
-    public void Configure(EntityTypeBuilder<Users> builder)
+    public void Configure(EntityTypeBuilder<Users> b)
     {
-        builder.ToTable("users");
-        builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).HasColumnName(nameof(Users.Id)).HasColumnType("char(36)");
-        builder.Property(x => x.Code).HasColumnName(nameof(Users.Code)).HasMaxLength(50).IsRequired();
-        builder.Property(x => x.Name).HasColumnName(nameof(Users.Name)).HasMaxLength(200).IsRequired();
-        builder.Property(x => x.Password).HasColumnName(nameof(Users.Password)).HasMaxLength(255).IsRequired();
-        builder.Property(x => x.CreatedDate).HasColumnName(nameof(Users.CreatedDate)).HasColumnType("datetime(6)").IsRequired();
-        builder.Property(x => x.IsActive).HasColumnName(nameof(Users.IsActive)).IsRequired();
-        builder.HasIndex(x => x.Code).IsUnique().HasDatabaseName("ux_users_code");
+        b.ToTable("users");
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedOnAdd();
+        b.Property(x => x.Email).HasMaxLength(255).IsRequired();
+        b.Property(x => x.NormalizedEmail).HasMaxLength(255).IsRequired();
+        b.Property(x => x.DisplayName).HasMaxLength(255).IsRequired();
+        b.Property(x => x.PasswordHash).HasMaxLength(500);
+        b.Property(x => x.SecurityStamp).HasColumnType("char(36)").IsRequired();
+        b.Property(x => x.PermissionVersion).HasDefaultValue(1);
+        b.Property(x => x.CreatedDate).HasColumnType("datetime(6)").HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+        b.Property(x => x.UpdatedDate).HasColumnType("datetime(6)");
+        b.HasIndex(x => x.NormalizedEmail).IsUnique().HasDatabaseName("UQUsersNormalizedEmail");
     }
 }
-

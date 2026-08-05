@@ -21,7 +21,6 @@ public sealed class CreateUsersCommandHandler(
 
         var user = new UsersEntity
         {
-            Id = Guid.NewGuid(),
             Code = request.Code.Trim(),
             Name = request.Name.Trim(),
             CreatedDate = DateTime.UtcNow,

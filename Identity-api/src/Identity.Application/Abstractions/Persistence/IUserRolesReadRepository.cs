@@ -2,5 +2,11 @@ namespace Identity.Application.Abstractions.Persistence;
 
 public interface IUserRolesReadRepository
 {
-    Task<IReadOnlyList<string>> GetRoleCodesAsync(ulong userId, CancellationToken cancellationToken);
+    Task<UserAuthorization> GetAuthorizationAsync(
+        ulong userId,
+        CancellationToken cancellationToken);
 }
+
+public sealed record UserAuthorization(
+    IReadOnlyList<string> Roles,
+    IReadOnlyList<string> Permissions);

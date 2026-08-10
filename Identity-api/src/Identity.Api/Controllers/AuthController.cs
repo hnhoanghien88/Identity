@@ -14,41 +14,99 @@ public sealed class AuthController(
     IJwtTokenService tokens,
     IUserRolesReadRepository userRoles) : ControllerBase
 {
+    private const string RefreshTokenCookie = "refresh_token";
+
     [AllowAnonymous]
     [HttpPost("/login")]
-    public async Task<IActionResult> Login(LoginRequest request, CancellationToken ct)
+    public async Task<ActionResult<LoginResponse>> Login(
+        LoginRequest request,
+        CancellationToken ct)
     {
-        var user = await sender.Send(new AuthenticateUserQuery(request.Code, request.Password), ct);
-        var roles = await userRoles.GetRoleCodesAsync(user.Id, ct);
-        return Ok(tokens.CreateTokens(user, roles));
+        var user = await sender.Send(
+            new AuthenticateUserQuery(request.Code, request.Password), ct);
+        var authorization = await userRoles.GetAuthorizationAsync(user.Id, ct);
+        var loginTokens = tokens.CreateTokens(user, authorization);
+
+        WriteRefreshTokenCookie(loginTokens);
+        return Ok(ToResponse(loginTokens, authorization));
     }
 
     [AllowAnonymous]
     [HttpPost("/refresh")]
-    public async Task<IActionResult> Refresh(RefreshRequest request, CancellationToken ct)
+    public async Task<ActionResult<LoginResponse>> Refresh(CancellationToken ct)
     {
-        var userId = tokens.ValidateRefreshToken(request.RefreshToken);
+        var refreshToken = ReadRefreshTokenCookie();
+        var userId = tokens.ValidateRefreshToken(refreshToken);
         var user = await sender.Send(new GetUsersByIdQuery(userId), ct);
 
         if (!user.IsActive)
             throw new UnauthorizedAccessException("The user account is inactive.");
 
-        var roles = await userRoles.GetRoleCodesAsync(user.Id, ct);
-        var newTokens = tokens.CreateTokens(user, roles);
-        tokens.RevokeRefreshToken(request.RefreshToken);
-        return Ok(newTokens);
+        var authorization = await userRoles.GetAuthorizationAsync(user.Id, ct);
+        var newTokens = tokens.CreateTokens(user, authorization);
+
+        tokens.RevokeRefreshToken(refreshToken);
+        WriteRefreshTokenCookie(newTokens);
+
+        return Ok(ToResponse(newTokens, authorization));
     }
 
     [Authorize]
     [HttpPost("/logout")]
-    public IActionResult Logout(LogoutRequest request)
+    public IActionResult Logout()
     {
-        tokens.RevokeRefreshToken(request.RefreshToken);
+        if (Request.Cookies.TryGetValue(RefreshTokenCookie, out var refreshToken)
+            && !string.IsNullOrWhiteSpace(refreshToken))
+        {
+            tokens.RevokeRefreshToken(refreshToken);
+        }
+
         tokens.RevokeAccessToken(User);
+        Response.Cookies.Delete(RefreshTokenCookie, RefreshCookieOptions());
         return NoContent();
     }
 
+    private string ReadRefreshTokenCookie()
+    {
+        if (!Request.Cookies.TryGetValue(RefreshTokenCookie, out var refreshToken)
+            || string.IsNullOrWhiteSpace(refreshToken))
+        {
+            throw new UnauthorizedAccessException("The refresh token cookie is missing.");
+        }
+
+        return refreshToken;
+    }
+
+    private void WriteRefreshTokenCookie(LoginTokens loginTokens)
+    {
+        var options = RefreshCookieOptions();
+        options.Expires = loginTokens.RefreshTokenExpiresAtUtc;
+        Response.Cookies.Append(
+            RefreshTokenCookie,
+            loginTokens.RefreshToken,
+            options);
+    }
+
+    private CookieOptions RefreshCookieOptions() => new()
+    {
+        HttpOnly = true,
+        Secure = Request.IsHttps,
+        SameSite = SameSiteMode.Strict,
+        Path = "/"
+    };
+
+    private static LoginResponse ToResponse(
+        LoginTokens loginTokens,
+        UserAuthorization authorization) =>
+        new(
+            loginTokens.AccessToken,
+            loginTokens.AccessTokenExpiresAtUtc,
+            authorization);
+
     public sealed record LoginRequest(string Code, string Password);
-    public sealed record RefreshRequest(string RefreshToken);
-    public sealed record LogoutRequest(string RefreshToken);
+
+    public sealed record LoginResponse(
+        string AccessToken,
+        DateTime AccessTokenExpiresAtUtc,
+        UserAuthorization Authorization);
 }

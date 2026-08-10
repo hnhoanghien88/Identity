@@ -1,7 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Collections.Concurrent;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Users.Dtos;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -10,25 +11,35 @@ namespace Identity.Api.Authentication;
 
 public interface IJwtTokenService
 {
-    LoginTokens CreateTokens(UsersDto user, IReadOnlyCollection<string> roles);
+    LoginTokens CreateTokens(UsersDto user, UserAuthorization authorization);
     ulong ValidateRefreshToken(string refreshToken);
     void RevokeRefreshToken(string refreshToken);
     void RevokeAccessToken(ClaimsPrincipal principal);
     bool IsAccessTokenRevoked(ClaimsPrincipal principal);
 }
-public sealed record LoginTokens(string AccessToken, DateTime AccessTokenExpiresAtUtc, string RefreshToken, DateTime RefreshTokenExpiresAtUtc);
+
+public sealed record LoginTokens(
+    string AccessToken,
+    DateTime AccessTokenExpiresAtUtc,
+    string RefreshToken,
+    DateTime RefreshTokenExpiresAtUtc);
 
 public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
 {
     private readonly JwtOptions _options = options.Value;
     private readonly ConcurrentDictionary<string, DateTime> _revokedTokens = new();
-    public LoginTokens CreateTokens(UsersDto user, IReadOnlyCollection<string> roles)
+
+    public LoginTokens CreateTokens(UsersDto user, UserAuthorization authorization)
     {
         var now = DateTime.UtcNow;
         var accessExpiry = now.AddMinutes(_options.AccessTokenMinutes);
         var refreshExpiry = now.AddDays(_options.RefreshTokenDays);
-        return new(CreateToken(user, roles, "access", now, accessExpiry), accessExpiry,
-            CreateToken(user, roles, "refresh", now, refreshExpiry), refreshExpiry);
+
+        return new LoginTokens(
+            CreateToken(user, authorization, "access", now, accessExpiry),
+            accessExpiry,
+            CreateToken(user, authorization, "refresh", now, refreshExpiry),
+            refreshExpiry);
     }
 
     public ulong ValidateRefreshToken(string refreshToken)
@@ -46,11 +57,8 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
         return userId;
     }
 
-    public void RevokeRefreshToken(string refreshToken)
-    {
-        var principal = ValidateRefreshTokenPrincipal(refreshToken);
-        RevokeToken(principal);
-    }
+    public void RevokeRefreshToken(string refreshToken) =>
+        RevokeToken(ValidateRefreshTokenPrincipal(refreshToken));
 
     public void RevokeAccessToken(ClaimsPrincipal principal) => RevokeToken(principal);
 
@@ -69,7 +77,6 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
             throw new UnauthorizedAccessException("The token claims are invalid.");
 
         _revokedTokens[jwtId] = DateTimeOffset.FromUnixTimeSeconds(expirationSeconds).UtcDateTime;
-
         foreach (var token in _revokedTokens.Where(x => x.Value <= DateTime.UtcNow))
             _revokedTokens.TryRemove(token.Key, out _);
     }
@@ -88,7 +95,8 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
         }
         catch (SecurityTokenException exception)
         {
-            throw new UnauthorizedAccessException("The refresh token is invalid or expired.", exception);
+            throw new UnauthorizedAccessException(
+                "The refresh token is invalid or expired.", exception);
         }
         catch (ArgumentException exception)
         {
@@ -110,17 +118,38 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
 
     private string CreateToken(
         UsersDto user,
-        IReadOnlyCollection<string> roles,
+        UserAuthorization authorization,
         string type,
         DateTime now,
         DateTime expiry)
     {
-        List<Claim> claims = [new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(JwtRegisteredClaimNames.UniqueName, user.Code), new(ClaimTypes.Name, user.Name),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), new("token_type", type)];
-        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
-        var credentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key)), SecurityAlgorithms.HmacSha256);
-        return new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(_options.Issuer, _options.Audience,
-            claims, now, expiry, credentials));
+        List<Claim> claims =
+        [
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.UniqueName, user.Code),
+            new(ClaimTypes.Name, user.Name),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new("token_type", type)
+        ];
+
+        if (type == "access")
+        {
+            claims.AddRange(authorization.Roles.Select(role =>
+                new Claim(ClaimTypes.Role, role)));
+            claims.AddRange(authorization.Permissions.Select(permission =>
+                new Claim("permission", permission)));
+        }
+
+        var credentials = new SigningCredentials(
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key)),
+            SecurityAlgorithms.HmacSha256);
+
+        return new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
+            _options.Issuer,
+            _options.Audience,
+            claims,
+            now,
+            expiry,
+            credentials));
     }
 }

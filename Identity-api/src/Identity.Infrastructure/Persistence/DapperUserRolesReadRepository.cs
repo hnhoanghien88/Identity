@@ -6,11 +6,11 @@ namespace Identity.Infrastructure.Persistence;
 public sealed class DapperUserRolesReadRepository(MySqlConnectionFactory connectionFactory)
     : IUserRolesReadRepository
 {
-    public async Task<IReadOnlyList<string>> GetRoleCodesAsync(
+    public async Task<UserAuthorization> GetAuthorizationAsync(
         ulong userId,
         CancellationToken cancellationToken)
     {
-        const string sql = """
+        const string rolesSql = """
             SELECT DISTINCT r.Code
             FROM user_roles ur
             INNER JOIN roles r ON r.Id = ur.RoleId
@@ -21,11 +21,28 @@ public sealed class DapperUserRolesReadRepository(MySqlConnectionFactory connect
             ORDER BY r.Code
             """;
 
+        const string permissionsSql = """
+            SELECT DISTINCT p.Code
+            FROM user_roles ur
+            INNER JOIN roles r ON r.Id = ur.RoleId
+            INNER JOIN role_permissions rp ON rp.RoleId = r.Id
+            INNER JOIN permissions p ON p.Id = rp.PermissionId
+            WHERE ur.UserId = @UserId
+              AND ur.IsActive = TRUE
+              AND r.IsActive = TRUE
+              AND r.IsDeleted = FALSE
+              AND p.IsActive = TRUE
+              AND p.IsDeleted = FALSE
+            ORDER BY p.Code
+            """;
+
         await using var connection = connectionFactory.CreateConnection();
+        var command = new { UserId = userId };
         var roles = await connection.QueryAsync<string>(new CommandDefinition(
-            sql,
-            new { UserId = userId },
-            cancellationToken: cancellationToken));
-        return roles.AsList();
+            rolesSql, command, cancellationToken: cancellationToken));
+        var permissions = await connection.QueryAsync<string>(new CommandDefinition(
+            permissionsSql, command, cancellationToken: cancellationToken));
+
+        return new UserAuthorization(roles.AsList(), permissions.AsList());
     }
 }

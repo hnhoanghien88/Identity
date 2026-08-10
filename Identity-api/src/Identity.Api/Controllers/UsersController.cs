@@ -1,5 +1,4 @@
 using Identity.Application.Users.ActivateUsers;
-using Identity.Application.Users.AuthenticateUser;
 using Identity.Application.Users.CreateUsers;
 using Identity.Application.Users.DeleteUsers;
 using Identity.Application.Users.GetUsers;
@@ -11,6 +10,7 @@ using Identity.Application.Common.Authorization;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Identity.Api.Controllers;
 
@@ -19,8 +19,8 @@ namespace Identity.Api.Controllers;
 [Authorize(Roles = RoleGroups.All)]
 public sealed class UsersController(ISender sender) : ControllerBase
 {
-    [AllowAnonymous]
     [HttpPost]
+    [Authorize(Roles = RoleGroups.Management)]
     public async Task<IActionResult> Create(CreateUsersCommand command, CancellationToken ct)
     {
         var user = await sender.Send(command, ct);
@@ -28,14 +28,6 @@ public sealed class UsersController(ISender sender) : ControllerBase
             nameof(GetById),
             new { id = user.Id },
             new ApiResponse<UsersDto>(true, user, "User created successfully."));
-    }
-
-    [AllowAnonymous]
-    [HttpPost("authenticate")]
-    public async Task<ActionResult<ApiResponse<UsersDto>>> Authenticate(AuthenticateUserQuery query, CancellationToken ct)
-    {
-        var user = await sender.Send(query, ct);
-        return Ok(new ApiResponse<UsersDto>(true, user, "Credentials are valid."));
     }
 
     [HttpGet("{id:long}")]
@@ -87,25 +79,38 @@ public sealed class UsersController(ISender sender) : ControllerBase
     ///
     /// </remarks>
     [HttpPost("search")]
-    public async Task<ActionResult<ApiResponse<IReadOnlyList<UsersDto>>>> Get(GetUsersQuery query, CancellationToken ct)
+    [Authorize(Roles = RoleGroups.Management)]
+    public async Task<ActionResult<ApiResponse<PagedUsersDto>>> Get(GetUsersQuery query, CancellationToken ct)
     {
         var users = await sender.Send(query, ct);
-        return Ok(new ApiResponse<IReadOnlyList<UsersDto>>(true, users, "Users retrieved successfully."));
+        return Ok(new ApiResponse<PagedUsersDto>(true, users, "Users retrieved successfully."));
     }
 
     [HttpPut("{id:long}")]
     [Authorize(Roles = RoleGroups.Management)]
     public async Task<ActionResult<ApiResponse<UsersDto>>> Update(ulong id, UpdateRequest request, CancellationToken ct)
     {
-        var user = await sender.Send(new UpdateUsersCommand(id, request.Code, request.Name), ct);
+        var user = await sender.Send(
+            new UpdateUsersCommand(
+                id,
+                request.Code,
+                request.Email,
+                request.Name,
+                request.Version),
+            ct);
         return Ok(new ApiResponse<UsersDto>(true, user, "User updated successfully."));
     }
 
     [HttpDelete("{id:long}")]
     [Authorize(Roles = RoleNames.Admin)]
-    public async Task<IActionResult> Delete(ulong id, CancellationToken ct)
+    public async Task<IActionResult> Delete(ulong id, [FromQuery] ulong version, CancellationToken ct)
     {
-        await sender.Send(new DeleteUsersCommand(id), ct);
+        var subject = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+            ?? User.FindFirst("sub")?.Value
+            ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!ulong.TryParse(subject, out var actorId))
+            throw new UnauthorizedAccessException("The access token subject is invalid.");
+        await sender.Send(new DeleteUsersCommand(id, actorId, version, User.FindFirst("email")?.Value), ct);
         return Ok(new ApiResponse<object>(true, null, "User deleted successfully."));
     }
 
@@ -117,7 +122,11 @@ public sealed class UsersController(ISender sender) : ControllerBase
         return Ok(new ApiResponse<object>(true, null, "User activation status updated successfully."));
     }
 
-    public sealed record UpdateRequest(string Code, string Name);
+    public sealed record UpdateRequest(
+        string Code,
+        string Email,
+        string Name,
+        ulong Version);
 
     public sealed record ActivationRequest(bool IsActive);
 }

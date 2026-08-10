@@ -1,4 +1,5 @@
 using FluentValidation;
+using Identity.Application.Users;
 
 namespace Identity.Application.Users.CreateUsers;
 
@@ -8,7 +9,14 @@ public sealed class CreateUsersValidator : AbstractValidator<CreateUsersCommand>
     {
         RuleFor(x => x.Code)
             .NotEmpty()
-            .MaximumLength(50);
+            .MaximumLength(UserIdentityRules.CodeMaximumLength)
+            .Must(UserIdentityRules.IsValidCode)
+            .WithMessage("Code may contain only ASCII letters, digits, dot, underscore, or hyphen without spaces.");
+
+        RuleFor(x => x.Email)
+            .NotEmpty()
+            .EmailAddress()
+            .MaximumLength(UserIdentityRules.EmailMaximumLength);
 
         RuleFor(x => x.Name)
             .NotEmpty()

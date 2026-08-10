@@ -37,7 +37,8 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
         [
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, user.Code),
-            new("email", user.Code),
+            new("code", user.Code),
+            new(JwtRegisteredClaimNames.Email, user.Email),
             new(ClaimTypes.Name, user.Name),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new("token_type", "access")

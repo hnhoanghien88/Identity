@@ -18,6 +18,11 @@ public interface IRefreshTokenRepository
         string refreshToken,
         string? revokedBy,
         CancellationToken cancellationToken);
+
+    Task RevokeAllForUserAsync(
+        ulong userId,
+        string? revokedBy,
+        CancellationToken cancellationToken);
 }
 
 public sealed record IssuedRefreshToken(

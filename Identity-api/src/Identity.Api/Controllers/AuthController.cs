@@ -33,7 +33,7 @@ public sealed class AuthController(
         var accessToken = tokens.CreateAccessToken(user, authorization);
         var refreshToken = await refreshTokens.IssueForLoginAsync(
             user.Id,
-            user.Code,
+            user.Email,
             _jwtOptions.ApplicationCode,
             TimeSpan.FromDays(_jwtOptions.RefreshTokenDays),
             ct);
@@ -58,7 +58,7 @@ public sealed class AuthController(
         if (!user.IsActive)
         {
             await refreshTokens.RevokeAsync(
-                rotatedToken.Token, user.Code, ct);
+                rotatedToken.Token, user.Email, ct);
             DeleteRefreshTokenCookie();
             throw new UnauthorizedAccessException("The user account is inactive.");
         }

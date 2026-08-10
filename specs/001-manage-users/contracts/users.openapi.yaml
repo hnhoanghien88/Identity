@@ -1,0 +1,258 @@
+openapi: 3.1.0
+info:
+  title: Identity Users Management API
+  version: 2.0.0
+  description: Code-based authentication and Users management with independent required Email.
+paths:
+  /login:
+    post:
+      summary: Authenticate with Code and password
+      description: Email is not accepted as a login identifier. Credential and account-state failures return the same generic response.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Authenticated; refresh token is issued through the protected cookie contract.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoginResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/InvalidCredentials' }
+  /api/users/search:
+    post:
+      summary: Search users
+      description: Requires Admin or Manager; deleted users are excluded.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserSearchRequest' }
+      responses:
+        '200':
+          description: Paged result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties: { data: { $ref: '#/components/schemas/PagedUsers' } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/users:
+    post:
+      summary: Create user
+      description: Requires Admin or Manager; password is write-only.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateUserRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties: { data: { $ref: '#/components/schemas/User' } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64, minimum: 1 }
+    get:
+      summary: Get user
+      description: Requires Admin or Manager.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties: { data: { $ref: '#/components/schemas/User' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Update user
+      description: Requires Admin or Manager and current concurrency version.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateUserRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties: { data: { $ref: '#/components/schemas/User' } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      summary: Delete user
+      description: Requires Admin; self-delete is rejected; performs soft delete and access invalidation.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: version
+          in: query
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    LoginRequest:
+      type: object
+      required: [code, password]
+      properties:
+        code: { type: string, minLength: 1, maxLength: 50, pattern: '^[A-Za-z0-9._-]+$' }
+        password: { type: string, format: password, minLength: 1, maxLength: 128, writeOnly: true }
+    LoginResponse:
+      type: object
+      required: [accessToken, accessTokenExpiresAtUtc, authorization]
+      properties:
+        accessToken: { type: string }
+        accessTokenExpiresAtUtc: { type: string, format: date-time }
+        authorization:
+          type: object
+          required: [roles, permissions]
+          properties:
+            roles: { type: array, items: { type: string } }
+            permissions: { type: array, items: { type: string } }
+    ApiResponse:
+      type: object
+      required: [success, message]
+      properties:
+        success: { type: boolean }
+        data: { nullable: true }
+        message: { type: string }
+    User:
+      type: object
+      required: [id, code, email, name, createdDate, isActive, version]
+      properties:
+        id: { type: integer, format: int64, minimum: 1 }
+        code: { type: string, minLength: 1, maxLength: 50, pattern: '^[A-Za-z0-9._-]+$', description: Login identifier }
+        email: { type: string, format: email, maxLength: 254, description: Required profile email; not a login identifier }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        createdDate: { type: string, format: date-time }
+        isActive: { type: boolean }
+        version: { type: integer, format: int64, minimum: 1 }
+    PagedUsers:
+      type: object
+      required: [items, totalCount, page, pageSize]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/User' } }
+        totalCount: { type: integer, minimum: 0 }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+    UserSearchRequest:
+      type: object
+      required: [page, pageSize]
+      properties:
+        filter:
+          type: object
+          nullable: true
+          properties:
+            code: { type: object, nullable: true, properties: { contains: { type: string, maxLength: 50 } } }
+            name: { type: object, nullable: true, properties: { contains: { type: string, maxLength: 200 } } }
+            isActive: { type: boolean, nullable: true }
+        sorts:
+          type: array
+          nullable: true
+          items:
+            type: object
+            required: [column, direction]
+            properties:
+              column: { type: integer, enum: [0, 1, 2, 3, 4] }
+              direction: { type: integer, enum: [0, 1] }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+    CreateUserRequest:
+      type: object
+      required: [code, email, name, password]
+      properties:
+        code: { type: string, minLength: 1, maxLength: 50, pattern: '^[A-Za-z0-9._-]+$' }
+        email: { type: string, format: email, maxLength: 254 }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        password: { type: string, format: password, minLength: 8, maxLength: 128, writeOnly: true }
+    UpdateUserRequest:
+      type: object
+      required: [code, email, name, version]
+      properties:
+        code: { type: string, minLength: 1, maxLength: 50, pattern: '^[A-Za-z0-9._-]+$' }
+        email: { type: string, format: email, maxLength: 254 }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        version: { type: integer, format: int64, minimum: 1 }
+    Problem:
+      type: object
+      required: [status, title]
+      properties:
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        traceId: { type: string }
+    ValidationProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required: [errors]
+          properties:
+            errors:
+              type: object
+              additionalProperties: { type: array, items: { type: string } }
+  responses:
+    ValidationError:
+      description: Field or request validation failed
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/ValidationProblem' } } }
+    Unauthorized:
+      description: Authentication missing or expired
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
+    InvalidCredentials:
+      description: Generic invalid Code/password/account-state response; never identifies which condition failed
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
+    Forbidden:
+      description: Required role missing
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
+    NotFound:
+      description: User absent or deleted
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
+    Conflict:
+      description: Case-insensitive duplicate Code or Email, stale version, self-delete, or lifecycle conflict
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }

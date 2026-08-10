@@ -17,22 +17,35 @@ public sealed class UpdateUsersCommandHandler(
         var user = await repository.GetByIdAsync(request.Id, ct)
             ?? throw new NotFoundException($"User '{request.Id}' was not found.");
 
+        if (user.Version != request.Version)
+            throw new ConflictException();
+
         if (await repository.CodeExistsAsync(request.Code, request.Id, ct))
         {
-            throw new ValidationException($"User code '{request.Code}' already exists.");
+            throw new ConflictException("Code is already in use.", "code");
         }
 
-        user.Code = request.Code.Trim();
+        if (await repository.EmailExistsAsync(request.Email, request.Id, ct))
+        {
+            throw new ConflictException("Email is already in use.", "email");
+        }
+
+        user.Code = request.Code;
+        user.Email = request.Email.Trim();
         user.Name = request.Name.Trim();
+        user.UpdatedDate = DateTime.UtcNow;
+        user.Version++;
 
         await repository.UpdateAsync(user, ct);
 
         return new UsersDto(
             user.Id,
             user.Code,
+            user.Email,
             user.Name,
             user.CreatedDate,
-            user.IsActive);
+            user.IsActive,
+            user.Version);
     }
 }
 

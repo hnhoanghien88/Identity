@@ -1,15 +1,10 @@
 ﻿<!--
 Sync Impact Report
-- Version change: template (unversioned) -> 1.0.0
-- Modified principles:
-  - Placeholder Principle 1 -> I. Security and Identity First
-  - Placeholder Principle 2 -> II. Enforced Layer Boundaries
-  - Placeholder Principle 3 -> III. Explicit API Contracts
-  - Placeholder Principle 4 -> IV. Tests Are Release Gates
-  - Placeholder Principle 5 -> V. Consistent and Accessible User Experience
-- Added sections:
-  - Technical and Security Constraints
-  - Development Workflow and Quality Gates
+- Version change: 1.0.0 -> 1.1.0
+- Modified principles: none
+- Added principles:
+  - VI. Readable Multi-line Code Formatting
+- Added sections: none
 - Removed sections: none
 - Follow-up TODOs: none
 -->
@@ -58,6 +53,34 @@ disabled/loading/error states. Layouts MUST remain usable on supported desktop a
 Authentication messages MUST be actionable without revealing sensitive identity information.
 New UI behavior MUST reuse shared theme, spacing, and component conventions where they exist.
 
+### VI. Readable Multi-line Code Formatting
+Generated or modified code MUST use readable multi-line formatting whenever an expression contains
+nested structure, child elements, multiple properties, or a non-trivial callback body. JSX parent
+and child elements MUST be placed on separate lines with consistent indentation; nested UI trees
+MUST NOT be compressed into a single line. Object literals and callbacks returning object literals
+with multiple fields MUST place fields on separate lines. Multiple statements MUST NOT be joined on
+one line. For example:
+
+```jsx
+<Table>
+  <TableHead>
+    <TableRow />
+  </TableHead>
+</Table>
+```
+
+```javascript
+const buildValue = () => ({
+  code,
+  name,
+})
+```
+
+Compact one-line formatting is allowed only for genuinely atomic expressions with no nested child
+structure and no loss of readability. Codex MUST run the repository formatter and lint checks when
+available and MUST manually review newly created files for dense one-line JSX or callbacks before
+declaring work complete. This rule keeps generated code reviewable and makes later changes safer.
+
 ## Technical and Security Constraints
 
 - Backend technology is .NET with the existing Domain, Application, Infrastructure, and API
@@ -86,6 +109,8 @@ New UI behavior MUST reuse shared theme, spacing, and component conventions wher
    representative environment before release.
 6. A change is complete only when required checks pass, documentation/contracts are current, and
    no unresolved critical security or correctness issue remains.
+7. Code review MUST reject dense one-line nested JSX, multi-property object-return callbacks, or
+   multiple statements compressed onto one line; affected code MUST be reformatted before merge.
 
 ## Governance
 
@@ -103,4 +128,4 @@ be corrected before merge or recorded as a time-bounded exception approved by ma
 an owner, rationale, risk assessment, and remediation date. The constitution MUST be reviewed when
 the architecture, authentication model, compliance obligations, or supported client stack changes.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-10 | **Last Amended**: 2026-08-10
+**Version**: 1.1.0 | **Ratified**: 2026-08-10 | **Last Amended**: 2026-08-10

@@ -7,10 +7,10 @@ public sealed record GetUsersQuery(
     UsersFilter? Filter = null,
     IReadOnlyList<UsersSort>? Sorts = null,
     int Page = 1,
-    int PageSize = 20) : IRequest<IReadOnlyList<UsersDto>>;
+    int PageSize = 20) : IRequest<PagedUsersDto>;
 
 public sealed record UsersFilter(
-    IReadOnlyCollection<Guid>? Ids = null,
+    IReadOnlyCollection<ulong>? Ids = null,
     StringFilter? Code = null,
     StringFilter? Name = null,
     DateTime? CreatedDateFrom = null,

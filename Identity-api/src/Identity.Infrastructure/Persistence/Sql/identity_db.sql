@@ -1,7 +1,7 @@
 CREATE TABLE `users`(
     `Id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `Email` VARCHAR(255) NOT NULL,
-    `NormalizedEmail` VARCHAR(255) NOT NULL,
+    `Code` VARCHAR(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `Email` VARCHAR(254) COLLATE utf8mb4_unicode_ci NOT NULL,
     `DisplayName` VARCHAR(255) NOT NULL,
     `PasswordHash` VARCHAR(500) NULL,
     `SecurityStamp` CHAR(36) NOT NULL,
@@ -11,10 +11,13 @@ CREATE TABLE `users`(
     `UpdatedBy` VARCHAR(255) NULL,
     `UpdatedDate` DATETIME(6) NULL,
     `IsActive` TINYINT(1) NOT NULL DEFAULT 1,
-    `IsDeleted` TINYINT(1) NOT NULL
+    `IsDeleted` TINYINT(1) NOT NULL,
+    `Version` BIGINT UNSIGNED NOT NULL DEFAULT 1
 );
 ALTER TABLE
-    `users` ADD UNIQUE `users_normalizedemail_unique`(`NormalizedEmail`);
+    `users` ADD UNIQUE `UQUsersCode`(`Code`);
+ALTER TABLE
+    `users` ADD UNIQUE `UQUsersEmail`(`Email`);
 CREATE TABLE `user_roles`(
     `Id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `UserId` BIGINT UNSIGNED NOT NULL,

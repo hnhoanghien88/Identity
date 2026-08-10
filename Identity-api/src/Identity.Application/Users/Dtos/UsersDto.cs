@@ -3,7 +3,9 @@ namespace Identity.Application.Users.Dtos;
 public sealed record UsersDto(
     ulong Id,
     string Code,
+    string Email,
     string Name,
     DateTime CreatedDate,
-    bool IsActive
+    bool IsActive,
+    ulong Version
 );

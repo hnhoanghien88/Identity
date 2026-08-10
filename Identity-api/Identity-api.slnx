@@ -5,4 +5,9 @@
     <Project Path="src/Identity.Domain/Identity.Domain.csproj" Id="fa83536a-ba5b-4793-b84a-1e8142c51b44" />
     <Project Path="src/Identity.Infrastructure/Identity.Infrastructure.csproj" Id="3e751a38-9a05-49d7-b95d-5c39623c1aa4" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Identity.Api.IntegrationTests/Identity.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Identity.Application.Tests/Identity.Application.Tests.csproj" />
+    <Project Path="tests/Identity.Infrastructure.IntegrationTests/Identity.Infrastructure.IntegrationTests.csproj" />
+  </Folder>
 </Solution>

@@ -16,107 +16,144 @@ import AppsRoundedIcon from "@mui/icons-material/AppsRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
+import PeopleIcon from "@mui/icons-material/People";
 import { LoginPage } from "./features/auth";
-import { canRestoreSession, clearSession, getSession, publishSession, restoreSession, subscribeToSession } from "./features/auth/session";
+import { UsersPage } from "./features/users";
+import {
+  canRestoreSession,
+  clearSession,
+  getSession,
+  publishSession,
+  restoreSession,
+  subscribeToSession,
+} from "./features/auth/session";
 import { logout } from "./features/auth/api/logout";
 import "./App.css";
 
 const LOGIN_PATH = "/login";
 const APPLICATIONS_PATH = "/applications";
-const knownPaths = new Set([LOGIN_PATH, APPLICATIONS_PATH]);
-
-function getCurrentPath() {
-  return knownPaths.has(window.location.pathname)
+const USERS_PATH = "/users";
+const knownPaths = new Set([LOGIN_PATH, APPLICATIONS_PATH, USERS_PATH]);
+const protectedPaths = new Set([APPLICATIONS_PATH, USERS_PATH]);
+const currentPath = () =>
+  knownPaths.has(window.location.pathname)
     ? window.location.pathname
     : LOGIN_PATH;
-}
+const canAccessUsers = (authSession) =>
+  authSession?.authorization?.roles?.some(
+    (role) => role === "Admin" || role === "Manager",
+  );
 
 function App() {
-  const [path, setPath] = useState(getCurrentPath);
-  const [authSession, setAuthSession] = useState(getSession);
-  const [isRestoringSession, setIsRestoringSession] = useState(() => !getSession());
-  const isLoggedIn = Boolean(authSession);
-
-  const navigate = (nextPath, { replace = false } = {}) => {
-    if (window.location.pathname !== nextPath) {
-      window.history[replace ? "replaceState" : "pushState"]({}, "", nextPath);
-    }
-    setPath(nextPath);
+  const [path, setPath] = useState(currentPath);
+  const [session, setSession] = useState(getSession);
+  const [restoring, setRestoring] = useState(() => !getSession());
+  const loggedIn = Boolean(session);
+  const canManageUsers = canAccessUsers(session);
+  const navigate = (next, replace = false) => {
+    if (window.location.pathname !== next)
+      window.history[replace ? "replaceState" : "pushState"]({}, "", next);
+    setPath(next);
   };
 
   useEffect(() => {
-    if (!knownPaths.has(window.location.pathname)) {
+    if (!knownPaths.has(window.location.pathname))
       window.history.replaceState({}, "", LOGIN_PATH);
-    }
-
-    const handlePopState = () => setPath(getCurrentPath());
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
+    const pop = () => setPath(currentPath());
+    window.addEventListener("popstate", pop);
+    return () => window.removeEventListener("popstate", pop);
   }, []);
 
-  useEffect(() => subscribeToSession((session) => {
-    setAuthSession(session);
-
-    if (session && window.location.pathname === LOGIN_PATH) {
-      navigate(APPLICATIONS_PATH, { replace: true });
-    } else if (!session && window.location.pathname === APPLICATIONS_PATH) {
-      navigate(LOGIN_PATH, { replace: true });
-    }
-  }), []);
+  useEffect(
+    () =>
+      subscribeToSession((next) => {
+        setSession(next);
+        if (next && window.location.pathname === LOGIN_PATH)
+          navigate(APPLICATIONS_PATH, true);
+        if (!next && protectedPaths.has(window.location.pathname))
+          navigate(LOGIN_PATH, true);
+      }),
+    [],
+  );
 
   useEffect(() => {
-    if (authSession) {
-      if (path === LOGIN_PATH) {
-        navigate(APPLICATIONS_PATH, { replace: true });
-      }
-      setIsRestoringSession(false);
+    if (session) {
+      if (path === LOGIN_PATH) navigate(APPLICATIONS_PATH, true);
+      setRestoring(false);
       return;
     }
-
     if (!canRestoreSession()) {
-      setIsRestoringSession(false);
-      if (path === APPLICATIONS_PATH) {
-        navigate(LOGIN_PATH, { replace: true });
-      }
+      setRestoring(false);
+      if (protectedPaths.has(path)) navigate(LOGIN_PATH, true);
       return;
     }
-
-    let isActive = true;
-    setIsRestoringSession(true);
-
+    let active = true;
+    setRestoring(true);
     restoreSession()
-      .then((session) => {
-        if (!isActive || !session) return;
-        setAuthSession(session);
-        navigate(APPLICATIONS_PATH, { replace: true });
-      })
-      .catch(() => {
-        if (isActive && path === APPLICATIONS_PATH) {
-          navigate(LOGIN_PATH, { replace: true });
+      .then((next) => {
+        if (active && next) {
+          setSession(next);
+          const restoredPath =
+            path === USERS_PATH && canAccessUsers(next)
+              ? USERS_PATH
+              : APPLICATIONS_PATH;
+          navigate(restoredPath, true);
         }
       })
+      .catch(() => {
+        if (active && protectedPaths.has(path)) navigate(LOGIN_PATH, true);
+      })
       .finally(() => {
-        if (isActive) setIsRestoringSession(false);
+        if (active) setRestoring(false);
       });
-
     return () => {
-      isActive = false;
+      active = false;
     };
-  }, [path, authSession]);
-
-  const handleLoginSuccess = (session) => {
-    publishSession(session);
-    navigate(APPLICATIONS_PATH);
-  };
+  }, [path, session]);
 
   const handleLogout = async () => {
     try {
-      await logout(authSession?.accessToken);
+      await logout(session?.accessToken);
     } finally {
       clearSession();
-      navigate(LOGIN_PATH, { replace: true });
+      navigate(LOGIN_PATH, true);
     }
   };
+
+  let content;
+  if (restoring) content = <CircularProgress aria-label="Restoring session" />;
+  else if (path === LOGIN_PATH)
+    content = (
+      <LoginPage
+        onLoginSuccess={(next) => {
+          publishSession(next);
+          navigate(APPLICATIONS_PATH);
+        }}
+      />
+    );
+  else if (path === USERS_PATH && canManageUsers)
+    content = <UsersPage session={session} />;
+  else
+    content = (
+      <Paper className="success-card" elevation={0}>
+        <Box className="success-icon">
+          <AppsRoundedIcon />
+        </Box>
+        <Typography variant="h4" component="h1" fontWeight={700}>
+          Applications
+        </Typography>
+        <Typography color="text.secondary">You are signed in.</Typography>
+        <Button
+          variant="outlined"
+          color="error"
+          startIcon={<LogoutRoundedIcon />}
+          onClick={handleLogout}
+          sx={{ mt: 3 }}
+        >
+          Logout
+        </Button>
+      </Paper>
+    );
 
   return (
     <Box className="app-shell">
@@ -152,7 +189,7 @@ function App() {
           </ListItemButton>
           <ListItemButton
             selected={path === APPLICATIONS_PATH}
-            disabled={!isLoggedIn}
+            disabled={!loggedIn}
             onClick={() => navigate(APPLICATIONS_PATH)}
           >
             <ListItemIcon>
@@ -160,35 +197,21 @@ function App() {
             </ListItemIcon>
             <ListItemText primary="Application" />
           </ListItemButton>
+          {canManageUsers && (
+            <ListItemButton
+              selected={path === USERS_PATH}
+              onClick={() => navigate(USERS_PATH)}
+            >
+              <ListItemIcon>
+                <PeopleIcon />
+              </ListItemIcon>
+              <ListItemText primary="Users" />
+            </ListItemButton>
+          )}
         </List>
       </Paper>
       <Box component="main" className="main-content">
-        {isRestoringSession ? (
-          <CircularProgress aria-label="Restoring session" />
-        ) : path === LOGIN_PATH ? (
-          <LoginPage onLoginSuccess={handleLoginSuccess} />
-        ) : (
-          <Paper className="success-card" elevation={0}>
-            <Box className="success-icon">
-              <AppsRoundedIcon />
-            </Box>
-            <Typography variant="h4" component="h1" fontWeight={700}>
-              Applications
-            </Typography>
-            <Typography color="text.secondary">
-              {"Bạn đã đăng nhập thành công."}
-            </Typography>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<LogoutRoundedIcon />}
-              onClick={handleLogout}
-              sx={{ mt: 3 }}
-            >
-              Logout
-            </Button>
-          </Paper>
-        )}
+        {content}
       </Box>
     </Box>
   );

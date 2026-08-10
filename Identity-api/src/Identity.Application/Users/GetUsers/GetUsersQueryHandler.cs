@@ -5,16 +5,18 @@ using MediatR;
 namespace Identity.Application.Users.GetUsers;
 
 public sealed class GetUsersQueryHandler(IUsersReadRepository repository)
-    : IRequestHandler<GetUsersQuery, IReadOnlyList<UsersDto>>
+    : IRequestHandler<GetUsersQuery, PagedUsersDto>
 {
-    public async Task<IReadOnlyList<UsersDto>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
+    public async Task<PagedUsersDto> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(request.Page, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(request.PageSize, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(request.PageSize, 100);
 
         var sorts = request.Sorts is { Count: > 0 }
             ? request.Sorts
-            : [new UsersSort(UsersSortColumn.CreatedDate, SortDirection.Descending)];
+            : [new UsersSort(UsersSortColumn.CreatedDate, SortDirection.Descending),
+               new UsersSort(UsersSortColumn.Id, SortDirection.Descending)];
 
         var users = await repository.GetAsync(
             request.Filter ?? new UsersFilter(),

@@ -8,6 +8,7 @@ public interface IUsersRepository
     Task<UsersEntity?> GetByIdAsync(ulong id, CancellationToken cancellationToken);
     Task<UsersEntity?> GetByCodeAsync(string code, CancellationToken cancellationToken);
     Task<bool> CodeExistsAsync(string code, ulong? excludingId, CancellationToken cancellationToken);
+    Task<bool> EmailExistsAsync(string email, ulong? excludingId, CancellationToken cancellationToken);
     Task UpdateAsync(UsersEntity user, CancellationToken cancellationToken);
     Task DeleteAsync(UsersEntity user, CancellationToken cancellationToken);
 }

@@ -7,7 +7,7 @@ public interface IUsersReadRepository
 {
     Task<UsersDto?> GetByIdAsync(ulong id, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<UsersDto>> GetAsync(
+    Task<PagedUsersDto> GetAsync(
         UsersFilter filter,
         IReadOnlyList<UsersSort> sorts,
         int page,

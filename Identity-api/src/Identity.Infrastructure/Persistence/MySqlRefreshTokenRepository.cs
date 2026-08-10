@@ -62,6 +62,9 @@ public sealed class MySqlRefreshTokenRepository(IdentityDbContext dbContext)
             ?? throw new UnauthorizedAccessException("The refresh token is invalid.");
 
         var now = DateTime.UtcNow;
+        if (current.User.IsDeleted || !current.User.IsActive)
+            throw new UnauthorizedAccessException("The user account is unavailable.");
+
         if (!current.IsActive || current.RevokedDate != null)
         {
             await RevokeFamilyAsync(current.FamilyId, current.UserId, current.User.Email, now, cancellationToken);
@@ -123,6 +126,26 @@ public sealed class MySqlRefreshTokenRepository(IdentityDbContext dbContext)
         token.RevokedBy = token.UserId;
         token.UpdatedDate = now;
         token.UpdatedBy = revokedBy ?? token.User.Email;
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RevokeAllForUserAsync(
+        ulong userId,
+        string? revokedBy,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        var tokens = await dbContext.RefreshTokens
+            .Where(x => x.UserId == userId && x.IsActive)
+            .ToListAsync(cancellationToken);
+        foreach (var token in tokens)
+        {
+            token.IsActive = false;
+            token.RevokedDate = now;
+            token.RevokedBy = userId;
+            token.UpdatedDate = now;
+            token.UpdatedBy = revokedBy;
+        }
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 

@@ -10,7 +10,7 @@ public sealed class DapperUsersReadRepository(MySqlConnectionFactory connectionF
     : IUsersReadRepository
 {
     private const string SelectUsers = """
-        SELECT Id, Email AS Code, DisplayName AS Name, CreatedDate, IsActive
+        SELECT Id, Code, Email, DisplayName AS Name, CreatedDate, IsActive, Version
         FROM users
         """;
 
@@ -19,22 +19,23 @@ public sealed class DapperUsersReadRepository(MySqlConnectionFactory connectionF
         await using var connection = connectionFactory.CreateConnection();
         return await connection.QuerySingleOrDefaultAsync<UsersDto>(
             new CommandDefinition(
-                $"{SelectUsers} WHERE Id = @Id",
+                $"{SelectUsers} WHERE Id = @Id AND IsDeleted = 0",
                 new { Id = id },
                 cancellationToken: cancellationToken));
     }
 
-    public async Task<IReadOnlyList<UsersDto>> GetAsync(
+    public async Task<PagedUsersDto> GetAsync(
         UsersFilter filter,
         IReadOnlyList<UsersSort> sorts,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
     {
-        var sql = new StringBuilder(SelectUsers).AppendLine(" WHERE 1 = 1");
+        var where = new StringBuilder(" WHERE IsDeleted = 0");
         var parameters = new DynamicParameters();
 
-        AddFilters(sql, parameters, filter);
+        AddFilters(where, parameters, filter);
+        var sql = new StringBuilder(SelectUsers).Append(where);
         sql.Append(" ORDER BY ").Append(BuildOrderBy(sorts));
         sql.Append(" LIMIT @PageSize OFFSET @Offset");
         parameters.Add("PageSize", pageSize);
@@ -43,7 +44,9 @@ public sealed class DapperUsersReadRepository(MySqlConnectionFactory connectionF
         await using var connection = connectionFactory.CreateConnection();
         var users = await connection.QueryAsync<UsersDto>(
             new CommandDefinition(sql.ToString(), parameters, cancellationToken: cancellationToken));
-        return users.AsList();
+        var totalCount = await connection.ExecuteScalarAsync<int>(
+            new CommandDefinition($"SELECT COUNT(*) FROM users{where}", parameters, cancellationToken: cancellationToken));
+        return new PagedUsersDto(users.AsList(), totalCount, page, pageSize);
     }
 
     private static void AddFilters(StringBuilder sql, DynamicParameters parameters, UsersFilter filter)
@@ -54,7 +57,7 @@ public sealed class DapperUsersReadRepository(MySqlConnectionFactory connectionF
             parameters.Add("Ids", filter.Ids);
         }
 
-        AddStringFilter(sql, parameters, "Email", filter.Code);
+        AddStringFilter(sql, parameters, "Code", filter.Code);
         AddStringFilter(sql, parameters, "DisplayName", filter.Name);
 
         AddFilter(sql, parameters, "CreatedDate >= @CreatedDateFrom", "CreatedDateFrom", filter.CreatedDateFrom);
@@ -115,7 +118,7 @@ public sealed class DapperUsersReadRepository(MySqlConnectionFactory connectionF
             var column = sort.Column switch
             {
                 UsersSortColumn.Id => "Id",
-                UsersSortColumn.Code => "Email",
+                UsersSortColumn.Code => "Code",
                 UsersSortColumn.Name => "DisplayName",
                 UsersSortColumn.CreatedDate => "CreatedDate",
                 UsersSortColumn.IsActive => "IsActive",

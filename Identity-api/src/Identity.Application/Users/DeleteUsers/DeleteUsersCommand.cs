@@ -2,4 +2,4 @@ using MediatR;
 
 namespace Identity.Application.Users.DeleteUsers;
 
-public sealed record DeleteUsersCommand(ulong Id) : IRequest;
+public sealed record DeleteUsersCommand(ulong Id, ulong ActorId, ulong Version, string? ActorEmail) : IRequest;

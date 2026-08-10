@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Identity.Api.Middleware;
 using System.Text;
 using Identity.Api.Authentication;
@@ -6,10 +6,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 using Identity.Application.Users.CreateUsers;
+using Identity.Application.Abstractions.Persistence;
 using Identity.Infrastructure;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -24,13 +29,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true, ValidIssuer = jwt.Issuer,
-        ValidateAudience = true, ValidAudience = jwt.Audience,
+        ValidateIssuer = true,
+        ValidIssuer = jwt.Issuer,
+        ValidateAudience = true,
+        ValidAudience = jwt.Audience,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
-        ValidateLifetime = true, ClockSkew = TimeSpan.Zero
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
     };
-    options.Events = new JwtBearerEvents { OnTokenValidated = context =>
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
     {
         if (context.Principal?.FindFirst("token_type")?.Value != "access")
             context.Fail("Only access tokens are accepted.");
@@ -38,11 +48,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
                      .GetRequiredService<IJwtTokenService>()
                      .IsAccessTokenRevoked(context.Principal))
             context.Fail("The access token has been revoked.");
-        return Task.CompletedTask;
-    }};
+        else
+        {
+            var subject = context.Principal.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                ?? context.Principal.FindFirst("sub")?.Value
+                ?? context.Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!ulong.TryParse(subject, out var userId)) context.Fail("The access token subject is invalid.");
+            else
+            {
+                var user = await context.HttpContext.RequestServices.GetRequiredService<IUsersRepository>()
+                    .GetByIdAsync(userId, context.HttpContext.RequestAborted);
+                if (user is null || !user.IsActive) context.Fail("The user account is unavailable.");
+            }
+        }
+    }
+    };
 });
 builder.Services.AddAuthorization();
-builder.Services.AddSwaggerGen(options => {
+builder.Services.AddSwaggerGen(options =>
+{
     options.SwaggerDoc(
         "v1",
         new OpenApiInfo

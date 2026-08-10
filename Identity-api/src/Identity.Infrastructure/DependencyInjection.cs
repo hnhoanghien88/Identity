@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddSingleton(new MySqlConnectionFactory(connectionString));
         services.AddScoped<IUsersReadRepository, DapperUsersReadRepository>();
         services.AddScoped<IUserRolesReadRepository, DapperUserRolesReadRepository>();
+        services.AddScoped<IRefreshTokenRepository, MySqlRefreshTokenRepository>();
         return services;
     }
 }

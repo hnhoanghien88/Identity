@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using Identity.Api.Authentication;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Users.AuthenticateUser;
@@ -5,6 +6,7 @@ using Identity.Application.Users.GetUsersById;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Identity.Api.Controllers;
 
@@ -12,9 +14,12 @@ namespace Identity.Api.Controllers;
 public sealed class AuthController(
     ISender sender,
     IJwtTokenService tokens,
-    IUserRolesReadRepository userRoles) : ControllerBase
+    IRefreshTokenRepository refreshTokens,
+    IUserRolesReadRepository userRoles,
+    IOptions<JwtOptions> jwtOptions) : ControllerBase
 {
     private const string RefreshTokenCookie = "refresh_token";
+    private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
     [AllowAnonymous]
     [HttpPost("/login")]
@@ -24,68 +29,96 @@ public sealed class AuthController(
     {
         var user = await sender.Send(
             new AuthenticateUserQuery(request.Code, request.Password), ct);
-        var authorization = await userRoles.GetAuthorizationAsync(user.Id, ct);
-        var loginTokens = tokens.CreateTokens(user, authorization);
+        var authorization = await userRoles.GetAuthorizationAsync(user.Id, _jwtOptions.ApplicationCode, ct);
+        var accessToken = tokens.CreateAccessToken(user, authorization);
+        var refreshToken = await refreshTokens.IssueForLoginAsync(
+            user.Id,
+            user.Code,
+            _jwtOptions.ApplicationCode,
+            TimeSpan.FromDays(_jwtOptions.RefreshTokenDays),
+            ct);
 
-        WriteRefreshTokenCookie(loginTokens);
-        return Ok(ToResponse(loginTokens, authorization));
+        WriteRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAtUtc);
+        return Ok(ToResponse(accessToken, authorization));
     }
 
     [AllowAnonymous]
     [HttpPost("/refresh")]
     public async Task<ActionResult<LoginResponse>> Refresh(CancellationToken ct)
     {
-        var refreshToken = ReadRefreshTokenCookie();
-        var userId = tokens.ValidateRefreshToken(refreshToken);
-        var user = await sender.Send(new GetUsersByIdQuery(userId), ct);
+        var currentToken = ReadRefreshTokenCookie();
+        var rotatedToken = await refreshTokens.RotateAsync(
+            currentToken,
+            TimeSpan.FromDays(_jwtOptions.RefreshTokenDays),
+            ct);
+
+        var user = await sender.Send(
+            new GetUsersByIdQuery(rotatedToken.UserId), ct);
 
         if (!user.IsActive)
+        {
+            await refreshTokens.RevokeAsync(
+                rotatedToken.Token, user.Code, ct);
+            DeleteRefreshTokenCookie();
             throw new UnauthorizedAccessException("The user account is inactive.");
+        }
 
-        var authorization = await userRoles.GetAuthorizationAsync(user.Id, ct);
-        var newTokens = tokens.CreateTokens(user, authorization);
+        var authorization = await userRoles.GetAuthorizationAsync(user.Id, _jwtOptions.ApplicationCode, ct);
+        var accessToken = tokens.CreateAccessToken(user, authorization);
 
-        tokens.RevokeRefreshToken(refreshToken);
-        WriteRefreshTokenCookie(newTokens);
+        WriteRefreshTokenCookie(
+            rotatedToken.Token,
+            rotatedToken.ExpiresAtUtc);
 
-        return Ok(ToResponse(newTokens, authorization));
+        return Ok(ToResponse(accessToken, authorization));
     }
 
     [Authorize]
     [HttpPost("/logout")]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout(CancellationToken ct)
     {
         if (Request.Cookies.TryGetValue(RefreshTokenCookie, out var refreshToken)
             && !string.IsNullOrWhiteSpace(refreshToken))
         {
-            tokens.RevokeRefreshToken(refreshToken);
+            await refreshTokens.RevokeAsync(
+                refreshToken,
+                GetCurrentUserEmail(),
+                ct);
         }
 
         tokens.RevokeAccessToken(User);
-        Response.Cookies.Delete(RefreshTokenCookie, RefreshCookieOptions());
+        DeleteRefreshTokenCookie();
         return NoContent();
     }
+
+    private string? GetCurrentUserEmail() =>
+        User.FindFirst("email")?.Value;
 
     private string ReadRefreshTokenCookie()
     {
         if (!Request.Cookies.TryGetValue(RefreshTokenCookie, out var refreshToken)
             || string.IsNullOrWhiteSpace(refreshToken))
         {
-            throw new UnauthorizedAccessException("The refresh token cookie is missing.");
+            throw new UnauthorizedAccessException(
+                "The refresh token cookie is missing.");
         }
 
         return refreshToken;
     }
 
-    private void WriteRefreshTokenCookie(LoginTokens loginTokens)
+    private void WriteRefreshTokenCookie(
+        string refreshToken,
+        DateTime expiresAtUtc)
     {
         var options = RefreshCookieOptions();
-        options.Expires = loginTokens.RefreshTokenExpiresAtUtc;
-        Response.Cookies.Append(
-            RefreshTokenCookie,
-            loginTokens.RefreshToken,
-            options);
+        options.Expires = expiresAtUtc;
+        Response.Cookies.Append(RefreshTokenCookie, refreshToken, options);
     }
+
+    private void DeleteRefreshTokenCookie() =>
+        Response.Cookies.Delete(
+            RefreshTokenCookie,
+            RefreshCookieOptions());
 
     private CookieOptions RefreshCookieOptions() => new()
     {
@@ -96,12 +129,9 @@ public sealed class AuthController(
     };
 
     private static LoginResponse ToResponse(
-        LoginTokens loginTokens,
+        AccessTokenResult accessToken,
         UserAuthorization authorization) =>
-        new(
-            loginTokens.AccessToken,
-            loginTokens.AccessTokenExpiresAtUtc,
-            authorization);
+        new(accessToken.Token, accessToken.ExpiresAtUtc, authorization);
 
     public sealed record LoginRequest(string Code, string Password);
 

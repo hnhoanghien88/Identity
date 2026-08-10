@@ -5,20 +5,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/login': {
+      '/api': {
         target: 'https://localhost:7203',
         changeOrigin: true,
         secure: false,
-      },
-      '/refresh': {
-        target: 'https://localhost:7203',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/logout': {
-        target: 'https://localhost:7203',
-        changeOrigin: true,
-        secure: false,
+        rewrite: (path) => path.slice(4),
       },
     },
   },

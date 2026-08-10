@@ -17,7 +17,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import { LoginPage } from "./features/auth";
-import { refreshSession } from "./features/auth/api/refresh";
+import { clearSession, getSession, publishSession, restoreSession, subscribeToSession } from "./features/auth/session";
 import { logout } from "./features/auth/api/logout";
 import "./App.css";
 
@@ -33,10 +33,8 @@ function getCurrentPath() {
 
 function App() {
   const [path, setPath] = useState(getCurrentPath);
-  const [authSession, setAuthSession] = useState(null);
-  const [isRestoringSession, setIsRestoringSession] = useState(
-    getCurrentPath() === APPLICATIONS_PATH,
-  );
+  const [authSession, setAuthSession] = useState(getSession);
+  const [isRestoringSession, setIsRestoringSession] = useState(() => !getSession());
   const isLoggedIn = Boolean(authSession);
 
   const navigate = (nextPath, { replace = false } = {}) => {
@@ -56,8 +54,21 @@ function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
+  useEffect(() => subscribeToSession((session) => {
+    setAuthSession(session);
+
+    if (session && window.location.pathname === LOGIN_PATH) {
+      navigate(APPLICATIONS_PATH, { replace: true });
+    } else if (!session && window.location.pathname === APPLICATIONS_PATH) {
+      navigate(LOGIN_PATH, { replace: true });
+    }
+  }), []);
+
   useEffect(() => {
-    if (path !== APPLICATIONS_PATH || authSession) {
+    if (authSession) {
+      if (path === LOGIN_PATH) {
+        navigate(APPLICATIONS_PATH, { replace: true });
+      }
       setIsRestoringSession(false);
       return;
     }
@@ -65,12 +76,16 @@ function App() {
     let isActive = true;
     setIsRestoringSession(true);
 
-    refreshSession()
+    restoreSession()
       .then((session) => {
-        if (isActive) setAuthSession(session);
+        if (!isActive) return;
+        setAuthSession(session);
+        navigate(APPLICATIONS_PATH, { replace: true });
       })
       .catch(() => {
-        if (isActive) navigate(LOGIN_PATH, { replace: true });
+        if (isActive && path === APPLICATIONS_PATH) {
+          navigate(LOGIN_PATH, { replace: true });
+        }
       })
       .finally(() => {
         if (isActive) setIsRestoringSession(false);
@@ -82,7 +97,7 @@ function App() {
   }, [path, authSession]);
 
   const handleLoginSuccess = (session) => {
-    setAuthSession(session);
+    publishSession(session);
     navigate(APPLICATIONS_PATH);
   };
 
@@ -90,7 +105,7 @@ function App() {
     try {
       await logout(authSession?.accessToken);
     } finally {
-      setAuthSession(null);
+      clearSession();
       navigate(LOGIN_PATH, { replace: true });
     }
   };

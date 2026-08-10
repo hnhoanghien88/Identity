@@ -1,0 +1,127 @@
+import { refreshSession } from './api/refresh'
+
+const CHANNEL_NAME = 'identity-auth-session'
+const REFRESH_LOCK_NAME = 'identity-refresh-token'
+const SESSION_WAIT_MS = 200
+const EXPIRY_BUFFER_MS = 30_000
+
+const channel = typeof BroadcastChannel === 'undefined'
+  ? null
+  : new BroadcastChannel(CHANNEL_NAME)
+
+let currentSession = null
+let restorePromise = null
+const listeners = new Set()
+const pendingRequests = new Map()
+
+channel?.addEventListener('message', ({ data }) => {
+  if (!data?.type) return
+
+  if (data.type === 'SESSION_REQUEST' && isUsable(currentSession)) {
+    channel.postMessage({
+      type: 'SESSION_RESPONSE',
+      requestId: data.requestId,
+      session: currentSession,
+    })
+    return
+  }
+
+  if (data.type === 'SESSION_RESPONSE') {
+    pendingRequests.get(data.requestId)?.(data.session)
+    return
+  }
+
+  if (data.type === 'SESSION_UPDATED' && isUsable(data.session)) {
+    updateLocalSession(data.session)
+    return
+  }
+
+  if (data.type === 'SESSION_CLEARED') {
+    updateLocalSession(null)
+  }
+})
+
+export function getSession() {
+  return isUsable(currentSession) ? currentSession : null
+}
+
+export function publishSession(session) {
+  updateLocalSession(session)
+  channel?.postMessage({ type: 'SESSION_UPDATED', session })
+}
+
+export function clearSession() {
+  updateLocalSession(null)
+  channel?.postMessage({ type: 'SESSION_CLEARED' })
+}
+
+export function subscribeToSession(listener) {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+export function restoreSession() {
+  if (isUsable(currentSession)) return Promise.resolve(currentSession)
+  if (restorePromise) return restorePromise
+
+  restorePromise = restoreFromAnotherTab()
+    .then((session) => session || refreshWithCrossTabLock())
+    .finally(() => {
+      restorePromise = null
+    })
+
+  return restorePromise
+}
+
+async function refreshWithCrossTabLock() {
+  if (!navigator.locks?.request) {
+    return refreshAndPublish()
+  }
+
+  return navigator.locks.request(REFRESH_LOCK_NAME, async () => {
+    const sharedSession = await restoreFromAnotherTab()
+    return sharedSession || refreshAndPublish()
+  })
+}
+
+async function refreshAndPublish() {
+  const session = await refreshSession()
+  publishSession(session)
+  return session
+}
+
+function restoreFromAnotherTab() {
+  if (!channel) return Promise.resolve(null)
+
+  const requestId = crypto.randomUUID()
+  return new Promise((resolve) => {
+    const timeoutId = window.setTimeout(() => {
+      pendingRequests.delete(requestId)
+      resolve(null)
+    }, SESSION_WAIT_MS)
+
+    pendingRequests.set(requestId, (session) => {
+      window.clearTimeout(timeoutId)
+      pendingRequests.delete(requestId)
+
+      if (isUsable(session)) {
+        updateLocalSession(session)
+        resolve(session)
+      } else {
+        resolve(null)
+      }
+    })
+
+    channel.postMessage({ type: 'SESSION_REQUEST', requestId })
+  })
+}
+
+function updateLocalSession(session) {
+  currentSession = session
+  listeners.forEach((listener) => listener(session))
+}
+
+function isUsable(session) {
+  if (!session?.accessToken || !session?.accessTokenExpiresAtUtc) return false
+  return Date.parse(session.accessTokenExpiresAtUtc) > Date.now() + EXPIRY_BUFFER_MS
+}

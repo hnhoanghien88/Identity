@@ -4,6 +4,7 @@ const CHANNEL_NAME = 'identity-auth-session'
 const REFRESH_LOCK_NAME = 'identity-refresh-token'
 const SESSION_WAIT_MS = 200
 const EXPIRY_BUFFER_MS = 30_000
+const LOGOUT_MARKER = 'identity-explicitly-logged-out'
 
 const channel = typeof BroadcastChannel === 'undefined'
   ? null
@@ -11,6 +12,7 @@ const channel = typeof BroadcastChannel === 'undefined'
 
 let currentSession = null
 let restorePromise = null
+let restorationBlocked = readLogoutMarker()
 const listeners = new Set()
 const pendingRequests = new Map()
 
@@ -32,11 +34,13 @@ channel?.addEventListener('message', ({ data }) => {
   }
 
   if (data.type === 'SESSION_UPDATED' && isUsable(data.session)) {
+    setRestorationBlocked(false)
     updateLocalSession(data.session)
     return
   }
 
   if (data.type === 'SESSION_CLEARED') {
+    setRestorationBlocked(true)
     updateLocalSession(null)
   }
 })
@@ -46,13 +50,19 @@ export function getSession() {
 }
 
 export function publishSession(session) {
+  setRestorationBlocked(false)
   updateLocalSession(session)
   channel?.postMessage({ type: 'SESSION_UPDATED', session })
 }
 
 export function clearSession() {
+  setRestorationBlocked(true)
   updateLocalSession(null)
   channel?.postMessage({ type: 'SESSION_CLEARED' })
+}
+
+export function canRestoreSession() {
+  return !restorationBlocked
 }
 
 export function subscribeToSession(listener) {
@@ -61,6 +71,7 @@ export function subscribeToSession(listener) {
 }
 
 export function restoreSession() {
+  if (restorationBlocked) return Promise.resolve(null)
   if (isUsable(currentSession)) return Promise.resolve(currentSession)
   if (restorePromise) return restorePromise
 
@@ -124,4 +135,24 @@ function updateLocalSession(session) {
 function isUsable(session) {
   if (!session?.accessToken || !session?.accessTokenExpiresAtUtc) return false
   return Date.parse(session.accessTokenExpiresAtUtc) > Date.now() + EXPIRY_BUFFER_MS
+}
+function setRestorationBlocked(isBlocked) {
+  restorationBlocked = isBlocked
+  try {
+    if (isBlocked) {
+      localStorage.setItem(LOGOUT_MARKER, 'true')
+    } else {
+      localStorage.removeItem(LOGOUT_MARKER)
+    }
+  } catch {
+    // Session coordination still works through memory and BroadcastChannel.
+  }
+}
+
+function readLogoutMarker() {
+  try {
+    return localStorage.getItem(LOGOUT_MARKER) === 'true'
+  } catch {
+    return false
+  }
 }

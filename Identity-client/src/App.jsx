@@ -17,7 +17,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import { LoginPage } from "./features/auth";
-import { clearSession, getSession, publishSession, restoreSession, subscribeToSession } from "./features/auth/session";
+import { canRestoreSession, clearSession, getSession, publishSession, restoreSession, subscribeToSession } from "./features/auth/session";
 import { logout } from "./features/auth/api/logout";
 import "./App.css";
 
@@ -73,12 +73,20 @@ function App() {
       return;
     }
 
+    if (!canRestoreSession()) {
+      setIsRestoringSession(false);
+      if (path === APPLICATIONS_PATH) {
+        navigate(LOGIN_PATH, { replace: true });
+      }
+      return;
+    }
+
     let isActive = true;
     setIsRestoringSession(true);
 
     restoreSession()
       .then((session) => {
-        if (!isActive) return;
+        if (!isActive || !session) return;
         setAuthSession(session);
         navigate(APPLICATIONS_PATH, { replace: true });
       })

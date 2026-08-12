@@ -9,10 +9,11 @@ public sealed class ApplicationsConfiguration : IEntityTypeConfiguration<Applica
     public void Configure(EntityTypeBuilder<Applications> b)
     {
         b.ToTable("applications");
-        b.Property(x => x.Code).HasMaxLength(50);
-        b.Property(x => x.Name).HasMaxLength(150);
-        b.Property(x => x.Audience).HasMaxLength(150);
+        b.Property(x => x.Code).HasMaxLength(50).UseCollation("utf8mb4_unicode_ci").IsRequired();
+        b.Property(x => x.Name).HasMaxLength(150).IsRequired();
+        b.Property(x => x.Audience).HasMaxLength(150).IsRequired();
         b.Property(x => x.Description).HasMaxLength(500);
+        b.Property(x => x.Version).HasDefaultValue(1UL).IsConcurrencyToken().IsRequired();
         b.HasIndex(x => x.Code).IsUnique().HasDatabaseName("UQApplicationsCode");
     }
 }
@@ -33,10 +34,11 @@ public sealed class ResourcesConfiguration : IEntityTypeConfiguration<Resources>
     public void Configure(EntityTypeBuilder<Resources> b)
     {
         b.ToTable("resources");
-        b.Property(x => x.Code).HasMaxLength(120);
+        b.Property(x => x.Code).HasMaxLength(120).UseCollation("utf8mb4_0900_ai_ci");
         b.Property(x => x.Name).HasMaxLength(150);
         b.Property(x => x.ResourceType).HasMaxLength(30);
         b.Property(x => x.Description).HasMaxLength(500);
+        b.Property(x => x.Version).HasDefaultValue(1UL).IsConcurrencyToken().IsRequired();
         b.HasIndex(x => new { x.ApplicationId, x.Code }).IsUnique().HasDatabaseName("UQResources");
     }
 }

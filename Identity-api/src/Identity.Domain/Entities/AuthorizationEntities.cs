@@ -6,6 +6,7 @@ public sealed class Applications : ActiveEntity
     public string Name { get; set; } = string.Empty;
     public string Audience { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public ulong Version { get; set; } = 1;
 }
 
 public sealed class Roles : ActiveEntity
@@ -25,4 +26,5 @@ public sealed class Resources : ActiveEntity
     public string Name { get; set; } = string.Empty;
     public string ResourceType { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public ulong Version { get; set; } = 1;
 }

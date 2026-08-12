@@ -72,8 +72,6 @@ public sealed class AuthController(
 
         return Ok(ToResponse(accessToken, authorization));
     }
-
-    [Authorize]
     [HttpPost("/logout")]
     public async Task<IActionResult> Logout(CancellationToken ct)
     {

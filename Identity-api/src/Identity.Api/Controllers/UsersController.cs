@@ -6,9 +6,7 @@ using Identity.Application.Users.GetUsersById;
 using Identity.Application.Users.UpdateUsers;
 using Identity.Application.Users.Dtos;
 using Identity.Api.Models;
-using Identity.Application.Common.Authorization;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 
@@ -16,11 +14,9 @@ namespace Identity.Api.Controllers;
 
 [ApiController]
 [Route("api/users")]
-[Authorize(Roles = RoleGroups.All)]
 public sealed class UsersController(ISender sender) : ControllerBase
 {
     [HttpPost]
-    [Authorize(Roles = RoleGroups.Management)]
     public async Task<IActionResult> Create(CreateUsersCommand command, CancellationToken ct)
     {
         var user = await sender.Send(command, ct);
@@ -31,7 +27,6 @@ public sealed class UsersController(ISender sender) : ControllerBase
     }
 
     [HttpGet("{id:long}")]
-    [Authorize(Roles = RoleGroups.Management)]
     public async Task<ActionResult<ApiResponse<UsersDto>>> GetById(ulong id, CancellationToken ct)
     {
         var user = await sender.Send(new GetUsersByIdQuery(id), ct);
@@ -79,7 +74,6 @@ public sealed class UsersController(ISender sender) : ControllerBase
     ///
     /// </remarks>
     [HttpPost("search")]
-    [Authorize(Roles = RoleGroups.Management)]
     public async Task<ActionResult<ApiResponse<PagedUsersDto>>> Get(GetUsersQuery query, CancellationToken ct)
     {
         var users = await sender.Send(query, ct);
@@ -87,7 +81,6 @@ public sealed class UsersController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{id:long}")]
-    [Authorize(Roles = RoleGroups.Management)]
     public async Task<ActionResult<ApiResponse<UsersDto>>> Update(ulong id, UpdateRequest request, CancellationToken ct)
     {
         var user = await sender.Send(
@@ -102,7 +95,6 @@ public sealed class UsersController(ISender sender) : ControllerBase
     }
 
     [HttpDelete("{id:long}")]
-    [Authorize(Roles = RoleNames.Admin)]
     public async Task<IActionResult> Delete(ulong id, [FromQuery] ulong version, CancellationToken ct)
     {
         var subject = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
@@ -115,7 +107,6 @@ public sealed class UsersController(ISender sender) : ControllerBase
     }
 
     [HttpPatch("{id:long}/activation")]
-    [Authorize(Roles = RoleNames.Admin)]
     public async Task<IActionResult> Activate(ulong id, ActivationRequest request, CancellationToken ct)
     {
         await sender.Send(new ActivateUsersCommand(id, request.IsActive), ct);

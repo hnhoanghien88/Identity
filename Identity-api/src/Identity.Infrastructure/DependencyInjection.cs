@@ -15,6 +15,10 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Connection string 'IdentityDatabase' was not found.");
         services.AddDbContext<IdentityDbContext>(options => options.UseMySQL(connectionString));
         services.AddScoped<IUsersRepository, MySqlUsersRepository>();
+        services.AddScoped<IApplicationsRepository, MySqlApplicationsRepository>();
+        services.AddScoped<IApplicationsReadRepository, DapperApplicationsReadRepository>();
+        services.AddScoped<IResourcesRepository, MySqlResourcesRepository>();
+        services.AddScoped<IResourcesReadRepository, DapperResourcesReadRepository>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton(new MySqlConnectionFactory(connectionString));
         services.AddScoped<IUsersReadRepository, DapperUsersReadRepository>();

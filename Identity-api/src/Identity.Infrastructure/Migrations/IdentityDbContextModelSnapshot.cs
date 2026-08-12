@@ -33,7 +33,8 @@ namespace Identity.Infrastructure.Migrations
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("varchar(50)")
+                        .UseCollation("utf8mb4_unicode_ci");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(255)
@@ -69,6 +70,12 @@ namespace Identity.Infrastructure.Migrations
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<ulong>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasDefaultValue(1ul);
 
                     b.HasKey("Id");
 
@@ -350,7 +357,8 @@ namespace Identity.Infrastructure.Migrations
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(120)
-                        .HasColumnType("varchar(120)");
+                        .HasColumnType("varchar(120)")
+                        .UseCollation("utf8mb4_0900_ai_ci");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(255)
@@ -391,6 +399,12 @@ namespace Identity.Infrastructure.Migrations
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<ulong>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasDefaultValue(1ul);
 
                     b.HasKey("Id");
 

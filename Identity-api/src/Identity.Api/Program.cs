@@ -1,5 +1,10 @@
 using FluentValidation;
 using Identity.Api.Middleware;
+using Identity.Api.Authorization;
+using Identity.Application.Applications.CreateApplication;
+using Identity.Application.Applications.UpdateApplication;
+using Identity.Application.Resources.CreateResource;
+using Identity.Application.Resources.UpdateResource;
 using System.Text;
 using Identity.Api.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -61,10 +66,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
                 if (user is null || !user.IsActive) context.Fail("The user account is unavailable.");
             }
         }
-    }
+    },
+        OnChallenge = async context =>
+        {
+            context.HandleResponse();
+            await ProblemDetailsAuthorizationResults.WriteUnauthorizedAsync(context.HttpContext);
+        },
+        OnForbidden = context =>
+            ProblemDetailsAuthorizationResults.WriteForbiddenAsync(context.HttpContext),
     };
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddApplicationPolicies();
+    options.AddResourcePolicies();
+});
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc(
@@ -93,6 +109,10 @@ builder.Services.AddSwaggerGen(options =>
 });
 builder.Services.AddMediatR(c => c.RegisterServicesFromAssembly(typeof(CreateUsersCommand).Assembly));
 builder.Services.AddTransient<IValidator<CreateUsersCommand>, CreateUsersValidator>();
+builder.Services.AddTransient<IValidator<CreateApplicationCommand>, CreateApplicationValidator>();
+builder.Services.AddTransient<IValidator<UpdateApplicationCommand>, UpdateApplicationValidator>();
+builder.Services.AddTransient<IValidator<CreateResourceCommand>, CreateResourceValidator>();
+builder.Services.AddTransient<IValidator<UpdateResourceCommand>, UpdateResourceValidator>();
 builder.Services.AddTransient<
     IValidator<Identity.Application.Users.UpdateUsers.UpdateUsersCommand>,
     Identity.Application.Users.UpdateUsers.UpdateUsersValidator>();
@@ -112,9 +132,3 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
-
-
-
-
-
-

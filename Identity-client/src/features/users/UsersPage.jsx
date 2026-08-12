@@ -27,11 +27,8 @@ const initialFilters = {
 };
 
 export function UsersPage({ session }) {
-  const roles = session?.authorization?.roles || [];
-  const canManage = roles.some(
-    (role) => role === "Admin" || role === "Manager",
-  );
-  const canDelete = roles.includes("Admin");
+  const canManage = Boolean(session?.accessToken);
+  const canDelete = canManage;
   const currentUserId = useMemo(() => {
     try {
       return JSON.parse(

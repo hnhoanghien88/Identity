@@ -155,6 +155,12 @@ namespace Identity.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<ulong>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasDefaultValue(1ul);
+
                     b.HasKey("Id");
 
                     b.HasIndex("ParentId");
@@ -199,6 +205,12 @@ namespace Identity.Infrastructure.Migrations
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<ulong>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasDefaultValue(1ul);
 
                     b.HasKey("Id");
 
@@ -501,6 +513,12 @@ namespace Identity.Infrastructure.Migrations
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<ulong>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasDefaultValue(1ul);
 
                     b.HasKey("Id");
 

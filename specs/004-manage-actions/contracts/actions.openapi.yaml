@@ -1,0 +1,85 @@
+openapi: 3.1.0
+info: { title: Identity Actions Management API, version: 1.0.0 }
+security: [{ bearerAuth: [] }]
+paths:
+  /api/actions/search:
+    post:
+      operationId: searchActions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SearchActionsRequest' }
+      responses:
+        '200': { description: Matching page }
+        '400': { description: Invalid search }
+        '401': { description: Unauthenticated }
+  /api/actions:
+    post:
+      operationId: createAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateActionRequest' }
+      responses:
+        '201': { description: Created }
+        '400': { description: Validation error }
+        '401': { description: Unauthenticated }
+        '409': { description: Duplicate Code }
+  /api/actions/{id}:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+    get:
+      operationId: getAction
+      responses: { '200': { description: Found }, '401': { description: Unauthenticated }, '404': { description: Not found } }
+    put:
+      operationId: updateAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateActionRequest' }
+      responses: { '200': { description: Updated }, '400': { description: Invalid }, '401': { description: Unauthenticated }, '404': { description: Not found }, '409': { description: Conflict } }
+    delete:
+      operationId: deleteAction
+      parameters:
+        - { in: query, name: version, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+      responses: { '200': { description: Deleted }, '401': { description: Unauthenticated }, '404': { description: Not found }, '409': { description: Stale or dependent } }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    StringFilter:
+      type: object
+      properties:
+        contains: { type: [string, 'null'] }
+        startsWith: { type: [string, 'null'] }
+        endsWith: { type: [string, 'null'] }
+        values: { type: [array, 'null'], items: { type: string } }
+    SearchActionsRequest:
+      type: object
+      properties:
+        filter:
+          type: object
+          properties:
+            code: { $ref: '#/components/schemas/StringFilter' }
+            name: { $ref: '#/components/schemas/StringFilter' }
+        sorts: { type: array, items: { type: object } }
+        page: { type: integer, minimum: 1, default: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    CreateActionRequest:
+      type: object
+      required: [code, name]
+      additionalProperties: false
+      properties:
+        code: { type: string, minLength: 1, maxLength: 50 }
+        name: { type: string, minLength: 1, maxLength: 100 }
+    UpdateActionRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateActionRequest'
+        - type: object
+          required: [version]
+          properties:
+            version: { type: integer, format: int64, minimum: 1 }
+

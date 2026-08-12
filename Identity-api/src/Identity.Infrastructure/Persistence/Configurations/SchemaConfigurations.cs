@@ -25,6 +25,7 @@ public sealed class RolesConfiguration : IEntityTypeConfiguration<Roles>
         b.ToTable("roles");
         b.Property(x => x.Code).HasMaxLength(100);
         b.Property(x => x.Name).HasMaxLength(150);
+        b.Property(x => x.Version).HasDefaultValue(1UL).IsConcurrencyToken().IsRequired();
         b.HasIndex(x => new { x.ApplicationId, x.Code }).IsUnique().HasDatabaseName("UQRoles");
     }
 }
@@ -50,6 +51,7 @@ public sealed class PermissionActionsConfiguration : IEntityTypeConfiguration<Pe
         b.ToTable("permission_actions");
         b.Property(x => x.Code).HasMaxLength(50);
         b.Property(x => x.Name).HasMaxLength(100);
+        b.Property(x => x.Version).HasDefaultValue(1UL).IsConcurrencyToken().IsRequired();
         b.HasIndex(x => x.Code).IsUnique().HasDatabaseName("UQPermissionActions");
     }
 }
@@ -95,6 +97,7 @@ public sealed class MenusConfiguration : IEntityTypeConfiguration<Menus>
         b.Property(x => x.Icon).HasMaxLength(100);
         b.Property(x => x.SortOrder).HasDefaultValue(0);
         b.Property(x => x.IsVisible).HasDefaultValue(true);
+        b.Property(x => x.Version).HasDefaultValue(1UL).IsConcurrencyToken().IsRequired();
         b.HasIndex(x => new { x.ApplicationId, x.Code }).IsUnique().HasDatabaseName("UQMenus");
     }
 }

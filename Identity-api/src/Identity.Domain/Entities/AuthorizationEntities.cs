@@ -16,6 +16,7 @@ public sealed class Roles : ActiveEntity
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public bool IsSystemRole { get; set; }
+    public ulong Version { get; set; } = 1;
 }
 
 public sealed class Resources : ActiveEntity

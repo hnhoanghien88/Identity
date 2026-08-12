@@ -12,10 +12,13 @@ import {
   Typography,
 } from "@mui/material";
 import AppsRoundedIcon from "@mui/icons-material/AppsRounded";
+import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
 import PeopleIcon from "@mui/icons-material/People";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import { LoginPage } from "./features/auth";
 import { UsersPage } from "./features/users";
 import {
@@ -23,6 +26,9 @@ import {
   hasApplicationPermission,
 } from "./features/applications";
 import { ResourcesPage, hasResourcePermission } from "./features/resources";
+import { ActionsPage } from "./features/actions";
+import { RolesPage } from "./features/roles";
+import { MenusPage } from "./features/menus";
 import {
   canRestoreSession,
   clearSession,
@@ -38,13 +44,26 @@ const LOGIN_PATH = "/login";
 const APPLICATIONS_PATH = "/applications";
 const USERS_PATH = "/users";
 const RESOURCES_PATH = "/resources";
+const ACTIONS_PATH = "/actions";
+const ROLES_PATH = "/roles";
+const MENUS_PATH = "/menus";
 const knownPaths = new Set([
   LOGIN_PATH,
   APPLICATIONS_PATH,
   RESOURCES_PATH,
+  ACTIONS_PATH,
+  ROLES_PATH,
+  MENUS_PATH,
   USERS_PATH,
 ]);
-const protectedPaths = new Set([APPLICATIONS_PATH, RESOURCES_PATH, USERS_PATH]);
+const protectedPaths = new Set([
+  APPLICATIONS_PATH,
+  RESOURCES_PATH,
+  ACTIONS_PATH,
+  ROLES_PATH,
+  MENUS_PATH,
+  USERS_PATH,
+]);
 const currentPath = () =>
   knownPaths.has(window.location.pathname)
     ? window.location.pathname
@@ -106,12 +125,14 @@ function App() {
         if (active && next) {
           setSession(next);
           const restoredPath =
-            path === USERS_PATH && canAccessUsers(next)
-              ? USERS_PATH
-              : path === RESOURCES_PATH &&
-                  hasResourcePermission(next, "Resources.View")
-                ? RESOURCES_PATH
-                : APPLICATIONS_PATH;
+            path === ACTIONS_PATH
+              ? ACTIONS_PATH
+              : path === USERS_PATH && canAccessUsers(next)
+                ? USERS_PATH
+                : path === RESOURCES_PATH &&
+                    hasResourcePermission(next, "Resources.View")
+                  ? RESOURCES_PATH
+                  : APPLICATIONS_PATH;
           navigate(restoredPath, true);
         }
       })
@@ -150,6 +171,9 @@ function App() {
     content = <UsersPage session={session} />;
   else if (path === RESOURCES_PATH)
     content = <ResourcesPage session={session} />;
+  else if (path === ACTIONS_PATH) content = <ActionsPage />;
+  else if (path === ROLES_PATH) content = <RolesPage />;
+  else if (path === MENUS_PATH) content = <MenusPage session={session} />;
   else content = <ApplicationsPage session={session} onLogout={handleLogout} />;
 
   return (
@@ -204,6 +228,36 @@ function App() {
             </ListItemIcon>
             <ListItemText primary="Resources" />
           </ListItemButton>
+          <ListItemButton
+            selected={path === MENUS_PATH}
+            disabled={!loggedIn}
+            onClick={() => navigate(MENUS_PATH)}
+          >
+            <ListItemIcon>
+              <AccountTreeIcon />
+            </ListItemIcon>
+            <ListItemText primary="Menus" />
+          </ListItemButton>{" "}
+          <ListItemButton
+            selected={path === ROLES_PATH}
+            disabled={!loggedIn}
+            onClick={() => navigate(ROLES_PATH)}
+          >
+            <ListItemIcon>
+              <AdminPanelSettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Roles" />
+          </ListItemButton>
+          <ListItemButton
+            selected={path === ACTIONS_PATH}
+            disabled={!loggedIn}
+            onClick={() => navigate(ACTIONS_PATH)}
+          >
+            <ListItemIcon>
+              <BoltRoundedIcon />
+            </ListItemIcon>
+            <ListItemText primary="Actions" />
+          </ListItemButton>{" "}
           {canManageUsers && (
             <ListItemButton
               selected={path === USERS_PATH}

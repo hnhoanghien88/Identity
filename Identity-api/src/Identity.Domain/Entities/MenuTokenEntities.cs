@@ -1,4 +1,4 @@
-namespace Identity.Domain.Entities;
+﻿namespace Identity.Domain.Entities;
 
 public sealed class Menus : ActiveEntity
 {
@@ -14,6 +14,7 @@ public sealed class Menus : ActiveEntity
     public string? Icon { get; set; }
     public int SortOrder { get; set; }
     public bool IsVisible { get; set; } = true;
+    public ulong Version { get; set; } = 1;
 }
 
 public sealed class RefreshTokens : EntityBase
@@ -32,3 +33,5 @@ public sealed class RefreshTokens : EntityBase
     public RefreshTokens? ReplacedByToken { get; set; }
     public bool IsActive { get; set; } = true;
 }
+
+

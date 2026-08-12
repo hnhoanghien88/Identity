@@ -1,10 +1,16 @@
 using FluentValidation;
 using Identity.Api.Middleware;
 using Identity.Api.Authorization;
+using Identity.Application.Actions.CreateAction;
+using Identity.Application.Actions.UpdateAction;
+using Identity.Application.Roles.CreateRole;
+using Identity.Application.Roles.UpdateRole;
 using Identity.Application.Applications.CreateApplication;
 using Identity.Application.Applications.UpdateApplication;
 using Identity.Application.Resources.CreateResource;
 using Identity.Application.Resources.UpdateResource;
+using Identity.Application.Menus.CreateMenu;
+using Identity.Application.Menus.UpdateMenu;
 using System.Text;
 using Identity.Api.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -110,9 +116,15 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddMediatR(c => c.RegisterServicesFromAssembly(typeof(CreateUsersCommand).Assembly));
 builder.Services.AddTransient<IValidator<CreateUsersCommand>, CreateUsersValidator>();
 builder.Services.AddTransient<IValidator<CreateApplicationCommand>, CreateApplicationValidator>();
+builder.Services.AddTransient<IValidator<CreateActionCommand>, CreateActionValidator>();
+builder.Services.AddTransient<IValidator<UpdateActionCommand>, UpdateActionValidator>();
+builder.Services.AddTransient<IValidator<CreateRoleCommand>, CreateRoleValidator>();
+builder.Services.AddTransient<IValidator<UpdateRoleCommand>, UpdateRoleValidator>();
 builder.Services.AddTransient<IValidator<UpdateApplicationCommand>, UpdateApplicationValidator>();
 builder.Services.AddTransient<IValidator<CreateResourceCommand>, CreateResourceValidator>();
 builder.Services.AddTransient<IValidator<UpdateResourceCommand>, UpdateResourceValidator>();
+builder.Services.AddTransient<IValidator<CreateMenuCommand>, CreateMenuValidator>();
+builder.Services.AddTransient<IValidator<UpdateMenuCommand>, UpdateMenuValidator>();
 builder.Services.AddTransient<
     IValidator<Identity.Application.Users.UpdateUsers.UpdateUsersCommand>,
     Identity.Application.Users.UpdateUsers.UpdateUsersValidator>();

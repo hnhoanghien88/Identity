@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: Identity Menus API
+  version: 1.0.0
+paths:
+  /api/menus:
+    get:
+      summary: Get the menu tree for one application
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: applicationId
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        '200':
+          description: Tree nodes ordered by SortOrder, Name and Id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MenuTreeResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      summary: Create a menu
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateMenuRequest' }
+      responses:
+        '201': { description: Created }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/menus/{id}:
+    get:
+      summary: Get one menu
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/MenuId' }]
+      responses:
+        '200': { description: Found }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Update or move a menu
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/MenuId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateMenuRequest' }
+      responses:
+        '200': { description: Updated }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      summary: Soft-delete a leaf menu
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/MenuId'
+        - in: query
+          name: version
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    MenuId:
+      in: path
+      name: id
+      required: true
+      schema: { type: integer, format: int64, minimum: 1 }
+  schemas:
+    CreateMenuRequest:
+      type: object
+      required: [applicationId, code, name, sortOrder, isVisible, isActive]
+      properties:
+        applicationId: { type: integer, format: int64 }
+        parentId: { type: integer, format: int64, nullable: true }
+        resourceId: { type: integer, format: int64, nullable: true }
+        code: { type: string, maxLength: 120 }
+        name: { type: string, maxLength: 150 }
+        route: { type: string, maxLength: 300, nullable: true }
+        icon: { type: string, maxLength: 100, nullable: true }
+        sortOrder: { type: integer, default: 0 }
+        isVisible: { type: boolean, default: true }
+        isActive: { type: boolean, default: true }
+    UpdateMenuRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateMenuRequest'
+        - type: object
+          required: [version]
+          properties:
+            version: { type: integer, format: int64, minimum: 1 }
+  responses:
+    BadRequest: { description: Validation failed }
+    Unauthorized: { description: Authentication required }
+    Forbidden: { description: Permission denied }
+    NotFound: { description: Menu not found }
+    Conflict: { description: Duplicate, hierarchy, dependency or concurrency conflict }
+

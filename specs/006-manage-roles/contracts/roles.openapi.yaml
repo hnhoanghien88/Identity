@@ -1,0 +1,54 @@
+openapi: 3.1.0
+info: { title: Identity Roles Management API, version: 1.0.0 }
+security: [{ bearerAuth: [] }]
+paths:
+  /api/roles/search:
+    post:
+      operationId: searchRoles
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SearchRolesRequest' } } } }
+      responses: { '200': { description: Matching page }, '400': { description: Invalid search }, '401': { description: Unauthenticated } }
+  /api/roles:
+    post:
+      operationId: createRole
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CreateRoleRequest' } } } }
+      responses: { '201': { description: Created }, '400': { description: Invalid }, '401': { description: Unauthenticated }, '409': { description: Conflict } }
+  /api/roles/{id}:
+    parameters: [{ in: path, name: id, required: true, schema: { type: integer, format: int64, minimum: 1 } }]
+    get:
+      operationId: getRole
+      responses: { '200': { description: Found }, '401': { description: Unauthenticated }, '404': { description: Not found } }
+    put:
+      operationId: updateRole
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpdateRoleRequest' } } } }
+      responses: { '200': { description: Updated }, '400': { description: Invalid }, '401': { description: Unauthenticated }, '404': { description: Not found }, '409': { description: Conflict } }
+    delete:
+      operationId: deleteRole
+      parameters: [{ in: query, name: version, required: true, schema: { type: integer, format: int64, minimum: 1 } }]
+      responses: { '200': { description: Deleted }, '401': { description: Unauthenticated }, '404': { description: Not found }, '409': { description: Stale, system or dependent } }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    SearchRolesRequest:
+      type: object
+      properties:
+        filter: { type: object }
+        sorts: { type: array, items: { type: object } }
+        page: { type: integer, minimum: 1, default: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    CreateRoleRequest:
+      type: object
+      required: [applicationId, code, name, isSystemRole, isActive]
+      additionalProperties: false
+      properties:
+        applicationId: { type: integer, format: int64, minimum: 1 }
+        code: { type: string, minLength: 1, maxLength: 100 }
+        name: { type: string, minLength: 1, maxLength: 150 }
+        isSystemRole: { type: boolean, default: false }
+        isActive: { type: boolean, default: true }
+    UpdateRoleRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateRoleRequest'
+        - type: object
+          required: [version]
+          properties: { version: { type: integer, format: int64, minimum: 1 } }

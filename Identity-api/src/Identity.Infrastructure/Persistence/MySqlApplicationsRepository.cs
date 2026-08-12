@@ -21,7 +21,6 @@ public sealed class MySqlApplicationsRepository(IdentityDbContext db) : IApplica
         await db.Roles.AnyAsync(value => value.ApplicationId == id, cancellationToken)
         || await db.Resources.AnyAsync(value => value.ApplicationId == id, cancellationToken)
         || await db.Menus.AnyAsync(value => value.ApplicationId == id, cancellationToken)
-        || await db.Permissions.AnyAsync(value => value.ApplicationId == id, cancellationToken)
         || await db.RefreshTokens.AnyAsync(value => value.ApplicationId == id, cancellationToken);
 
     public async Task AddAsync(ApplicationEntity application, CancellationToken cancellationToken)

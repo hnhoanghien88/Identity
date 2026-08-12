@@ -103,7 +103,6 @@ ALTER TABLE
     `refresh_tokens` ADD INDEX `refresh_tokens_replacedbytokenid_index`(`ReplacedByTokenId`);
 CREATE TABLE `permissions`(
     `Id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `ApplicationId` BIGINT UNSIGNED NOT NULL,
     `ResourceId` BIGINT UNSIGNED NOT NULL,
     `ActionId` BIGINT UNSIGNED NOT NULL,
     `Code` VARCHAR(200) NOT NULL,
@@ -111,14 +110,10 @@ CREATE TABLE `permissions`(
     `CreatedBy` VARCHAR(255) NULL,
     `CreatedDate` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `UpdatedBy` VARCHAR(255) NULL,
-    `UpdatedDate` DATETIME(6) NULL,
-    `IsActive` TINYINT(1) NOT NULL DEFAULT 1,
-    `IsDeleted` TINYINT(1) NOT NULL
+    `UpdatedDate` DATETIME(6) NULL
 );
 ALTER TABLE
     `permissions` ADD UNIQUE `permissions_resourceid_actionid_unique`(`ResourceId`, `ActionId`);
-ALTER TABLE
-    `permissions` ADD INDEX `permissions_applicationid_index`(`ApplicationId`);
 ALTER TABLE
     `permissions` ADD INDEX `permissions_actionid_index`(`ActionId`);
 CREATE TABLE `permission_actions`(
@@ -193,10 +188,10 @@ ALTER TABLE
 ALTER TABLE
     `menus` ADD CONSTRAINT `menus_parentid_foreign` FOREIGN KEY(`ParentId`) REFERENCES `menus`(`Id`);
 ALTER TABLE
-    `permissions` ADD CONSTRAINT `permissions_applicationid_foreign` FOREIGN KEY(`ApplicationId`) REFERENCES `applications`(`Id`);
-ALTER TABLE
     `refresh_tokens` ADD CONSTRAINT `refresh_tokens_replacedbytokenid_foreign` FOREIGN KEY(`ReplacedByTokenId`) REFERENCES `refresh_tokens`(`Id`);
 ALTER TABLE
     `role_permissions` ADD CONSTRAINT `role_permissions_permissionid_foreign` FOREIGN KEY(`PermissionId`) REFERENCES `permissions`(`Id`);
 ALTER TABLE
     `menus` ADD CONSTRAINT `menus_applicationid_foreign` FOREIGN KEY(`ApplicationId`) REFERENCES `applications`(`Id`);
+
+

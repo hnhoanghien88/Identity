@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<IActionsReadRepository, DapperActionsReadRepository>();
         services.AddScoped<IRolesRepository, MySqlRolesRepository>();
         services.AddScoped<IRolesReadRepository, DapperRolesReadRepository>();
+        services.AddScoped<IRolePermissionsRepository, MySqlRolePermissionsRepository>();
         services.AddScoped<IMenusRepository, MySqlMenusRepository>();
         services.AddScoped<IMenusReadRepository, DapperMenusReadRepository>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();

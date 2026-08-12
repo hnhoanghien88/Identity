@@ -32,13 +32,14 @@ public sealed class DapperUserRolesReadRepository(MySqlConnectionFactory connect
             INNER JOIN roles r ON r.Id = ur.RoleId
             INNER JOIN role_permissions rp ON rp.RoleId = r.Id
             INNER JOIN permissions p ON p.Id = rp.PermissionId
-            INNER JOIN applications a ON a.Id = r.ApplicationId
+            INNER JOIN resources resource ON resource.Id = p.ResourceId
+            INNER JOIN applications a ON a.Id = resource.ApplicationId
             WHERE ur.UserId = @UserId
               AND ur.IsActive = TRUE
               AND r.IsActive = TRUE
               AND r.IsDeleted = FALSE
-              AND p.IsActive = TRUE
-              AND p.IsDeleted = FALSE
+              AND resource.IsActive = TRUE
+              AND resource.IsDeleted = FALSE
               AND a.Code = @ApplicationCode
               AND a.IsActive = TRUE
               AND a.IsDeleted = FALSE
@@ -48,10 +49,14 @@ public sealed class DapperUserRolesReadRepository(MySqlConnectionFactory connect
         await using var connection = connectionFactory.CreateConnection();
         var command = new { UserId = userId, ApplicationCode = applicationCode };
         var roles = await connection.QueryAsync<string>(new CommandDefinition(
-            rolesSql, command, cancellationToken: cancellationToken));
+            rolesSql,
+            command,
+            cancellationToken: cancellationToken));
         var permissions = await connection.QueryAsync<string>(new CommandDefinition(
-            permissionsSql, command, cancellationToken: cancellationToken));
-
+            permissionsSql,
+            command,
+            cancellationToken: cancellationToken));
         return new UserAuthorization(roles.AsList(), permissions.AsList());
     }
 }
+

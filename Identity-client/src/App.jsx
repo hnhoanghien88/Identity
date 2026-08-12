@@ -29,6 +29,7 @@ import { ResourcesPage, hasResourcePermission } from "./features/resources";
 import { ActionsPage } from "./features/actions";
 import { RolesPage } from "./features/roles";
 import { MenusPage } from "./features/menus";
+import { RolePermissionsPage } from "./features/rolePermissions";
 import {
   canRestoreSession,
   clearSession,
@@ -47,6 +48,7 @@ const RESOURCES_PATH = "/resources";
 const ACTIONS_PATH = "/actions";
 const ROLES_PATH = "/roles";
 const MENUS_PATH = "/menus";
+const ROLE_PERMISSIONS_PATH = "/role-permissions";
 const knownPaths = new Set([
   LOGIN_PATH,
   APPLICATIONS_PATH,
@@ -54,6 +56,7 @@ const knownPaths = new Set([
   ACTIONS_PATH,
   ROLES_PATH,
   MENUS_PATH,
+  ROLE_PERMISSIONS_PATH,
   USERS_PATH,
 ]);
 const protectedPaths = new Set([
@@ -62,6 +65,7 @@ const protectedPaths = new Set([
   ACTIONS_PATH,
   ROLES_PATH,
   MENUS_PATH,
+  ROLE_PERMISSIONS_PATH,
   USERS_PATH,
 ]);
 const currentPath = () =>
@@ -125,14 +129,16 @@ function App() {
         if (active && next) {
           setSession(next);
           const restoredPath =
-            path === ACTIONS_PATH
-              ? ACTIONS_PATH
-              : path === USERS_PATH && canAccessUsers(next)
-                ? USERS_PATH
-                : path === RESOURCES_PATH &&
-                    hasResourcePermission(next, "Resources.View")
-                  ? RESOURCES_PATH
-                  : APPLICATIONS_PATH;
+            path === ROLE_PERMISSIONS_PATH
+              ? ROLE_PERMISSIONS_PATH
+              : path === ACTIONS_PATH
+                ? ACTIONS_PATH
+                : path === USERS_PATH && canAccessUsers(next)
+                  ? USERS_PATH
+                  : path === RESOURCES_PATH &&
+                      hasResourcePermission(next, "Resources.View")
+                    ? RESOURCES_PATH
+                    : APPLICATIONS_PATH;
           navigate(restoredPath, true);
         }
       })
@@ -174,6 +180,7 @@ function App() {
   else if (path === ACTIONS_PATH) content = <ActionsPage />;
   else if (path === ROLES_PATH) content = <RolesPage />;
   else if (path === MENUS_PATH) content = <MenusPage session={session} />;
+  else if (path === ROLE_PERMISSIONS_PATH) content = <RolePermissionsPage />;
   else content = <ApplicationsPage session={session} onLogout={handleLogout} />;
 
   return (
@@ -258,6 +265,16 @@ function App() {
             </ListItemIcon>
             <ListItemText primary="Actions" />
           </ListItemButton>{" "}
+          <ListItemButton
+            selected={path === ROLE_PERMISSIONS_PATH}
+            disabled={!loggedIn}
+            onClick={() => navigate(ROLE_PERMISSIONS_PATH)}
+          >
+            <ListItemIcon>
+              <AdminPanelSettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Role Permissions" />
+          </ListItemButton>
           {canManageUsers && (
             <ListItemButton
               selected={path === USERS_PATH}

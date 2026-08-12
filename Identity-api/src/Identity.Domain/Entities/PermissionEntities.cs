@@ -7,10 +7,8 @@ public sealed class PermissionActions : EntityBase
     public ulong Version { get; set; } = 1;
 }
 
-public sealed class Permissions : ActiveEntity
+public sealed class Permissions : EntityBase
 {
-    public ulong ApplicationId { get; set; }
-    public Applications Application { get; set; } = null!;
     public ulong ResourceId { get; set; }
     public Resources Resource { get; set; } = null!;
     public ulong ActionId { get; set; }
@@ -35,3 +33,4 @@ public sealed class RolePermissions : EntityBase
     public ulong PermissionId { get; set; }
     public Permissions Permission { get; set; } = null!;
 }
+

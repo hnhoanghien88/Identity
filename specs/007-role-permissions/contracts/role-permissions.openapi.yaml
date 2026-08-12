@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: Role Permissions API
+  version: 1.0.0
+paths:
+  /api/role-permissions:
+    get:
+      summary: Get Action grants for a Role and Resource
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: query, name: roleId, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+        - { in: query, name: resourceId, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+      responses:
+        '200':
+          description: Action grant snapshot
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SnapshotResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/role-permissions/{roleId}/{resourceId}/{actionId}:
+    parameters:
+      - { in: path, name: roleId, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+      - { in: path, name: resourceId, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+      - { in: path, name: actionId, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+    put:
+      summary: Idempotently grant an Action
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/MutationSuccess' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      summary: Idempotently revoke an Action
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/MutationSuccess' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    ActionGrant:
+      type: object
+      required: [actionId, code, name, isGranted]
+      properties:
+        actionId: { type: integer, format: int64 }
+        code: { type: string }
+        name: { type: string }
+        isGranted: { type: boolean }
+    Snapshot:
+      type: object
+      required: [roleId, resourceId, actions]
+      properties:
+        roleId: { type: integer, format: int64 }
+        resourceId: { type: integer, format: int64 }
+        actions: { type: array, items: { $ref: '#/components/schemas/ActionGrant' } }
+    SnapshotResponse:
+      type: object
+      required: [success, data, message]
+      properties:
+        success: { type: boolean, enum: [true] }
+        data: { $ref: '#/components/schemas/Snapshot' }
+        message: { type: string }
+    MutationResponse:
+      type: object
+      properties:
+        success: { type: boolean, enum: [true] }
+        data: { nullable: true }
+        message: { type: string }
+    ProblemDetails:
+      type: object
+      properties:
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+  responses:
+    MutationSuccess:
+      description: Desired state is committed
+      content: { application/json: { schema: { $ref: '#/components/schemas/MutationResponse' } } }
+    Unauthorized:
+      description: Authentication required
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } }
+    NotFound:
+      description: Role, Resource, or Action missing
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } }
+    Conflict:
+      description: Concurrent or persistence conflict
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } }

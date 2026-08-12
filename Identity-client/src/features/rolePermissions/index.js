@@ -1,0 +1,1 @@
+export { RolePermissionsPage } from "./RolePermissionsPage";

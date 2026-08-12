@@ -1,4 +1,4 @@
-﻿.app-shell {
+.app-shell {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
@@ -49,6 +49,25 @@
   width: min(100%, 1280px);
   align-self: start;
 }
+.role-permissions-page {
+  width: min(100%, 1440px);
+  align-self: start;
+}
+.role-permissions-grid {
+  display: grid;
+  grid-template-columns: minmax(200px, 0.8fr) minmax(240px, 1fr) minmax(
+      280px,
+      1.2fr
+    );
+  gap: 16px;
+  align-items: start;
+}
+.role-permissions-column {
+  min-height: 420px;
+  max-height: calc(100vh - 190px);
+  overflow: auto;
+  padding: 20px;
+}
 .login-card,
 .success-card {
   width: min(100%, 440px);
@@ -94,6 +113,13 @@
   }
   .main-content {
     padding: 24px 16px;
+  }
+  .role-permissions-grid {
+    grid-template-columns: 1fr;
+  }
+  .role-permissions-column {
+    min-height: auto;
+    max-height: none;
   }
   .login-card,
   .success-card {

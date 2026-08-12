@@ -72,7 +72,6 @@ public sealed class UserRolesConfiguration : IEntityTypeConfiguration<UserRoles>
     public void Configure(EntityTypeBuilder<UserRoles> b)
     {
         b.ToTable("user_roles");
-        b.Property(x => x.IsActive).HasDefaultValue(true);
         b.HasIndex(x => new { x.UserId, x.RoleId }).IsUnique().HasDatabaseName("UQUserRoles");
     }
 }
@@ -116,3 +115,5 @@ public sealed class RefreshTokensConfiguration : IEntityTypeConfiguration<Refres
         b.HasIndex(x => x.TokenHash).IsUnique().HasDatabaseName("UQRefreshTokenHash");
     }
 }
+
+

@@ -83,7 +83,7 @@ export function UserFormDialog({
               slotProps={{
                 htmlInput: {
                   maxLength: 50,
-                  pattern: "[A-Za-z0-9._-]+",
+                  pattern: "[A-Za-z0-9._\\-]+",
                 },
               }}
             />

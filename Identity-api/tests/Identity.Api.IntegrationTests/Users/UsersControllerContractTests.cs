@@ -10,18 +10,18 @@ namespace Identity.Api.IntegrationTests.Users;
 public sealed class UsersControllerContractTests
 {
     [Fact]
-    public void Create_is_not_anonymous_and_requires_management_role()
+    public void Create_is_not_anonymous_and_requires_create_permission()
     {
         var method = typeof(UsersController).GetMethod(nameof(UsersController.Create))!;
         Assert.Empty(method.GetCustomAttributes<AllowAnonymousAttribute>());
-        Assert.Contains(method.GetCustomAttributes<AuthorizeAttribute>(), x => x.Roles == RoleGroups.Management);
+        Assert.Contains(method.GetCustomAttributes<AuthorizeAttribute>(), x => x.Policy == "Users.Create");
     }
 
     [Fact]
-    public void Delete_requires_admin_and_version_query()
+    public void Delete_requires_delete_permission_and_version_query()
     {
         var method = typeof(UsersController).GetMethod(nameof(UsersController.Delete))!;
-        Assert.Contains(method.GetCustomAttributes<AuthorizeAttribute>(), x => x.Roles == RoleNames.Admin);
+        Assert.Contains(method.GetCustomAttributes<AuthorizeAttribute>(), x => x.Policy == "Users.Delete");
         Assert.Contains(method.GetParameters(), x => x.Name == "version" && x.GetCustomAttribute<FromQueryAttribute>() is not null);
     }
 

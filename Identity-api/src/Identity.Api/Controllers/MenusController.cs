@@ -1,6 +1,9 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using Identity.Api.Models;
 using Identity.Application.Common.Authorization;
+using Identity.Application.Applications.Dtos;
+using Identity.Application.Applications.GetApplications;
+using Identity.Application.Users.GetUsers;
 using Identity.Application.Menus.CreateMenu;
 using Identity.Application.Menus.DeleteMenu;
 using Identity.Application.Menus.Dtos;
@@ -17,7 +20,22 @@ namespace Identity.Api.Controllers;
 [Route("api/menus")]
 public sealed class MenusController(ISender sender) : ControllerBase
 {
+    [HttpGet("applications")]
+    [Authorize(Policy = "Menus.Read")]
+    public async Task<ActionResult<ApiResponse<PagedApplicationsDto>>> GetApplications(
+        CancellationToken token)
+    {
+        var result = await sender.Send(
+            new GetApplicationsQuery(
+                new ApplicationsFilter(IsActive: true),
+                [new ApplicationsSort(ApplicationsSortColumn.Code, SortDirection.Ascending)],
+                1,
+                100),
+            token);
+        return Ok(new ApiResponse<PagedApplicationsDto>(true, result, "Menu applications retrieved successfully."));
+    }
     [HttpGet]
+    [Authorize(Policy = "Menus.Read")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<MenuDto>>>> Get(ulong applicationId, CancellationToken token)
     {
         var result = await sender.Send(new GetMenusQuery(applicationId), token);
@@ -25,6 +43,8 @@ public sealed class MenusController(ISender sender) : ControllerBase
     }
 
     [HttpGet("{id:long}")]
+
+    [Authorize(Policy = "Menus.Read")]
     public async Task<ActionResult<ApiResponse<MenuDto>>> GetById(ulong id, CancellationToken token)
     {
         var result = await sender.Send(new GetMenuByIdQuery(id), token);
@@ -32,6 +52,8 @@ public sealed class MenusController(ISender sender) : ControllerBase
     }
 
     [HttpPost]
+
+    [Authorize(Policy = "Menus.Create")]
     public async Task<ActionResult<ApiResponse<MenuDto>>> Create(CreateRequest request, CancellationToken token)
     {
         var result = await sender.Send(new CreateMenuCommand(request.ApplicationId, request.ParentId,
@@ -41,6 +63,8 @@ public sealed class MenusController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{id:long}")]
+
+    [Authorize(Policy = "Menus.Update")]
     public async Task<ActionResult<ApiResponse<MenuDto>>> Update(ulong id, UpdateRequest request, CancellationToken token)
     {
         var result = await sender.Send(new UpdateMenuCommand(id, request.ApplicationId, request.ParentId,
@@ -50,6 +74,8 @@ public sealed class MenusController(ISender sender) : ControllerBase
     }
 
     [HttpDelete("{id:long}")]
+
+    [Authorize(Policy = "Menus.Delete")]
     public async Task<IActionResult> Delete(ulong id, [FromQuery] ulong version, CancellationToken token)
     {
         await sender.Send(new DeleteMenuCommand(id, version, Actor()), token);

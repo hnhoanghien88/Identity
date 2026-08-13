@@ -1,6 +1,5 @@
 using System.Reflection;
 using Identity.Api.Controllers;
-using Identity.Application.Common.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,18 +8,19 @@ namespace Identity.Api.IntegrationTests.Applications;
 public sealed class ApplicationsControllerContractTests
 {
     [Theory]
-    [InlineData(nameof(ApplicationsController.Search))]
-    [InlineData(nameof(ApplicationsController.GetById))]
-    [InlineData(nameof(ApplicationsController.Create))]
-    [InlineData(nameof(ApplicationsController.Update))]
-    [InlineData(nameof(ApplicationsController.Delete))]
-    public void Endpoint_inherits_authenticated_controller_access(string methodName)
+    [InlineData(nameof(ApplicationsController.Search), "Applications.Read")]
+    [InlineData(nameof(ApplicationsController.GetById), "Applications.Read")]
+    [InlineData(nameof(ApplicationsController.Create), "Applications.Create")]
+    [InlineData(nameof(ApplicationsController.Update), "Applications.Update")]
+    [InlineData(nameof(ApplicationsController.Delete), "Applications.Delete")]
+    public void Endpoint_requires_expected_permission(string methodName, string policy)
     {
-        var method = typeof(ApplicationsController).GetMethod(methodName)!;
-        Assert.Empty(method.GetCustomAttributes<AllowAnonymousAttribute>());
-        Assert.Contains(
-            typeof(ApplicationsController).GetCustomAttributes<AuthorizeAttribute>(),
-            _ => true);
+        var authorize = typeof(ApplicationsController)
+            .GetMethod(methodName)!
+            .GetCustomAttribute<AuthorizeAttribute>();
+
+        Assert.NotNull(authorize);
+        Assert.Equal(policy, authorize.Policy);
     }
 
     [Fact]
@@ -28,20 +28,12 @@ public sealed class ApplicationsControllerContractTests
     {
         Assert.Contains(
             typeof(ApplicationsController.UpdateRequest).GetProperties(),
-            property => property.Name == "Version" && property.PropertyType == typeof(ulong));
-
+            property => property.Name == "Version"
+                && property.PropertyType == typeof(ulong));
         var version = typeof(ApplicationsController)
             .GetMethod(nameof(ApplicationsController.Delete))!
             .GetParameters()
             .Single(parameter => parameter.Name == "version");
         Assert.NotNull(version.GetCustomAttribute<FromQueryAttribute>());
-    }
-
-    [Fact]
-    public void Controller_is_authenticated_and_uses_expected_route()
-    {
-        var type = typeof(ApplicationsController);
-        Assert.Contains(type.GetCustomAttributes<AuthorizeAttribute>(), _ => true);
-        Assert.Equal("api/applications", type.GetCustomAttribute<RouteAttribute>()!.Template);
     }
 }

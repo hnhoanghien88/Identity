@@ -19,15 +19,13 @@ import { ApplicationFormDialog } from "./components/ApplicationFormDialog";
 import { ApplicationsFilters } from "./components/ApplicationsFilters";
 import { ApplicationsTable } from "./components/ApplicationsTable";
 import { DeleteApplicationDialog } from "./components/DeleteApplicationDialog";
+import { runIfPermitted } from "../auth/permissions";
 import { hasApplicationPermission } from "./capabilities";
 
 const initialFilters = { code: "", name: "", audience: "", status: "" };
 
 export function ApplicationsPage({ session }) {
-  const canView = hasApplicationPermission(session, "Applications.View");
-  const canCreate = hasApplicationPermission(session, "Applications.Create");
-  const canEdit = hasApplicationPermission(session, "Applications.Update");
-  const canDelete = hasApplicationPermission(session, "Applications.Delete");
+  const canView = hasApplicationPermission(session, "Applications.Read");
   const [filters, setFilters] = useState(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState(initialFilters);
   const [page, setPage] = useState(1);
@@ -149,19 +147,19 @@ export function ApplicationsPage({ session }) {
               Manage registered identity applications.
             </Typography>
           </Box>
-          {canCreate && (
-            <Button
-              variant="contained"
-              startIcon={<AddCircleIcon />}
-              onClick={() => {
+          <Button
+            variant="contained"
+            startIcon={<AddCircleIcon />}
+            onClick={() =>
+              runIfPermitted(session, "Applications.Create", () => {
                 setFormApplication(undefined);
                 setMutationError(null);
                 setFormOpen(true);
-              }}
-            >
-              Create Application
-            </Button>
-          )}
+              })
+            }
+          >
+            Create Application
+          </Button>
         </Stack>
         <ApplicationsFilters
           value={filters}
@@ -200,8 +198,8 @@ export function ApplicationsPage({ session }) {
             page={page}
             pageSize={pageSize}
             sort={sort}
-            canEdit={canEdit}
-            canDelete={canDelete}
+            canEdit
+            canDelete
             onPage={setPage}
             onPageSize={(size) => {
               setPageSize(size);
@@ -215,15 +213,19 @@ export function ApplicationsPage({ session }) {
               }));
               setPage(1);
             }}
-            onEdit={(application) => {
-              setFormApplication(application);
-              setMutationError(null);
-              setFormOpen(true);
-            }}
-            onDelete={(application) => {
-              setDeleteTarget(application);
-              setMutationError(null);
-            }}
+            onEdit={(application) =>
+              runIfPermitted(session, "Applications.Update", () => {
+                setFormApplication(application);
+                setMutationError(null);
+                setFormOpen(true);
+              })
+            }
+            onDelete={(application) =>
+              runIfPermitted(session, "Applications.Delete", () => {
+                setDeleteTarget(application);
+                setMutationError(null);
+              })
+            }
           />
         )}
       </Stack>

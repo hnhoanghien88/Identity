@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Box, Snackbar, Stack, Typography } from "@mui/material";
+import { runIfPermitted } from "../auth/permissions";
 import { searchRoles } from "../roles/api/rolesApi";
 import { searchResources } from "../resources/api/resourcesApi";
 import {
@@ -10,7 +11,7 @@ import {
 import { ActionsColumn } from "./components/ActionsColumn";
 import { SelectionColumn } from "./components/SelectionColumn";
 
-export function RolePermissionsPage() {
+export function RolePermissionsPage({ session }) {
   const [roles, setRoles] = useState([]);
   const [resources, setResources] = useState([]);
   const [activeRoleId, setActiveRoleId] = useState(null);
@@ -165,7 +166,13 @@ export function RolePermissionsPage() {
             error={actionsError}
             pending={pending}
             enabled={Boolean(activeRoleId && activeResourceId)}
-            onToggle={toggle}
+            onToggle={(actionId, granted) =>
+              runIfPermitted(
+                session,
+                granted ? "RolePermissions.Update" : "RolePermissions.Delete",
+                () => toggle(actionId, granted),
+              )
+            }
             onRetry={() => setReloadKey((key) => key + 1)}
           />
         </Box>

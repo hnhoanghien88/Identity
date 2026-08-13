@@ -9,8 +9,8 @@ namespace Identity.Api.IntegrationTests.Resources;
 public sealed class ResourcesReadContractTests
 {
     [Theory]
-    [InlineData(nameof(ResourcesController.Search), ResourcePermissions.View)]
-    [InlineData(nameof(ResourcesController.GetById), ResourcePermissions.View)]
+    [InlineData(nameof(ResourcesController.Search), ResourcePermissions.Read)]
+    [InlineData(nameof(ResourcesController.GetById), ResourcePermissions.Read)]
     [InlineData(nameof(ResourcesController.Create), ResourcePermissions.Create)]
     [InlineData(nameof(ResourcesController.Update), ResourcePermissions.Update)]
     [InlineData(nameof(ResourcesController.Delete), ResourcePermissions.Delete)]

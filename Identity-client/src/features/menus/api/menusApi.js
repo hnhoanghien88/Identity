@@ -1,5 +1,10 @@
 import { resourcesFetch } from "../../resources/api/resourcesClient";
 
+export const getMenuApplications = (signal) =>
+  resourcesFetch("/api/menus/applications", { signal }).then(
+    (response) => response.data,
+  );
+
 export const getMenus = (applicationId, signal) =>
   resourcesFetch(`/api/menus?applicationId=${applicationId}`, { signal }).then(
     (response) => response.data,

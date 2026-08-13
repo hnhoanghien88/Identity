@@ -15,6 +15,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { runIfPermitted } from "../auth/permissions";
 import { searchRoles } from "../roles/api/rolesApi";
 import {
   assignUsersToRole,
@@ -24,7 +25,7 @@ import {
 import { AddUsersDialog } from "./components/AddUsersDialog";
 import { RemoveUserDialog } from "./components/RemoveUserDialog";
 
-export function UserRolesPage() {
+export function UserRolesPage({ session }) {
   const [roles, setRoles] = useState([]);
   const [roleId, setRoleId] = useState(null);
   const [members, setMembers] = useState([]);
@@ -145,8 +146,10 @@ export function UserRolesPage() {
           <Paper variant="outlined" className="user-roles-column">
             <Stack
               direction="row"
-              justifyContent="space-between"
-              alignItems="center"
+              sx={{
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
             >
               <Typography component="h2" variant="h6" fontWeight={700}>
                 Users in {activeRole?.code ?? "Role"}
@@ -154,10 +157,12 @@ export function UserRolesPage() {
               <Button
                 startIcon={<Add />}
                 disabled={!roleId}
-                onClick={() => {
-                  setDialogError("");
-                  setAddOpen(true);
-                }}
+                onClick={() =>
+                  runIfPermitted(session, "UserRoles.Create", () => {
+                    setDialogError("");
+                    setAddOpen(true);
+                  })
+                }
               >
                 Add User
               </Button>
@@ -174,10 +179,12 @@ export function UserRolesPage() {
                     secondaryAction={
                       <IconButton
                         aria-label={`Remove ${user.code} from ${activeRole?.code}`}
-                        onClick={() => {
-                          setDialogError("");
-                          setRemoveUser(user);
-                        }}
+                        onClick={() =>
+                          runIfPermitted(session, "UserRoles.Delete", () => {
+                            setDialogError("");
+                            setRemoveUser(user);
+                          })
+                        }
                       >
                         <Delete />
                       </IconButton>

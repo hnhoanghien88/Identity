@@ -13,9 +13,15 @@ import {
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
-import { searchApplications } from "../applications/api/applicationsApi";
 import { searchResources } from "../resources/api/resourcesApi";
-import { createMenu, deleteMenu, getMenus, updateMenu } from "./api/menusApi";
+import {
+  createMenu,
+  deleteMenu,
+  getMenuApplications,
+  getMenus,
+  updateMenu,
+} from "./api/menusApi";
+import { hasPermission, runIfPermitted } from "../auth/permissions";
 import { DeleteMenuDialog } from "./components/DeleteMenuDialog";
 import { MenuFormDialog } from "./components/MenuFormDialog";
 import { MenusTreeTable } from "./components/MenusTreeTable";
@@ -23,7 +29,8 @@ import { MenusTreeTable } from "./components/MenusTreeTable";
 const allIds = (nodes) =>
   nodes.flatMap((node) => [node.id, ...allIds(node.children || [])]);
 
-export function MenusPage() {
+export function MenusPage({ session }) {
+  const canLoadResources = hasPermission(session, "Resources.Read");
   const [applications, setApplications] = useState([]);
   const [applicationId, setApplicationId] = useState("");
   const [menus, setMenus] = useState([]);
@@ -41,15 +48,7 @@ export function MenusPage() {
   const [notice, setNotice] = useState("");
   useEffect(() => {
     const controller = new AbortController();
-    searchApplications(
-      {
-        filter: { isActive: true },
-        sorts: [{ column: 1, direction: 0 }],
-        page: 1,
-        pageSize: 100,
-      },
-      controller.signal,
-    )
+    getMenuApplications(controller.signal)
       .then((data) => {
         setApplications(data.items);
         setApplicationId(
@@ -67,44 +66,34 @@ export function MenusPage() {
       }
       setLoading(true);
       setError("");
-      const [menusResult, resourcesResult] = await Promise.allSettled([
-        getMenus(applicationId, signal),
-        searchResources(
-          {
-            filter: { applicationId: Number(applicationId), isActive: true },
-            sorts: [{ column: 2, direction: 0 }],
-            page: 1,
-            pageSize: 100,
-          },
-          signal,
-        ),
-      ]);
-      if (menusResult.status === "fulfilled") {
-        const nextMenus = menusResult.value;
+      try {
+        const nextMenus = await getMenus(applicationId, signal);
         setMenus(nextMenus);
         if (expandedApplicationId.current !== applicationId) {
           setExpanded(new Set(allIds(nextMenus)));
           expandedApplicationId.current = applicationId;
         }
-      } else if (menusResult.reason.name !== "AbortError") {
-        setError(menusResult.reason.message);
-      }
-      if (resourcesResult.status === "fulfilled") {
-        setResources(resourcesResult.value.items);
-      } else if (resourcesResult.reason.name !== "AbortError") {
-        setResources([]);
-        setError((current) =>
-          current
-            ? `${current} Resources: ${resourcesResult.reason.message}`
-            : resourcesResult.reason.message,
-        );
-      }
-      try {
+        if (canLoadResources) {
+          const resourcesResult = await searchResources(
+            {
+              filter: { applicationId: Number(applicationId), isActive: true },
+              sorts: [{ column: 2, direction: 0 }],
+              page: 1,
+              pageSize: 100,
+            },
+            signal,
+          );
+          setResources(resourcesResult.items);
+        } else {
+          setResources([]);
+        }
+      } catch (reason) {
+        if (reason.name !== "AbortError") setError(reason.message);
       } finally {
         setLoading(false);
       }
     },
-    [applicationId],
+    [applicationId, canLoadResources],
   );
   useEffect(() => {
     const controller = new AbortController();
@@ -146,8 +135,8 @@ export function MenusPage() {
       <Stack spacing={3}>
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
           gap={2}
+          sx={{ justifyContent: "space-between" }}
         >
           <Box>
             <Typography variant="h4" component="h1" fontWeight={700}>
@@ -156,21 +145,21 @@ export function MenusPage() {
             <Typography color="text.secondary">
               Manage recursive application navigation.
             </Typography>
-          </Box>
-          {
-            <Button
-              variant="contained"
-              startIcon={<AddCircleIcon />}
-              disabled={!applicationId}
-              onClick={() => {
+          </Box>{" "}
+          <Button
+            variant="contained"
+            startIcon={<AddCircleIcon />}
+            disabled={!applicationId}
+            onClick={() =>
+              runIfPermitted(session, "Menus.Create", () => {
                 setForm(null);
                 setMutationError(null);
                 setFormOpen(true);
-              }}
-            >
-              Create Menu
-            </Button>
-          }
+              })
+            }
+          >
+            Create Menu
+          </Button>
         </Stack>
         <Stack direction={{ xs: "column", sm: "row" }} gap={2}>
           <TextField
@@ -235,15 +224,19 @@ export function MenusPage() {
             }
             canEdit
             canDelete
-            onEdit={(value) => {
-              setForm(value);
-              setMutationError(null);
-              setFormOpen(true);
-            }}
-            onDelete={(value) => {
-              setDeleting(value);
-              setMutationError(null);
-            }}
+            onEdit={(value) =>
+              runIfPermitted(session, "Menus.Update", () => {
+                setForm(value);
+                setMutationError(null);
+                setFormOpen(true);
+              })
+            }
+            onDelete={(value) =>
+              runIfPermitted(session, "Menus.Delete", () => {
+                setDeleting(value);
+                setMutationError(null);
+              })
+            }
           />
         ) : (
           <Alert severity="info">No Menus exist for this Application.</Alert>

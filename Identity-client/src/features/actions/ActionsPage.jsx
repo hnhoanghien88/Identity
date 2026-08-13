@@ -15,6 +15,7 @@ import {
   searchActions,
   updateAction,
 } from "./api/actionsApi";
+import { runIfPermitted } from "../auth/permissions";
 import { ActionFormDialog } from "./components/ActionFormDialog";
 import { ActionsFilters } from "./components/ActionsFilters";
 import { ActionsTable } from "./components/ActionsTable";
@@ -22,7 +23,7 @@ import { DeleteActionDialog } from "./components/DeleteActionDialog";
 
 const initialFilters = { code: "", name: "" };
 
-export function ActionsPage() {
+export function ActionsPage({ session }) {
   const [filters, setFilters] = useState(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState(initialFilters);
   const [page, setPage] = useState(1);
@@ -124,11 +125,13 @@ export function ActionsPage() {
           <Button
             variant="contained"
             startIcon={<AddCircleIcon />}
-            onClick={() => {
-              setFormAction(undefined);
-              setMutationError(null);
-              setFormOpen(true);
-            }}
+            onClick={() =>
+              runIfPermitted(session, "Actions.Create", () => {
+                setFormAction(undefined);
+                setMutationError(null);
+                setFormOpen(true);
+              })
+            }
           >
             Create Action
           </Button>
@@ -181,15 +184,19 @@ export function ActionsPage() {
               }));
               setPage(1);
             }}
-            onEdit={(action) => {
-              setFormAction(action);
-              setMutationError(null);
-              setFormOpen(true);
-            }}
-            onDelete={(action) => {
-              setDeleteTarget(action);
-              setMutationError(null);
-            }}
+            onEdit={(action) =>
+              runIfPermitted(session, "Actions.Update", () => {
+                setFormAction(action);
+                setMutationError(null);
+                setFormOpen(true);
+              })
+            }
+            onDelete={(action) =>
+              runIfPermitted(session, "Actions.Delete", () => {
+                setDeleteTarget(action);
+                setMutationError(null);
+              })
+            }
           />
         )}
       </Stack>

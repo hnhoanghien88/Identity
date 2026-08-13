@@ -1,4 +1,4 @@
-﻿using Identity.Application.Abstractions.Persistence;
+using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Menus.Dtos;
 using MediatR;
 
@@ -14,7 +14,7 @@ public sealed class GetMenusQueryHandler(IMenusReadRepository repository) : IReq
         var children = valid.Where(x => x.ParentId.HasValue)
             .GroupBy(x => x.ParentId!.Value).ToDictionary(x => x.Key, x => x.ToList());
         MenuDto Map(MenuRowDto row) => new(row.Id, row.ApplicationId, row.ApplicationName, row.ParentId,
-            row.ResourceId, row.ResourceName, row.Code, row.Name, row.Route, row.Icon, row.SortOrder,
+            row.ResourceId, row.ResourceName, row.ResourceCode, row.Code, row.Name, row.Route, row.Icon, row.SortOrder,
             row.IsVisible, row.IsActive, row.Version,
             children.TryGetValue(row.Id, out var values) ? values.Select(Map).ToList() : []);
         return roots.Select(Map).ToList();

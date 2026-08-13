@@ -18,6 +18,7 @@ namespace Identity.Api.Controllers;
 public sealed class ActionsController(ISender sender) : ControllerBase
 {
     [HttpPost("search")]
+    [Authorize(Policy = "Actions.Read")]
     public async Task<ActionResult<ApiResponse<PagedActionsDto>>> Search(GetActionsQuery query, CancellationToken cancellationToken)
     {
         var actions = await sender.Send(query, cancellationToken);
@@ -25,6 +26,8 @@ public sealed class ActionsController(ISender sender) : ControllerBase
     }
 
     [HttpGet("{id:long}")]
+
+    [Authorize(Policy = "Actions.Read")]
     public async Task<ActionResult<ApiResponse<ActionDto>>> GetById(ulong id, CancellationToken cancellationToken)
     {
         var action = await sender.Send(new GetActionByIdQuery(id), cancellationToken);
@@ -32,6 +35,8 @@ public sealed class ActionsController(ISender sender) : ControllerBase
     }
 
     [HttpPost]
+
+    [Authorize(Policy = "Actions.Create")]
     public async Task<ActionResult<ApiResponse<ActionDto>>> Create(CreateRequest request, CancellationToken cancellationToken)
     {
         var action = await sender.Send(new CreateActionCommand(request.Code, request.Name, Actor()), cancellationToken);
@@ -39,6 +44,8 @@ public sealed class ActionsController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{id:long}")]
+
+    [Authorize(Policy = "Actions.Update")]
     public async Task<ActionResult<ApiResponse<ActionDto>>> Update(ulong id, UpdateRequest request, CancellationToken cancellationToken)
     {
         var action = await sender.Send(new UpdateActionCommand(id, request.Code, request.Name, request.Version, Actor()), cancellationToken);
@@ -46,6 +53,8 @@ public sealed class ActionsController(ISender sender) : ControllerBase
     }
 
     [HttpDelete("{id:long}")]
+
+    [Authorize(Policy = "Actions.Delete")]
     public async Task<IActionResult> Delete(ulong id, [FromQuery] ulong version, CancellationToken cancellationToken)
     {
         await sender.Send(new DeleteActionCommand(id, version), cancellationToken);

@@ -8,7 +8,7 @@ public sealed class DapperMenusReadRepository(MySqlConnectionFactory connectionF
 {
     private const string SelectMenus = """
         SELECT m.Id, m.ApplicationId, a.Name AS ApplicationName, m.ParentId,
-               m.ResourceId, r.Name AS ResourceName, m.Code, m.Name, m.Route,
+               m.ResourceId, r.Name AS ResourceName, r.Code AS ResourceCode, m.Code, m.Name, m.Route,
                m.Icon, m.SortOrder, m.IsVisible, m.IsActive, m.Version
         FROM menus m
         INNER JOIN applications a ON a.Id = m.ApplicationId

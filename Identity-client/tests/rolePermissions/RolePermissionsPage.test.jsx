@@ -26,6 +26,11 @@ const roles = [
   { id: 1, code: "ADMIN" },
   { id: 2, code: "AUDITOR" },
 ];
+const session = {
+  authorization: {
+    permissions: ["RolePermissions.Update", "RolePermissions.Delete"],
+  },
+};
 const resources = [
   { id: 10, applicationCode: "PORTAL", code: "USERS" },
   { id: 11, applicationCode: "PORTAL", code: "REPORTS" },
@@ -49,7 +54,7 @@ describe("RolePermissionsPage", () => {
   });
 
   it("selects first Role and Resource and renders accessible Actions", async () => {
-    render(<RolePermissionsPage />);
+    render(<RolePermissionsPage session={session} />);
 
     expect(
       await screen.findByRole("checkbox", { name: /VIEW/ }),
@@ -66,7 +71,7 @@ describe("RolePermissionsPage", () => {
 
   it("reloads Actions when the active selection changes", async () => {
     const user = userEvent.setup();
-    render(<RolePermissionsPage />);
+    render(<RolePermissionsPage session={session} />);
     await screen.findByRole("checkbox", { name: /VIEW/ });
 
     await user.click(screen.getByText("AUDITOR"));
@@ -83,7 +88,7 @@ describe("RolePermissionsPage", () => {
 
   it("grants and revokes a Permission", async () => {
     const user = userEvent.setup();
-    render(<RolePermissionsPage />);
+    render(<RolePermissionsPage session={session} />);
     const view = await screen.findByRole("checkbox", { name: /VIEW/ });
     const edit = screen.getByRole("checkbox", { name: /EDIT/ });
 
@@ -100,7 +105,7 @@ describe("RolePermissionsPage", () => {
   it("rolls back an optimistic grant when saving fails", async () => {
     grantRolePermission.mockRejectedValueOnce(new Error("Save failed"));
     const user = userEvent.setup();
-    render(<RolePermissionsPage />);
+    render(<RolePermissionsPage session={session} />);
     const view = await screen.findByRole("checkbox", { name: /VIEW/ });
 
     await user.click(view);

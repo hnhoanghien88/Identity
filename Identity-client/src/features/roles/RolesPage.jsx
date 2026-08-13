@@ -9,9 +9,10 @@ import {
   Typography,
 } from "@mui/material";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
-import { searchApplications } from "../applications/api/applicationsApi";
+import { runIfPermitted } from "../auth/permissions";
 import {
   createRole,
+  getRoleApplications,
   deleteRole,
   searchRoles,
   updateRole,
@@ -23,7 +24,7 @@ import { RolesTable } from "./components/RolesTable";
 
 const initialFilters = { applicationId: "", code: "", name: "" };
 
-export function RolesPage() {
+export function RolesPage({ session }) {
   const [applications, setApplications] = useState([]);
   const [filters, setFilters] = useState(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState(initialFilters);
@@ -43,7 +44,7 @@ export function RolesPage() {
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    searchApplications({ filter: {}, sorts: [], page: 1, pageSize: 100 })
+    getRoleApplications()
       .then((data) => setApplications(data.items))
       .catch(() => setApplications([]));
   }, []);
@@ -135,11 +136,13 @@ export function RolesPage() {
           <Button
             variant="contained"
             startIcon={<AddCircleIcon />}
-            onClick={() => {
-              setFormRole(undefined);
-              setMutationError(null);
-              setFormOpen(true);
-            }}
+            onClick={() =>
+              runIfPermitted(session, "Roles.Create", () => {
+                setFormRole(undefined);
+                setMutationError(null);
+                setFormOpen(true);
+              })
+            }
           >
             Create Role
           </Button>
@@ -193,15 +196,19 @@ export function RolesPage() {
               }));
               setPage(1);
             }}
-            onEdit={(role) => {
-              setFormRole(role);
-              setMutationError(null);
-              setFormOpen(true);
-            }}
-            onDelete={(role) => {
-              setDeleteTarget(role);
-              setMutationError(null);
-            }}
+            onEdit={(role) =>
+              runIfPermitted(session, "Roles.Update", () => {
+                setFormRole(role);
+                setMutationError(null);
+                setFormOpen(true);
+              })
+            }
+            onDelete={(role) =>
+              runIfPermitted(session, "Roles.Delete", () => {
+                setDeleteTarget(role);
+                setMutationError(null);
+              })
+            }
           />
         )}
       </Stack>

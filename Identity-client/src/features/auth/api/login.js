@@ -1,3 +1,5 @@
+import { getAuthorization } from "./authorization";
+
 const INVALID_CREDENTIALS =
   "Code ho\u1eb7c m\u1eadt kh\u1ea9u kh\u00f4ng \u0111\u00fang.";
 const SERVER_ERROR =
@@ -28,5 +30,8 @@ export async function login(credentials) {
     throw new Error(problem?.detail || LOGIN_ERROR);
   }
 
-  return response.json();
+  const session = await response.json();
+  const authorization = await getAuthorization(session.accessToken);
+  return { ...session, authorization };
 }
+

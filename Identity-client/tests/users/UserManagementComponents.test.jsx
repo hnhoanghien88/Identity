@@ -29,6 +29,7 @@ describe("user management components", () => {
             accessToken: "header.eyJzdWIiOiIxIn0.signature",
             authorization: {
               roles: ["Admin"],
+              permissions: ["Users.Read"],
             },
           }}
         />

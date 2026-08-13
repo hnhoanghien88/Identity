@@ -7,5 +7,6 @@ public sealed record UsersDto(
     string Name,
     DateTime CreatedDate,
     bool IsActive,
+    int PermissionVersion,
     ulong Version
 );

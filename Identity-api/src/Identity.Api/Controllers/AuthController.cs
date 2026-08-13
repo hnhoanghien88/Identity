@@ -39,7 +39,7 @@ public sealed class AuthController(
             ct);
 
         WriteRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAtUtc);
-        return Ok(ToResponse(accessToken, authorization));
+        return Ok(ToResponse(accessToken));
     }
 
     [AllowAnonymous]
@@ -70,7 +70,7 @@ public sealed class AuthController(
             rotatedToken.Token,
             rotatedToken.ExpiresAtUtc);
 
-        return Ok(ToResponse(accessToken, authorization));
+        return Ok(ToResponse(accessToken));
     }
     [HttpPost("/logout")]
     public async Task<IActionResult> Logout(CancellationToken ct)
@@ -126,15 +126,12 @@ public sealed class AuthController(
         Path = "/"
     };
 
-    private static LoginResponse ToResponse(
-        AccessTokenResult accessToken,
-        UserAuthorization authorization) =>
-        new(accessToken.Token, accessToken.ExpiresAtUtc, authorization);
+    private static LoginResponse ToResponse(AccessTokenResult accessToken) =>
+        new(accessToken.Token, accessToken.ExpiresAtUtc);
 
     public sealed record LoginRequest(string Code, string Password);
 
     public sealed record LoginResponse(
         string AccessToken,
-        DateTime AccessTokenExpiresAtUtc,
-        UserAuthorization Authorization);
+        DateTime AccessTokenExpiresAtUtc);
 }

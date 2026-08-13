@@ -13,6 +13,7 @@ namespace Identity.Api.Controllers;
 public sealed class RolePermissionsController(ISender sender) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Policy = "RolePermissions.Read")]
     public async Task<ActionResult<ApiResponse<RolePermissionSnapshotDto>>> Get(
         [FromQuery] ulong roleId,
         [FromQuery] ulong resourceId,
@@ -28,6 +29,8 @@ public sealed class RolePermissionsController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{roleId:long}/{resourceId:long}/{actionId:long}")]
+
+    [Authorize(Policy = "RolePermissions.Update")]
     public async Task<IActionResult> Grant(
         ulong roleId,
         ulong resourceId,
@@ -48,6 +51,8 @@ public sealed class RolePermissionsController(ISender sender) : ControllerBase
     }
 
     [HttpDelete("{roleId:long}/{resourceId:long}/{actionId:long}")]
+
+    [Authorize(Policy = "RolePermissions.Delete")]
     public async Task<IActionResult> Revoke(
         ulong roleId,
         ulong resourceId,

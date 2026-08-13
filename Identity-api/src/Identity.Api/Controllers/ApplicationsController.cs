@@ -7,6 +7,7 @@ using Identity.Application.Applications.GetApplicationById;
 using Identity.Application.Applications.GetApplications;
 using Identity.Application.Applications.UpdateApplication;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
@@ -16,6 +17,7 @@ namespace Identity.Api.Controllers;
 public sealed class ApplicationsController(ISender sender) : ControllerBase
 {
     [HttpPost("search")]
+    [Authorize(Policy = "Applications.Read")]
     public async Task<ActionResult<ApiResponse<PagedApplicationsDto>>> Search(
         GetApplicationsQuery query,
         CancellationToken cancellationToken)
@@ -25,6 +27,8 @@ public sealed class ApplicationsController(ISender sender) : ControllerBase
     }
 
     [HttpGet("{id:long}")]
+
+    [Authorize(Policy = "Applications.Read")]
     public async Task<ActionResult<ApiResponse<ApplicationDto>>> GetById(
         ulong id,
         CancellationToken cancellationToken)
@@ -34,6 +38,8 @@ public sealed class ApplicationsController(ISender sender) : ControllerBase
     }
 
     [HttpPost]
+
+    [Authorize(Policy = "Applications.Create")]
     public async Task<ActionResult<ApiResponse<ApplicationDto>>> Create(
         CreateRequest request,
         CancellationToken cancellationToken)
@@ -53,6 +59,8 @@ public sealed class ApplicationsController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{id:long}")]
+
+    [Authorize(Policy = "Applications.Update")]
     public async Task<ActionResult<ApiResponse<ApplicationDto>>> Update(
         ulong id,
         UpdateRequest request,
@@ -73,6 +81,8 @@ public sealed class ApplicationsController(ISender sender) : ControllerBase
     }
 
     [HttpDelete("{id:long}")]
+
+    [Authorize(Policy = "Applications.Delete")]
     public async Task<IActionResult> Delete(
         ulong id,
         [FromQuery] ulong version,

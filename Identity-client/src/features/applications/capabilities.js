@@ -1,2 +1,2 @@
-export const hasApplicationPermission = (session) =>
-  Boolean(session?.accessToken);
+export const hasApplicationPermission = (session, permission) =>
+  Boolean(session?.authorization?.permissions?.includes(permission));

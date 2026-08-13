@@ -63,7 +63,7 @@ describe("ResourcesPage list", () => {
     render(
       <ResourcesPage
         session={session([
-          "Resources.View",
+          "Resources.Read",
           "Resources.Create",
           "Resources.Update",
           "Resources.Delete",
@@ -72,6 +72,7 @@ describe("ResourcesPage list", () => {
     );
 
     expect(await screen.findByText("USERS")).toBeInTheDocument();
+    expect(applicationApi.searchApplications).not.toHaveBeenCalled();
     await user.type(screen.getByLabelText("Code"), "USE");
     await user.type(screen.getByLabelText("Resource Type"), "Api");
     await user.click(screen.getByRole("button", { name: "Apply filters" }));
@@ -93,9 +94,11 @@ describe("ResourcesPage list", () => {
     );
   });
 
-  it("allows a signed-in session when View permission is absent", async () => {
+  it("denies access when Resources.Read permission is absent", () => {
     render(<ResourcesPage session={session([])} />);
-    expect(await screen.findByText("USERS")).toBeInTheDocument();
-    expect(resourceApi.searchResources).toHaveBeenCalled();
+    expect(
+      screen.getByText("You do not have permission to view Resources."),
+    ).toBeInTheDocument();
+    expect(resourceApi.searchResources).not.toHaveBeenCalled();
   });
 });

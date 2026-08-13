@@ -91,7 +91,9 @@ public sealed class DapperApplicationsReadRepository(MySqlConnectionFactory conn
     }
 
     private static string BuildOrderBy(IReadOnlyList<ApplicationsSort> sorts) =>
-        string.Join(
+        sorts.Count == 0
+            ? "Id ASC"
+            : string.Join(
             ", ",
             sorts.Select(sort =>
             {

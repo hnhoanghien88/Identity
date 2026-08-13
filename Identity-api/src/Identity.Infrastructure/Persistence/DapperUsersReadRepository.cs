@@ -10,7 +10,7 @@ public sealed class DapperUsersReadRepository(MySqlConnectionFactory connectionF
     : IUsersReadRepository
 {
     private const string SelectUsers = """
-        SELECT Id, Code, Email, DisplayName AS Name, CreatedDate, IsActive, Version
+        SELECT Id, Code, Email, DisplayName AS Name, CreatedDate, IsActive, PermissionVersion, Version
         FROM users
         """;
 

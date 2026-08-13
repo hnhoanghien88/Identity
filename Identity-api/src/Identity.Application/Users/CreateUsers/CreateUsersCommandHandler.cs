@@ -44,6 +44,7 @@ public sealed class CreateUsersCommandHandler(
             user.Name,
             user.CreatedDate,
             user.IsActive,
+            user.PermissionVersion,
             user.Version);
     }
 }

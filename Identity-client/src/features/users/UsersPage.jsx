@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
+import { hasPermission, runIfPermitted } from "../auth/permissions";
 import {
   createUser,
   deleteUser,
@@ -27,8 +28,7 @@ const initialFilters = {
 };
 
 export function UsersPage({ session }) {
-  const canManage = Boolean(session?.accessToken);
-  const canDelete = canManage;
+  const canManage = hasPermission(session, "Users.Read");
   const currentUserId = useMemo(() => {
     try {
       return JSON.parse(
@@ -38,7 +38,7 @@ export function UsersPage({ session }) {
             .replace(/-/g, "+")
             .replace(/_/g, "/"),
         ),
-      ).sub;
+      ).uid;
     } catch {
       return null;
     }
@@ -151,11 +151,13 @@ export function UsersPage({ session }) {
           <Button
             variant="contained"
             startIcon={<AddCircleIcon />}
-            onClick={() => {
-              setFormUser(undefined);
-              setMutationError(null);
-              setFormOpen(true);
-            }}
+            onClick={() =>
+              runIfPermitted(session, "Users.Create", () => {
+                setFormUser(undefined);
+                setMutationError(null);
+                setFormOpen(true);
+              })
+            }
           >
             Create user
           </Button>
@@ -196,7 +198,7 @@ export function UsersPage({ session }) {
             pageSize={pageSize}
             sort={sort}
             canEdit
-            canDelete={canDelete}
+            canDelete
             currentUserId={currentUserId}
             onPage={setPage}
             onPageSize={(size) => {
@@ -211,15 +213,19 @@ export function UsersPage({ session }) {
               }));
               setPage(1);
             }}
-            onEdit={(user) => {
-              setFormUser(user);
-              setMutationError(null);
-              setFormOpen(true);
-            }}
-            onDelete={(user) => {
-              setDeleteTarget(user);
-              setMutationError(null);
-            }}
+            onEdit={(user) =>
+              runIfPermitted(session, "Users.Update", () => {
+                setFormUser(user);
+                setMutationError(null);
+                setFormOpen(true);
+              })
+            }
+            onDelete={(user) =>
+              runIfPermitted(session, "Users.Delete", () => {
+                setDeleteTarget(user);
+                setMutationError(null);
+              })
+            }
           />
         )}
       </Stack>

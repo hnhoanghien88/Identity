@@ -29,6 +29,7 @@ public sealed class AuthenticateUserQueryHandler(
             user.Name,
             user.CreatedDate,
             user.IsActive,
+            user.PermissionVersion,
             user.Version);
     }
 }

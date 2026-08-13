@@ -1,5 +1,10 @@
 import { rolesFetch } from "./rolesClient";
 
+export const getRoleApplications = (signal) =>
+  rolesFetch("/api/roles/applications", { signal }).then(
+    (response) => response.data,
+  );
+
 export const searchRoles = (request, signal) =>
   rolesFetch("/api/roles/search", {
     method: "POST",

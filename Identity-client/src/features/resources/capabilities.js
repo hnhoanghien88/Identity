@@ -1,2 +1,2 @@
-export const hasResourcePermission = (session) =>
-  Boolean(session?.accessToken);
+export const hasResourcePermission = (session, permission) =>
+  Boolean(session?.authorization?.permissions?.includes(permission));

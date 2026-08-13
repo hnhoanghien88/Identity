@@ -1,3 +1,5 @@
+import { getAuthorization } from "./authorization";
+
 let pendingRefresh = null;
 
 export function refreshSession() {
@@ -21,5 +23,8 @@ async function requestRefresh() {
     throw new Error(problem?.detail || "Unable to restore the session.");
   }
 
-  return response.json();
+  const session = await response.json();
+  const authorization = await getAuthorization(session.accessToken);
+  return { ...session, authorization };
 }
+

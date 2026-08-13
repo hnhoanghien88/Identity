@@ -12,7 +12,14 @@ const api = vi.hoisted(() => ({
 
 vi.mock("../../src/features/applications/api/applicationsApi", () => api);
 
-const session = (permissions = []) => ({
+const session = (
+  permissions = [
+    "Applications.Read",
+    "Applications.Create",
+    "Applications.Update",
+    "Applications.Delete",
+  ],
+) => ({
   accessToken: "authenticated-token",
   authorization: { permissions },
 });
@@ -55,7 +62,7 @@ describe("ApplicationsPage", () => {
     const user = userEvent.setup();
     render(
       <ApplicationsPage
-        session={session(["Applications.View"])}
+        session={session(["Applications.Read"])}
         onLogout={vi.fn()}
       />,
     );

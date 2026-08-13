@@ -11,7 +11,7 @@ public static class MenuRules
 
     public static MenuDto ToDto(MenuEntity value) =>
         new(value.Id, value.ApplicationId, value.Application.Name, value.ParentId,
-            value.ResourceId, value.Resource?.Name, value.Code, value.Name,
+            value.ResourceId, value.Resource?.Name, value.Resource?.Code, value.Code, value.Name,
             value.Route, value.Icon, value.SortOrder, value.IsVisible,
             value.IsActive, value.Version, []);
 }

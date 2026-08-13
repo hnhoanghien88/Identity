@@ -28,6 +28,9 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IAuthorizationCache, AuthorizationCache>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
@@ -61,15 +64,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
             context.Fail("The access token has been revoked.");
         else
         {
-            var subject = context.Principal.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
-                ?? context.Principal.FindFirst("sub")?.Value
-                ?? context.Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var subject = context.Principal.FindFirst("uid")?.Value;
             if (!ulong.TryParse(subject, out var userId)) context.Fail("The access token subject is invalid.");
             else
             {
                 var user = await context.HttpContext.RequestServices.GetRequiredService<IUsersRepository>()
                     .GetByIdAsync(userId, context.HttpContext.RequestAborted);
                 if (user is null || !user.IsActive) context.Fail("The user account is unavailable.");
+                else if (!int.TryParse(context.Principal.FindFirst("permissionversion")?.Value, out var permissionVersion)
+                    || permissionVersion != user.PermissionVersion)
+                    context.Fail("The authorization version is stale.");
             }
         }
     },
@@ -84,8 +88,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 });
 builder.Services.AddAuthorization(options =>
 {
-    options.AddApplicationPolicies();
-    options.AddResourcePolicies();
+    options.AddPermissionPolicies();
 });
 builder.Services.AddSwaggerGen(options =>
 {

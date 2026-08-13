@@ -1,4 +1,4 @@
-﻿import { Fragment } from "react";
+import { Fragment } from "react";
 import {
   IconButton,
   Paper,
@@ -56,8 +56,7 @@ export function MenusTreeTable({
                   <TableCell>
                     <Stack
                       direction="row"
-                      alignItems="center"
-                      sx={{ pl: depth * 3 }}
+                      sx={{ alignItems: "center", pl: depth * 3 }}
                     >
                       <IconButton
                         size="small"
@@ -119,3 +118,4 @@ export function MenusTreeTable({
     </TableContainer>
   );
 }
+

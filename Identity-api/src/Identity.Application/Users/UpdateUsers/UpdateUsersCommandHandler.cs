@@ -45,6 +45,7 @@ public sealed class UpdateUsersCommandHandler(
             user.Name,
             user.CreatedDate,
             user.IsActive,
+            user.PermissionVersion,
             user.Version);
     }
 }

@@ -30,6 +30,13 @@ public sealed class MySqlUserRolesRepository(IdentityDbContext db) : IUserRolesR
         var existing = await db.UserRoles.Where(x => x.RoleId == roleId && requested.Contains(x.UserId)).Select(x => x.UserId).ToListAsync(ct);
         var assigned = requested.Except(existing).ToArray();
         db.UserRoles.AddRange(assigned.Select(userId => new UserRoles { RoleId = roleId, UserId = userId, IsActive = true, CreatedBy = actor, CreatedDate = DateTime.UtcNow }));
+        await db.Users
+            .Where(user => assigned.Contains(user.Id))
+            .ExecuteUpdateAsync(
+                updates => updates.SetProperty(
+                    user => user.PermissionVersion,
+                    user => user.PermissionVersion + 1),
+                ct);
         try { await db.SaveChangesAsync(ct); await transaction.CommitAsync(ct); }
         catch (DbUpdateException) { throw new ConflictException("User Role data changed concurrently. Reload and try again."); }
         return new(roleId, assigned, existing);
@@ -41,6 +48,13 @@ public sealed class MySqlUserRolesRepository(IdentityDbContext db) : IUserRolesR
         var membership = await db.UserRoles.SingleOrDefaultAsync(x => x.RoleId == roleId && x.UserId == userId, ct);
         if (membership is null) return;
         db.UserRoles.Remove(membership);
+        await db.Users
+            .Where(user => user.Id == userId)
+            .ExecuteUpdateAsync(
+                updates => updates.SetProperty(
+                    user => user.PermissionVersion,
+                    user => user.PermissionVersion + 1),
+                ct);
         await db.SaveChangesAsync(ct);
     }
     private async Task EnsureRoleAsync(ulong id, CancellationToken ct) { if (!await db.Roles.AnyAsync(r => r.Id == id && r.IsActive && !r.IsDeleted, ct)) throw new NotFoundException($"Role '{id}' was not found."); }

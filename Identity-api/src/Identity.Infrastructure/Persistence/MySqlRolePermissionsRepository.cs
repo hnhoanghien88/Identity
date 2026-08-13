@@ -72,6 +72,7 @@ public sealed class MySqlRolePermissionsRepository(IdentityDbContext db)
                 CreatedDate = DateTime.UtcNow,
             });
             await SaveChangesAsync(cancellationToken);
+            await IncrementPermissionVersionsAsync(roleId, cancellationToken);
         }
         await transaction.CommitAsync(cancellationToken);
     }
@@ -112,9 +113,23 @@ public sealed class MySqlRolePermissionsRepository(IdentityDbContext db)
 
         db.Permissions.Remove(permission);
         await SaveChangesAsync(cancellationToken);
+        await IncrementPermissionVersionsAsync(roleId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
+    private Task IncrementPermissionVersionsAsync(
+        ulong roleId,
+        CancellationToken cancellationToken) =>
+        db.Users
+            .Where(user => db.UserRoles.Any(userRole =>
+                userRole.RoleId == roleId
+                && userRole.UserId == user.Id
+                && userRole.IsActive))
+            .ExecuteUpdateAsync(
+                updates => updates.SetProperty(
+                    user => user.PermissionVersion,
+                    user => user.PermissionVersion + 1),
+                cancellationToken);
     private async Task EnsureRoleAsync(ulong id, CancellationToken cancellationToken)
     {
         if (!await db.Roles.AnyAsync(

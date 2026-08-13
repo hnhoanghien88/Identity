@@ -16,6 +16,7 @@ import {
   updateResource,
 } from "./api/resourcesApi";
 import { searchApplications } from "../applications/api/applicationsApi";
+import { hasPermission, runIfPermitted } from "../auth/permissions";
 import { hasResourcePermission } from "./capabilities";
 import { DeleteResourceDialog } from "./components/DeleteResourceDialog";
 import { ResourceFormDialog } from "./components/ResourceFormDialog";
@@ -31,10 +32,8 @@ const initialFilters = {
 };
 
 export function ResourcesPage({ session }) {
-  const canView = hasResourcePermission(session, "Resources.View");
-  const canCreate = hasResourcePermission(session, "Resources.Create");
-  const canEdit = hasResourcePermission(session, "Resources.Update");
-  const canDelete = hasResourcePermission(session, "Resources.Delete");
+  const canView = hasResourcePermission(session, "Resources.Read");
+  const canViewApplications = hasPermission(session, "Applications.Read");
   const [applications, setApplications] = useState([]);
   const [filters, setFilters] = useState(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState(initialFilters);
@@ -99,35 +98,41 @@ export function ResourcesPage({ session }) {
       };
 
       try {
-        const [resourceData, applicationData] = await Promise.all([
-          searchResources(
-            {
-              filter,
-              sorts: [sort],
-              page,
-              pageSize,
-            },
-            signal,
-          ),
-          searchApplications(
-            {
-              filter: {
-                isActive: true,
-              },
-              sorts: [
+        const resourceData = await searchResources(
+          {
+            filter,
+            sorts: [sort],
+            page,
+            pageSize,
+          },
+          signal,
+        );
+        const applicationItems = canViewApplications
+          ? (
+              await searchApplications(
                 {
-                  column: 1,
-                  direction: 0,
+                  filter: { isActive: true },
+                  sorts: [{ column: 1, direction: 0 }],
+                  page: 1,
+                  pageSize: 100,
                 },
-              ],
-              page: 1,
-              pageSize: 100,
-            },
-            signal,
-          ),
-        ]);
+                signal,
+              )
+            ).items
+          : Array.from(
+              new Map(
+                resourceData.items.map((item) => [
+                  item.applicationId,
+                  {
+                    id: item.applicationId,
+                    code: item.applicationCode,
+                    name: item.applicationName,
+                  },
+                ]),
+              ).values(),
+            );
         setResult(resourceData);
-        setApplications(applicationData.items);
+        setApplications(applicationItems);
         setLoaded(true);
       } catch (error) {
         if (error.name !== "AbortError") setLoadError(error.message);
@@ -135,7 +140,7 @@ export function ResourcesPage({ session }) {
         setLoading(false);
       }
     },
-    [canView, appliedFilters, sort, page, pageSize],
+    [canView, canViewApplications, appliedFilters, sort, page, pageSize],
   );
 
   useEffect(() => {
@@ -210,19 +215,19 @@ export function ResourcesPage({ session }) {
               Manage protected resources for identity applications.
             </Typography>
           </Box>
-          {canCreate && (
-            <Button
-              variant="contained"
-              startIcon={<AddCircleIcon />}
-              onClick={() => {
+          <Button
+            variant="contained"
+            startIcon={<AddCircleIcon />}
+            onClick={() =>
+              runIfPermitted(session, "Resources.Create", () => {
                 setFormResource(undefined);
                 setMutationError(null);
                 setFormOpen(true);
-              }}
-            >
-              Create Resource
-            </Button>
-          )}
+              })
+            }
+          >
+            Create Resource
+          </Button>
         </Stack>
         <ResourcesFilters
           value={filters}
@@ -266,8 +271,8 @@ export function ResourcesPage({ session }) {
             page={page}
             pageSize={pageSize}
             sort={sort}
-            canEdit={canEdit}
-            canDelete={canDelete}
+            canEdit
+            canDelete
             onPage={setPage}
             onPageSize={(size) => {
               setPageSize(size);
@@ -281,15 +286,19 @@ export function ResourcesPage({ session }) {
               }));
               setPage(1);
             }}
-            onEdit={(resource) => {
-              setFormResource(resource);
-              setMutationError(null);
-              setFormOpen(true);
-            }}
-            onDelete={(resource) => {
-              setDeleteTarget(resource);
-              setMutationError(null);
-            }}
+            onEdit={(resource) =>
+              runIfPermitted(session, "Resources.Update", () => {
+                setFormResource(resource);
+                setMutationError(null);
+                setFormOpen(true);
+              })
+            }
+            onDelete={(resource) =>
+              runIfPermitted(session, "Resources.Delete", () => {
+                setDeleteTarget(resource);
+                setMutationError(null);
+              })
+            }
           />
         )}
       </Stack>

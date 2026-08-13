@@ -35,19 +35,17 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
         var expiry = now.AddMinutes(_options.AccessTokenMinutes);
         List<Claim> claims =
         [
-            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(JwtRegisteredClaimNames.UniqueName, user.Code),
-            new("code", user.Code),
+            new("uid", user.Id.ToString()),
+            new("permissionversion", user.PermissionVersion.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
+            new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Name, user.Name),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new("token_type", "access")
         ];
 
         claims.AddRange(authorization.Roles.Select(role =>
-            new Claim(ClaimTypes.Role, role)));
-        claims.AddRange(authorization.Permissions.Select(permission =>
-            new Claim("permission", permission)));
+            new Claim("role", role)));
 
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key)),
@@ -89,3 +87,4 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
             || _revokedTokens.ContainsKey(jwtId);
     }
 }
+

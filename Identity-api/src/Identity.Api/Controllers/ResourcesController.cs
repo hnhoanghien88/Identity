@@ -7,6 +7,7 @@ using Identity.Application.Resources.GetResourceById;
 using Identity.Application.Resources.GetResources;
 using Identity.Application.Resources.UpdateResource;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
@@ -16,6 +17,7 @@ namespace Identity.Api.Controllers;
 public sealed class ResourcesController(ISender sender) : ControllerBase
 {
     [HttpPost("search")]
+    [Authorize(Policy = "Resources.Read")]
     public async Task<ActionResult<ApiResponse<PagedResourcesDto>>> Search(
         GetResourcesQuery query,
         CancellationToken cancellationToken)
@@ -29,6 +31,8 @@ public sealed class ResourcesController(ISender sender) : ControllerBase
     }
 
     [HttpGet("{id:long}")]
+
+    [Authorize(Policy = "Resources.Read")]
     public async Task<ActionResult<ApiResponse<ResourceDto>>> GetById(
         ulong id,
         CancellationToken cancellationToken)
@@ -44,6 +48,8 @@ public sealed class ResourcesController(ISender sender) : ControllerBase
     }
 
     [HttpPost]
+
+    [Authorize(Policy = "Resources.Create")]
     public async Task<ActionResult<ApiResponse<ResourceDto>>> Create(
         CreateRequest request,
         CancellationToken cancellationToken)
@@ -67,6 +73,8 @@ public sealed class ResourcesController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{id:long}")]
+
+    [Authorize(Policy = "Resources.Update")]
     public async Task<ActionResult<ApiResponse<ResourceDto>>> Update(
         ulong id,
         UpdateRequest request,
@@ -92,6 +100,8 @@ public sealed class ResourcesController(ISender sender) : ControllerBase
     }
 
     [HttpDelete("{id:long}")]
+
+    [Authorize(Policy = "Resources.Delete")]
     public async Task<IActionResult> Delete(
         ulong id,
         [FromQuery] ulong version,

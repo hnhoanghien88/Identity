@@ -3,6 +3,11 @@ import {
   Box,
   Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   List,
   ListItemButton,
@@ -12,22 +17,26 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import AppsRoundedIcon from "@mui/icons-material/AppsRounded";
-import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
-import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import PeopleIcon from "@mui/icons-material/People";
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import AppsIcon from "@mui/icons-material/Apps";
+import BoltIcon from "@mui/icons-material/Bolt";
+import CategoryIcon from "@mui/icons-material/Category";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import PeopleIcon from "@mui/icons-material/People";
+import SecurityIcon from "@mui/icons-material/Security";
 import { LoginPage } from "./features/auth";
-import { UsersPage } from "./features/users";
+import { ForbiddenPage } from "./features/auth/ForbiddenPage";
 import {
-  ApplicationsPage,
-  hasApplicationPermission,
-} from "./features/applications";
-import { ResourcesPage, hasResourcePermission } from "./features/resources";
+  hasPermission,
+  PERMISSION_DENIED_EVENT,
+} from "./features/auth/permissions";
+import { UsersPage } from "./features/users";
+import { ApplicationsPage } from "./features/applications";
+import { ResourcesPage } from "./features/resources";
 import { ActionsPage } from "./features/actions";
 import { RolesPage } from "./features/roles";
 import { MenusPage } from "./features/menus";
@@ -44,6 +53,23 @@ import {
 import { logout } from "./features/auth/api/logout";
 import { getSessionUserName } from "./features/auth/sessionUser";
 import "./App.css";
+
+const menuIcons = {
+  AccountTree: AccountTreeIcon,
+  AdminPanelSettings: AdminPanelSettingsIcon,
+  Apps: AppsIcon,
+  Bolt: BoltIcon,
+  Category: CategoryIcon,
+  Lock: LockOutlinedIcon,
+  ManageAccounts: ManageAccountsIcon,
+  People: PeopleIcon,
+  Security: SecurityIcon,
+};
+
+function MenuIcon({ name }) {
+  const Icon = menuIcons[name] || AccountTreeIcon;
+  return <Icon fontSize="small" />;
+}
 
 const LOGIN_PATH = "/login";
 const APPLICATIONS_PATH = "/applications";
@@ -75,24 +101,44 @@ const protectedPaths = new Set([
   USER_ROLES_PATH,
   USERS_PATH,
 ]);
+const readPermissions = {
+  [APPLICATIONS_PATH]: "Applications.Read",
+  [RESOURCES_PATH]: "Resources.Read",
+  [ACTIONS_PATH]: "Actions.Read",
+  [ROLES_PATH]: "Roles.Read",
+  [MENUS_PATH]: "Menus.Read",
+  [ROLE_PERMISSIONS_PATH]: "RolePermissions.Read",
+  [USER_ROLES_PATH]: "UserRoles.Read",
+  [USERS_PATH]: "Users.Read",
+};
 const currentPath = () =>
   knownPaths.has(window.location.pathname)
     ? window.location.pathname
     : LOGIN_PATH;
-const canAccessUsers = (authSession) => Boolean(authSession?.accessToken);
+const flattenMenus = (menus, depth = 0) =>
+  (menus || []).flatMap((menu) => [
+    { ...menu, depth },
+    ...flattenMenus(menu.children, depth + 1),
+  ]);
+const firstMenuRoute = (session) =>
+  flattenMenus(session?.authorization?.menus).find((menu) => menu.route)
+    ?.route || LOGIN_PATH;
 
 function App() {
   const [path, setPath] = useState(currentPath);
   const [session, setSession] = useState(getSession);
   const [restoring, setRestoring] = useState(() => !getSession());
+  const [deniedPermission, setDeniedPermission] = useState("");
+  useEffect(() => {
+    const showPermissionDenied = (event) =>
+      setDeniedPermission(event.detail?.permission || "this action");
+    window.addEventListener(PERMISSION_DENIED_EVENT, showPermissionDenied);
+    return () =>
+      window.removeEventListener(PERMISSION_DENIED_EVENT, showPermissionDenied);
+  }, []);
   const loggedIn = Boolean(session);
   const userName = getSessionUserName(session);
-  const canManageUsers = canAccessUsers(session);
-  const canViewApplications = hasApplicationPermission(
-    session,
-    "Applications.View",
-  );
-  const canViewResources = hasResourcePermission(session, "Resources.View");
+  const navigationMenus = flattenMenus(session?.authorization?.menus);
   const navigate = (next, replace = false) => {
     if (window.location.pathname !== next)
       window.history[replace ? "replaceState" : "pushState"]({}, "", next);
@@ -112,7 +158,7 @@ function App() {
       subscribeToSession((next) => {
         setSession(next);
         if (next && window.location.pathname === LOGIN_PATH)
-          navigate(APPLICATIONS_PATH, true);
+          navigate(firstMenuRoute(next), true);
         if (!next && protectedPaths.has(window.location.pathname))
           navigate(LOGIN_PATH, true);
       }),
@@ -121,7 +167,7 @@ function App() {
 
   useEffect(() => {
     if (session) {
-      if (path === LOGIN_PATH) navigate(APPLICATIONS_PATH, true);
+      if (path === LOGIN_PATH) navigate(firstMenuRoute(session), true);
       setRestoring(false);
       return;
     }
@@ -143,12 +189,12 @@ function App() {
                 ? USER_ROLES_PATH
                 : path === ACTIONS_PATH
                   ? ACTIONS_PATH
-                  : path === USERS_PATH && canAccessUsers(next)
+                  : path === USERS_PATH && hasPermission(next, "Users.Read")
                     ? USERS_PATH
                     : path === RESOURCES_PATH &&
-                        hasResourcePermission(next, "Resources.View")
+                        hasPermission(next, "Resources.Read")
                       ? RESOURCES_PATH
-                      : APPLICATIONS_PATH;
+                      : firstMenuRoute(next);
           navigate(restoredPath, true);
         }
       })
@@ -172,6 +218,11 @@ function App() {
     }
   };
 
+  const requiredPermission = readPermissions[path];
+  const forbidden =
+    Boolean(session && requiredPermission) &&
+    !hasPermission(session, requiredPermission);
+
   let content;
   if (restoring) content = <CircularProgress aria-label="Restoring session" />;
   else if (path === LOGIN_PATH)
@@ -179,19 +230,21 @@ function App() {
       <LoginPage
         onLoginSuccess={(next) => {
           publishSession(next);
-          navigate(APPLICATIONS_PATH);
+          navigate(firstMenuRoute(next));
         }}
       />
     );
-  else if (path === USERS_PATH && canManageUsers)
-    content = <UsersPage session={session} />;
+  else if (forbidden) content = <ForbiddenPage />;
+  else if (path === USERS_PATH) content = <UsersPage session={session} />;
   else if (path === RESOURCES_PATH)
     content = <ResourcesPage session={session} />;
-  else if (path === ACTIONS_PATH) content = <ActionsPage />;
-  else if (path === ROLES_PATH) content = <RolesPage />;
+  else if (path === ACTIONS_PATH) content = <ActionsPage session={session} />;
+  else if (path === ROLES_PATH) content = <RolesPage session={session} />;
   else if (path === MENUS_PATH) content = <MenusPage session={session} />;
-  else if (path === ROLE_PERMISSIONS_PATH) content = <RolePermissionsPage />;
-  else if (path === USER_ROLES_PATH) content = <UserRolesPage />;
+  else if (path === ROLE_PERMISSIONS_PATH)
+    content = <RolePermissionsPage session={session} />;
+  else if (path === USER_ROLES_PATH)
+    content = <UserRolesPage session={session} />;
   else content = <ApplicationsPage session={session} />;
 
   return (
@@ -220,7 +273,7 @@ function App() {
             className="sidebar-account"
             direction="row"
             spacing={1}
-            alignItems="center"
+            sx={{ alignItems: "center" }}
           >
             <Typography className="sidebar-user-name" variant="body2">
               {userName}
@@ -237,101 +290,53 @@ function App() {
         )}
         <Divider />
         <List className="menu-list" aria-label="Main navigation">
-          <ListItemButton
-            selected={path === LOGIN_PATH}
-            onClick={() => navigate(LOGIN_PATH)}
-          >
-            <ListItemIcon>
-              <LoginRoundedIcon />
-            </ListItemIcon>
-            <ListItemText primary="Login" />
-          </ListItemButton>
-          <ListItemButton
-            selected={path === APPLICATIONS_PATH}
-            disabled={!loggedIn || !canViewApplications}
-            onClick={() => navigate(APPLICATIONS_PATH)}
-          >
-            <ListItemIcon>
-              <AppsRoundedIcon />
-            </ListItemIcon>
-            <ListItemText primary="Application" />
-          </ListItemButton>
-          <ListItemButton
-            selected={path === RESOURCES_PATH}
-            disabled={!loggedIn || !canViewResources}
-            onClick={() => navigate(RESOURCES_PATH)}
-          >
-            <ListItemIcon>
-              <CategoryRoundedIcon />
-            </ListItemIcon>
-            <ListItemText primary="Resources" />
-          </ListItemButton>
-          <ListItemButton
-            selected={path === MENUS_PATH}
-            disabled={!loggedIn}
-            onClick={() => navigate(MENUS_PATH)}
-          >
-            <ListItemIcon>
-              <AccountTreeIcon />
-            </ListItemIcon>
-            <ListItemText primary="Menus" />
-          </ListItemButton>{" "}
-          <ListItemButton
-            selected={path === ROLES_PATH}
-            disabled={!loggedIn}
-            onClick={() => navigate(ROLES_PATH)}
-          >
-            <ListItemIcon>
-              <AdminPanelSettingsIcon />
-            </ListItemIcon>
-            <ListItemText primary="Roles" />
-          </ListItemButton>
-          <ListItemButton
-            selected={path === ACTIONS_PATH}
-            disabled={!loggedIn}
-            onClick={() => navigate(ACTIONS_PATH)}
-          >
-            <ListItemIcon>
-              <BoltRoundedIcon />
-            </ListItemIcon>
-            <ListItemText primary="Actions" />
-          </ListItemButton>{" "}
-          <ListItemButton
-            selected={path === ROLE_PERMISSIONS_PATH}
-            disabled={!loggedIn}
-            onClick={() => navigate(ROLE_PERMISSIONS_PATH)}
-          >
-            <ListItemIcon>
-              <AdminPanelSettingsIcon />
-            </ListItemIcon>
-            <ListItemText primary="Role Permissions" />
-          </ListItemButton>
-          <ListItemButton
-            selected={path === USER_ROLES_PATH}
-            disabled={!loggedIn}
-            onClick={() => navigate(USER_ROLES_PATH)}
-          >
-            <ListItemIcon>
-              <PeopleIcon />
-            </ListItemIcon>
-            <ListItemText primary="User Roles" />
-          </ListItemButton>
-          {canManageUsers && (
+          {!loggedIn && (
             <ListItemButton
-              selected={path === USERS_PATH}
-              onClick={() => navigate(USERS_PATH)}
+              selected={path === LOGIN_PATH}
+              onClick={() => navigate(LOGIN_PATH)}
             >
               <ListItemIcon>
-                <PeopleIcon />
+                <LoginRoundedIcon />
               </ListItemIcon>
-              <ListItemText primary="Users" />
+              <ListItemText primary="Login" />
             </ListItemButton>
           )}
+          {loggedIn &&
+            navigationMenus.map((menu) => (
+              <ListItemButton
+                key={menu.id}
+                selected={Boolean(menu.route) && path === menu.route}
+                onClick={() => menu.route && navigate(menu.route)}
+                sx={{ pl: 2 + menu.depth * 2 }}
+              >
+                <ListItemIcon>
+                  <MenuIcon name={menu.icon} />
+                </ListItemIcon>
+                <ListItemText primary={menu.name} />
+              </ListItemButton>
+            ))}{" "}
         </List>
       </Paper>
       <Box component="main" className="main-content">
         {content}
       </Box>
+      <Dialog
+        open={Boolean(deniedPermission)}
+        onClose={() => setDeniedPermission("")}
+      >
+        <DialogTitle>Permission required</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You do not have permission to perform this action
+            {deniedPermission ? ` (${deniedPermission})` : ""}.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeniedPermission("")} autoFocus>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

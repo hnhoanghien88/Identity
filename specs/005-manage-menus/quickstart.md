@@ -28,6 +28,7 @@ npm run build
 7. Open the same Menu in two sessions, update one and then submit the stale form. Verify the stale update is rejected.
 8. Attempt to delete a parent and verify it is blocked; delete a leaf and verify it disappears after reload.
 9. Remove each Menus capability in turn and verify both UI actions and API endpoint access fail closed.
+10. Seed or select a Menu with both Resource and Route set to `NULL`. Verify both index cells show `—`, no mojibake is present, open Edit, verify Resource is None and Route is empty, then save successfully without converting either value into display text.
 
 Expected shapes and error statuses are defined in [contracts/menus.openapi.yaml](contracts/menus.openapi.yaml); entity rules are in [data-model.md](data-model.md).
 

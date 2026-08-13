@@ -78,8 +78,8 @@ export function MenusTreeTable({
                     </Stack>
                   </TableCell>
                   <TableCell>{node.code}</TableCell>
-                  <TableCell>{node.resourceName || "â€”"}</TableCell>
-                  <TableCell>{node.route || "â€”"}</TableCell>
+                  <TableCell>{node.resourceName || "—"}</TableCell>
+                  <TableCell>{node.route || "—"}</TableCell>
                   <TableCell>{node.sortOrder}</TableCell>
                   <TableCell>
                     {node.isActive

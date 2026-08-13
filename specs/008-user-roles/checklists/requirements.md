@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Quản lý Menus dạng cây
+# Specification Quality Checklist: Quản lý User theo Role
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-08-12
@@ -31,5 +31,4 @@
 
 ## Notes
 
-- Validation passed after the 2026-08-13 update. The specification now explicitly covers `NULL` Resource/Route display, prevention of the mojibake string `â€”`, preservation of true empty values, and successful editing as regression acceptance criteria. CQRS remains an architectural constraint; implementation details are deferred to planning.
-
+- Validation passed on the first review; no clarification markers remain.

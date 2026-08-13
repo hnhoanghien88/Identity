@@ -29,11 +29,7 @@ describe("MenusTreeTable", () => {
   it("exposes recursive rows and accessible expansion", async () => {
     const onToggle = vi.fn();
     const { rerender } = render(
-      <MenusTreeTable
-        menus={tree}
-        expanded={new Set()}
-        onToggle={onToggle}
-      />,
+      <MenusTreeTable menus={tree} expanded={new Set()} onToggle={onToggle} />,
     );
     expect(screen.queryByText("Child")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Expand Root" }));
@@ -46,9 +42,28 @@ describe("MenusTreeTable", () => {
       />,
     );
     expect(screen.getByText("Child")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Collapse Root" })).toHaveAttribute(
-      "aria-expanded",
-      "true",
+    expect(
+      screen.getByRole("button", { name: "Collapse Root" }),
+    ).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("renders NULL Resource and Route safely and keeps editing available", async () => {
+    const onEdit = vi.fn();
+    render(
+      <MenusTreeTable
+        menus={tree}
+        expanded={new Set()}
+        onToggle={vi.fn()}
+        canEdit
+        onEdit={onEdit}
+      />,
     );
+
+    expect(screen.getAllByText("—")).toHaveLength(2);
+    expect(screen.queryByText("â€”")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit Root" }));
+
+    expect(onEdit).toHaveBeenCalledWith(tree[0]);
   });
 });

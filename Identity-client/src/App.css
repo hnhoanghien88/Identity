@@ -4,6 +4,23 @@
   grid-template-columns: 260px minmax(0, 1fr);
   background: #f5f7fb;
 }
+
+.user-roles-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(360px, 2fr);
+  gap: 20px;
+}
+
+.user-roles-column {
+  min-height: 420px;
+  padding: 20px;
+}
+
+@media (max-width: 800px) {
+  .user-roles-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .sidebar {
   min-height: 100vh;
   border-right: 1px solid #e5e7eb;

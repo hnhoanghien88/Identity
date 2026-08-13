@@ -1,0 +1,113 @@
+openapi: 3.1.0
+info: { title: User Roles Management API, version: 1.0.0 }
+paths:
+  /api/user-roles:
+    get:
+      summary: List active members of a Role
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: roleId, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        "200": { description: Paged members, content: { application/json: { schema: { $ref: "#/components/schemas/PagedResponse" } } } }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/user-roles/candidates:
+    get:
+      summary: List active Users not assigned to a Role
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: roleId, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: search, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        "200": { description: Paged candidates, content: { application/json: { schema: { $ref: "#/components/schemas/PagedResponse" } } } }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/user-roles/{roleId}:
+    post:
+      summary: Assign multiple Users to a Role
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: "#/components/parameters/RoleId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userIds]
+              properties:
+                userIds: { type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: { type: integer, minimum: 1 } }
+      responses:
+        "200": { description: Assigned and already assigned IDs, content: { application/json: { schema: { $ref: "#/components/schemas/AssignmentResponse" } } } }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /api/user-roles/{roleId}/{userId}:
+    delete:
+      summary: Remove membership without deleting the User
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/RoleId" }
+        - { name: userId, in: path, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        "200": { description: Membership absent, content: { application/json: { schema: { $ref: "#/components/schemas/EmptyResponse" } } } }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    RoleId: { name: roleId, in: path, required: true, schema: { type: integer, minimum: 1 } }
+  schemas:
+    Member:
+      type: object
+      required: [userId, code, name, email]
+      properties:
+        userId: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        email: { type: string }
+    PagedData:
+      type: object
+      required: [items, page, pageSize, totalCount]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Member" } }
+        page: { type: integer }
+        pageSize: { type: integer }
+        totalCount: { type: integer }
+    ResponseBase:
+      type: object
+      required: [success, message]
+      properties: { success: { type: boolean }, message: { type: string } }
+    PagedResponse:
+      allOf: [{ $ref: "#/components/schemas/ResponseBase" }, { type: object, properties: { data: { $ref: "#/components/schemas/PagedData" } } }]
+    AssignmentResponse:
+      allOf:
+        - { $ref: "#/components/schemas/ResponseBase" }
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [roleId, assignedUserIds, alreadyAssignedUserIds]
+              properties:
+                roleId: { type: integer }
+                assignedUserIds: { type: array, items: { type: integer } }
+                alreadyAssignedUserIds: { type: array, items: { type: integer } }
+    EmptyResponse:
+      allOf: [{ $ref: "#/components/schemas/ResponseBase" }, { type: object, properties: { data: { type: [object, "null"] } } }]
+    Problem:
+      type: object
+      properties: { title: { type: string }, status: { type: integer }, detail: { type: string } }
+  responses:
+    BadRequest: { description: Invalid input, content: { application/problem+json: { schema: { $ref: "#/components/schemas/Problem" } } } }
+    Unauthorized: { description: Missing or invalid authentication, content: { application/problem+json: { schema: { $ref: "#/components/schemas/Problem" } } } }
+    NotFound: { description: Role or User unavailable, content: { application/problem+json: { schema: { $ref: "#/components/schemas/Problem" } } } }
+    Conflict: { description: Concurrent membership change, content: { application/problem+json: { schema: { $ref: "#/components/schemas/Problem" } } } }

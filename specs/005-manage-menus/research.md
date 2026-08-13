@@ -35,4 +35,8 @@
 - **Decision**: Dùng MUI primitives sẵn có để render tree table đệ quy, quản lý expanded IDs cục bộ và cung cấp `aria-expanded`, indentation, expand/collapse all.
 - **Rationale**: Không thêm dependency, giữ design system và đáp ứng keyboard/accessibility.
 - **Alternatives considered**: Thư viện tree-grid mới tăng supply-chain và styling cost; bảng phẳng không đáp ứng yêu cầu.
+## Null display and edit safety
 
+- **Decision**: Giữ `ResourceId`, `resourceName` và `Route` là giá trị trống trong model/form; chỉ render ký hiệu Unicode `—` tại ô bảng khi giá trị không được thiết lập.
+- **Rationale**: Tách dữ liệu nghiệp vụ khỏi ký hiệu trình bày, tránh mojibake và bảo đảm callback Edit nhận đúng Menu gốc thay vì chuỗi thay thế.
+- **Alternatives considered**: Chuẩn hóa thành chuỗi `—` tại API hoặc khi nạp form bị loại vì làm sai ngữ nghĩa `null` và có nguy cơ lưu ký hiệu trình bày vào database; để ô trống hoàn toàn khó nhận biết hơn cho người dùng.

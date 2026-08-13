@@ -1,6 +1,6 @@
 # Implementation Plan: Quản lý Menus dạng cây
 
-**Branch**: `005-manage-menus` | **Date**: 2026-08-12 | **Spec**: [spec.md](spec.md)
+**Branch**: `005-manage-menus` | **Date**: 2026-08-13 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `/specs/005-manage-menus/spec.md`
 
@@ -56,6 +56,9 @@ Identity-client/tests/menus/
 **Structure Decision**: Giữ backend bốn layer và client theo feature. Menus mirror conventions của Resources nhưng query trả flat rows có `ParentId`; Application handler xây cây có cycle/orphan guard để contract không phụ thuộc SQL đệ quy hay thư viện UI mới.
 
 ## Implementation Design
+
+- Giá trị Resource/Route không được thiết lập được giữ là `null` xuyên suốt dữ liệu và form; tree table chỉ ánh xạ giá trị thiếu sang ký hiệu Unicode `—` tại thời điểm render. Nút Edit nhận nguyên bản Menu, không nhận text thay thế, nên bản ghi có cả hai trường `null` vẫn chỉnh sửa được.
+- Regression test render một Menu có Resource/Route `null`, xác nhận không có chuỗi mojibake và xác nhận callback Edit nhận đúng object ban đầu.
 
 - Query tree dùng SQL parameterized theo Application, trả toàn bộ rows hoạt động theo thứ tự ổn định; handler dựng cây O(n), cô lập orphan/cycle thành dữ liệu chẩn đoán an toàn.
 - Commands dùng EF/MediatR/FluentValidation; repository kiểm tra Application, Resource và Parent cùng scope, descendant cycle, duplicate Code và concurrency.

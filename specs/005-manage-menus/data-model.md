@@ -11,6 +11,7 @@
 | Code | required string, max 120 | Trimmed; unique case-insensitive per Application |
 | Name | required string, max 150 | Trimmed, non-empty |
 | Route | optional string, max 300 | Trimmed; blank normalized to null |
+Resource và Route giữ giá trị `null` khi không được thiết lập. Ký hiệu `—` trên màn hình index chỉ là presentation state và không thuộc dữ liệu Menu.
 | Icon | optional string, max 100 | Trimmed; blank normalized to null |
 | SortOrder | integer | Default 0; siblings sort ascending |
 | IsVisible | boolean | Default true |

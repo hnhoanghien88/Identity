@@ -76,6 +76,13 @@
 - [x] T039 Run formatter and manually review multi-line JSX/object formatting in `Identity-client/src/features/menus/` and `Identity-client/tests/menus/`
 - [ ] T040 Run backend build/tests and frontend test/lint/build gates from `specs/005-manage-menus/quickstart.md`
 
+## Phase 8: Resource/Route NULL Regression (US3)
+
+**Goal**: Hiển thị đúng giá trị thiếu và giữ thao tác chỉnh sửa hoạt động khi Resource/Route là `NULL`.
+**Independent Test**: Render Menu có `resourceName` và `route` trống, xác nhận hai ô hiển thị `—`, không có mojibake, và nút Edit truyền đúng Menu gốc.
+
+- [x] T041 [P] [US3] Add NULL Resource/Route display and edit regression coverage in `Identity-client/tests/menus/menus-tree.test.jsx`
+- [x] T042 [US3] Render the Unicode empty-value placeholder without mutating edit data in `Identity-client/src/features/menus/components/MenusTreeTable.jsx`
 ## Dependencies
 
 - Phase 1 â†’ Phase 2 â†’ user stories â†’ Polish.
@@ -83,6 +90,7 @@
 - US2 depends on foundational persistence and US1 refresh behavior.
 - US3 depends on US2 form/repository; US4 depends on US1 tree and shared repository.
 - Within each story, tests precede implementation; tasks touching the same file execute sequentially.
+- T041 precedes T042; the NULL regression reuses the completed US1 tree and US3 edit surfaces.
 
 ## Parallel Opportunities
 

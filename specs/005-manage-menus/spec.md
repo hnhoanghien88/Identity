@@ -61,6 +61,8 @@ Người quản trị chỉnh sửa thông tin Menu, trạng thái hiển thị,
 3. **Given** người dùng chọn chính Menu hoặc một hậu duệ của nó làm Parent, **When** lưu, **Then** hệ thống từ chối để không tạo chu trình.
 4. **Given** người dùng đổi Application của Menu đang có, **When** lưu, **Then** hệ thống từ chối và hướng dẫn tạo cấu trúc phù hợp trong Application đích.
 5. **Given** Menu đã bị người khác cập nhật hoặc xóa sau khi form được mở, **When** người dùng lưu dữ liệu cũ, **Then** hệ thống không ghi đè âm thầm và yêu cầu tải dữ liệu mới nhất.
+6. **Given** một Menu có cả Resource và Route không được thiết lập, **When** người dùng mở màn hình index, **Then** mỗi giá trị trống được hiển thị bằng dấu gạch ngang dài `—` dễ đọc và thao tác chỉnh sửa của Menu vẫn khả dụng.
+7. **Given** một Menu đang hiển thị `—` cho Resource hoặc Route chưa được thiết lập, **When** người dùng chọn chỉnh sửa, nhập hoặc giữ trống các trường tùy chọn rồi lưu dữ liệu hợp lệ, **Then** form mở bình thường, giá trị trống không bị chuyển thành chuỗi ký tự đại diện và Menu được cập nhật thành công.
 
 ---
 
@@ -80,6 +82,10 @@ Người quản trị xóa một Menu không còn sử dụng sau khi thấy rõ
 4. **Given** hộp thoại xác nhận đang mở, **When** người dùng hủy, **Then** không có dữ liệu nào thay đổi.
 
 ### Edge Cases
+
+- Resource và Route đồng thời là `NULL`: màn hình index hiển thị `—` riêng cho từng cột, không hiển thị chuỗi lỗi mã hóa như `â€”`, không phát sinh lỗi khi dựng dòng và vẫn cho phép mở thao tác chỉnh sửa.
+- Chỉ một trong Resource hoặc Route là `NULL`: trường trống hiển thị `—`; trường còn lại hiển thị đúng dữ liệu thực và thao tác chỉnh sửa vẫn hoạt động.
+- Người dùng mở form sửa từ một dòng có giá trị tùy chọn đang hiển thị `—`: form phải nhận giá trị trống thực, không nhận ký tự `—` làm dữ liệu của Resource hoặc Route.
 
 - ParentId không tồn tại, đã xóa hoặc thuộc Application khác: bản ghi không được tạo hoặc cập nhật với quan hệ đó.
 - Dữ liệu cũ đã chứa ParentId mồ côi hoặc chu trình: màn hình không lặp vô hạn; hiển thị cảnh báo an toàn và vẫn cho phép người dùng xử lý các phần cây hợp lệ.
@@ -124,6 +130,8 @@ Người quản trị xóa một Menu không còn sử dụng sau khi thấy rõ
 - **FR-027**: Mỗi thao tác thành công MUST ghi nhận thời điểm và danh tính người tạo hoặc cập nhật theo cơ chế audit hiện có.
 - **FR-028**: Các nhu cầu đọc dữ liệu và các yêu cầu thay đổi dữ liệu MUST được xác định thành các luồng độc lập trong thiết kế tiếp theo, phù hợp với ràng buộc CQRS của feature.
 - **FR-029**: Giao diện MUST hỗ trợ bàn phím, focus nhìn thấy được, nhãn có ý nghĩa, trạng thái mở/thu gọn có thể nhận biết và bố cục dùng được trên các kích thước desktop/mobile được hỗ trợ.
+- **FR-030**: Khi Resource hoặc Route của Menu không có giá trị, màn hình index MUST hiển thị ký hiệu thay thế `—` cho trường tương ứng; MUST NOT hiển thị chuỗi lỗi mã hóa như `â€”` hoặc coi ký hiệu thay thế là dữ liệu thực.
+- **FR-031**: Menu có Resource và/hoặc Route không có giá trị MUST vẫn cho phép người dùng có quyền mở form chỉnh sửa, xem đúng trạng thái trống, cập nhật các trường hợp lệ và lưu; giá trị `—` dùng để hiển thị MUST NOT được đưa vào dữ liệu chỉnh sửa hoặc dữ liệu lưu.
 
 ### Key Entities
 
@@ -145,8 +153,11 @@ Người quản trị xóa một Menu không còn sử dụng sau khi thấy rõ
 - **SC-006**: 100% lựa chọn Application, Resource và Parent trên form phản ánh dữ liệu còn khả dụng tại thời điểm tải hoặc làm mới, không dùng giá trị cấu hình cố định.
 - **SC-007**: 100% thao tác xóa bị hủy, bị chặn do còn nút con hoặc gặp xung đột giữ nguyên dữ liệu và cung cấp kết quả dễ hiểu.
 - **SC-008**: Toàn bộ luồng CRUD chính và thao tác mở/thu gọn cây có thể hoàn thành chỉ bằng bàn phím trên các kích thước màn hình được hỗ trợ.
+- **SC-009**: 100% trường hợp kiểm thử Menu có Resource và/hoặc Route là `NULL` hiển thị đúng `—` trên màn hình index, không xuất hiện `â€”`, và người dùng có quyền mở rồi hoàn thành chỉnh sửa thành công.
 
 ## Assumptions
+
+- Dấu — chỉ là ký hiệu trình bày cho giá trị không được thiết lập trên màn hình index; giá trị nghiệp vụ tương ứng vẫn là trống và Resource cùng Route tiếp tục là các trường tùy chọn.
 
 - Feature tái sử dụng đăng nhập, phân quyền và audit hiện có; tên quyền chi tiết sẽ được xác định ở giai đoạn lập kế hoạch theo quy ước dự án.
 - Resource là liên kết tùy chọn; một Menu không gắn Resource vẫn hợp lệ, ví dụ nút dùng để nhóm các Menu con.

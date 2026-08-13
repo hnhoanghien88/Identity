@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Box,
+  Button,
   CircularProgress,
   Divider,
   List,
@@ -16,6 +17,7 @@ import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import PeopleIcon from "@mui/icons-material/People";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
@@ -40,6 +42,7 @@ import {
   subscribeToSession,
 } from "./features/auth/session";
 import { logout } from "./features/auth/api/logout";
+import { getSessionUserName } from "./features/auth/sessionUser";
 import "./App.css";
 
 const LOGIN_PATH = "/login";
@@ -83,6 +86,7 @@ function App() {
   const [session, setSession] = useState(getSession);
   const [restoring, setRestoring] = useState(() => !getSession());
   const loggedIn = Boolean(session);
+  const userName = getSessionUserName(session);
   const canManageUsers = canAccessUsers(session);
   const canViewApplications = hasApplicationPermission(
     session,
@@ -188,7 +192,7 @@ function App() {
   else if (path === MENUS_PATH) content = <MenusPage session={session} />;
   else if (path === ROLE_PERMISSIONS_PATH) content = <RolePermissionsPage />;
   else if (path === USER_ROLES_PATH) content = <UserRolesPage />;
-  else content = <ApplicationsPage session={session} onLogout={handleLogout} />;
+  else content = <ApplicationsPage session={session} />;
 
   return (
     <Box className="app-shell">
@@ -211,6 +215,26 @@ function App() {
             </Typography>
           </Box>
         </Stack>
+        {loggedIn && (
+          <Stack
+            className="sidebar-account"
+            direction="row"
+            spacing={1}
+            alignItems="center"
+          >
+            <Typography className="sidebar-user-name" variant="body2">
+              {userName}
+            </Typography>
+            <Button
+              size="small"
+              color="error"
+              startIcon={<LogoutRoundedIcon />}
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
+          </Stack>
+        )}
         <Divider />
         <List className="menu-list" aria-label="Main navigation">
           <ListItemButton

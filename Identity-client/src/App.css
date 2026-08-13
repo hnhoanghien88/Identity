@@ -29,6 +29,16 @@
 .brand {
   padding: 24px;
 }
+.sidebar-account {
+  padding: 0 24px 20px;
+}
+.sidebar-user-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .brand-icon,
 .success-icon {
   display: grid;
@@ -118,7 +128,24 @@
     justify-content: center;
     padding: 20px 12px;
   }
+  .sidebar-account {
+    justify-content: center;
+    padding: 0 8px 16px;
+  }
+  .sidebar-account .MuiButton-startIcon {
+    margin: 0;
+  }
+  .sidebar-account .MuiButton-root {
+    min-width: 40px;
+    overflow: hidden;
+    padding-inline: 8px;
+    text-indent: -9999px;
+  }
+  .sidebar-account .MuiSvgIcon-root {
+    text-indent: 0;
+  }
   .brand > div:last-child,
+  .sidebar-user-name,
   .menu-list .MuiListItemText-root {
     display: none;
   }

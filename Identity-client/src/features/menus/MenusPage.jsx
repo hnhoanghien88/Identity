@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -29,6 +29,7 @@ export function MenusPage() {
   const [menus, setMenus] = useState([]);
   const [resources, setResources] = useState([]);
   const [expanded, setExpanded] = useState(new Set());
+  const expandedApplicationId = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
@@ -79,7 +80,12 @@ export function MenusPage() {
         ),
       ]);
       if (menusResult.status === "fulfilled") {
-        setMenus(menusResult.value);
+        const nextMenus = menusResult.value;
+        setMenus(nextMenus);
+        if (expandedApplicationId.current !== applicationId) {
+          setExpanded(new Set(allIds(nextMenus)));
+          expandedApplicationId.current = applicationId;
+        }
       } else if (menusResult.reason.name !== "AbortError") {
         setError(menusResult.reason.message);
       }
@@ -179,7 +185,7 @@ export function MenusPage() {
           >
             {applications.map((item) => (
               <MenuItem key={item.id} value={item.id}>
-                {item.code} â€” {item.name}
+                {item.code} — {item.name}
               </MenuItem>
             ))}
           </TextField>

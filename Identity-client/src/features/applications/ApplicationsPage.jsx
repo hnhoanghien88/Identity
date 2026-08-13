@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Box,
@@ -9,7 +9,6 @@ import {
   Typography,
 } from "@mui/material";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import {
   createApplication,
   deleteApplication,
@@ -24,7 +23,7 @@ import { hasApplicationPermission } from "./capabilities";
 
 const initialFilters = { code: "", name: "", audience: "", status: "" };
 
-export function ApplicationsPage({ session, onLogout }) {
+export function ApplicationsPage({ session }) {
   const canView = hasApplicationPermission(session, "Applications.View");
   const canCreate = hasApplicationPermission(session, "Applications.Create");
   const canEdit = hasApplicationPermission(session, "Applications.Update");
@@ -162,15 +161,7 @@ export function ApplicationsPage({ session, onLogout }) {
             >
               Create Application
             </Button>
-          )}{" "}
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<LogoutRoundedIcon />}
-            onClick={onLogout}
-          >
-            Logout
-          </Button>
+          )}
         </Stack>
         <ApplicationsFilters
           value={filters}

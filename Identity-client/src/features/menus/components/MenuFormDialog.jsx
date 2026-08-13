@@ -51,8 +51,10 @@ export function MenuFormDialog({
         menu
           ? {
               ...menu,
-              parentId: menu.parentId || "",
-              resourceId: menu.resourceId || "",
+              parentId: menu.parentId ?? "",
+              resourceId: menu.resourceId ?? "",
+              route: menu.route ?? "",
+              icon: menu.icon ?? "",
             }
           : empty,
       );
@@ -78,8 +80,8 @@ export function MenuFormDialog({
   });
   const submit = () => {
     const next = {};
-    if (!value.code.trim()) next.code = "Code is required.";
-    if (!value.name.trim()) next.name = "Name is required.";
+    if (!value.code?.trim()) next.code = "Code is required.";
+    if (!value.name?.trim()) next.name = "Name is required.";
     setErrors(next);
     if (Object.keys(next).length) return;
     onSubmit({
@@ -88,8 +90,8 @@ export function MenuFormDialog({
       resourceId: value.resourceId ? Number(value.resourceId) : null,
       code: value.code.trim(),
       name: value.name.trim(),
-      route: value.route.trim() || null,
-      icon: value.icon.trim() || null,
+      route: value.route?.trim() || null,
+      icon: value.icon?.trim() || null,
       sortOrder: Number(value.sortOrder),
       isVisible: value.isVisible,
       isActive: value.isActive,

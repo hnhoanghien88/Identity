@@ -120,6 +120,40 @@ NgÆ°á»i quáº£n trá»‹ bá» check má»™t Action Ä‘á»ƒ gá
 
 ## Assumptions
 
+## Update 2026-08-13: Application-scoped selection
+
+### User Story 4 - Select Resources within the Role Application (Priority: P1)
+
+An administrator can identify each Role's Application in column 1. After selecting a Role, column 2 lists only active Resources that belong to that Role's Application.
+
+**Independent Test**: Select Roles from two different Applications and verify that the displayed Application changes with the Role, the previous Resource selection is cleared, and every newly loaded Resource belongs to the newly selected Role's Application.
+
+**Acceptance Scenarios**:
+
+1. **Given** Roles from multiple Applications, **When** column 1 is displayed, **Then** every Role shows its Role Code, Application Code, and Application Name.
+2. **Given** a Role in Application A, **When** it is selected, **Then** column 2 requests and displays only active Resources in Application A and selects the first result when available.
+3. **Given** a selected Role in Application A, **When** the user selects a Role in Application B, **Then** the old Resource and Actions are cleared before Resources in Application B are loaded.
+4. **Given** a direct request combining a Role and Resource from different Applications, **When** permissions are read, granted, or revoked, **Then** the request is rejected without changing permission data.
+
+### Additional Functional Requirements
+
+- **FR-023**: Column 1 MUST display Role Code, Application Code, and Application Name for every Role.
+- **FR-024**: Column 2 MUST load Resources using the selected Role's Application as a mandatory filter.
+- **FR-025**: Changing Role MUST clear the previous Resource selection and Action state before loading the new Application scope.
+- **FR-026**: Stale Resource results from a previously selected Role MUST NOT replace the current Role's Resource list.
+- **FR-027**: The system MUST reject reads, grants, and revocations where Role and Resource belong to different Applications.
+
+### Additional Success Criteria
+
+- **SC-009**: 100% of displayed Roles identify their Application using both code and name.
+- **SC-010**: 100% of Resource lists contain only Resources from the selected Role's Application.
+- **SC-011**: 100% of cross-Application Role–Resource permission requests are rejected without data changes.
+
+### Additional Assumptions
+
+- Each Role and Resource belongs to exactly one Application.
+- Existing Role responses already expose Application identity, and existing Resource search supports Application filtering.
+
 - â€œKhÃ´ng yÃªu cáº§u quyá»nâ€ nghÄ©a lÃ  khÃ´ng kiá»ƒm tra Permission riÃªng cá»§a chá»©c nÄƒng; yÃªu cáº§u Ä‘Äƒng nháº­p hiá»‡n cÃ³ váº«n Ä‘Æ°á»£c giá»¯ theo constitution.
 - MÃ n hÃ¬nh dÃ¹ng tÃªn **Role Permissions** vÃ  Ä‘á»‹a chá»‰ `/role-permissions` theo quy Æ°á»›c tÃªn chá»©c nÄƒng hiá»‡n cÃ³.
 - Má»—i thao tÃ¡c checkbox Ä‘Æ°á»£c lÆ°u ngay; khÃ´ng cÃ³ nÃºt lÆ°u hÃ ng loáº¡t hay tráº¡ng thÃ¡i chá»‰nh sá»­a chÆ°a cam káº¿t kÃ©o dÃ i.
@@ -128,4 +162,3 @@ NgÆ°á»i quáº£n trá»‹ bá» check má»™t Action Ä‘á»ƒ gá
 - Roles, Resources vÃ  Actions Ä‘Ã£ cÃ³ cÆ¡ cháº¿ xÃ¡c Ä‘á»‹nh báº£n ghi kháº£ dá»¥ng; chá»©c nÄƒng nÃ y khÃ´ng thay Ä‘á»•i vÃ²ng Ä‘á»i cá»§a cÃ¡c thá»±c thá»ƒ Ä‘Ã³.
 - Permission Ä‘Æ°á»£c nháº­n diá»‡n duy nháº¥t bá»Ÿi tá»• há»£p Role, Resource vÃ  Action; thao tÃ¡c bá» check xÃ³a liÃªn káº¿t tÆ°Æ¡ng á»©ng thay vÃ¬ Ä‘Ã¡nh dáº¥u khÃ´ng hoáº¡t Ä‘á»™ng.
 - Danh sÃ¡ch lá»›n sá»­ dá»¥ng cÆ¡ cháº¿ duyá»‡t hoáº·c tÃ¬m kiáº¿m phÃ¹ há»£p theo chuáº©n chung cá»§a dá»± Ã¡n; chi tiáº¿t tÆ°Æ¡ng tÃ¡c Ä‘Æ°á»£c quyáº¿t Ä‘á»‹nh á»Ÿ bÆ°á»›c láº­p káº¿ hoáº¡ch mÃ  khÃ´ng thay Ä‘á»•i luá»“ng ba cá»™t.
-

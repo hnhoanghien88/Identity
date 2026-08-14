@@ -95,7 +95,6 @@
   overflow: auto;
   padding: 20px;
 }
-.login-card,
 .success-card {
   width: min(100%, 440px);
   box-sizing: border-box;
@@ -104,10 +103,6 @@
   border-radius: 18px !important;
   box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08) !important;
 }
-.login-heading {
-  margin-bottom: 32px;
-}
-.login-heading h1,
 .success-card h1 {
   margin-bottom: 8px;
 }
@@ -165,8 +160,14 @@
     min-height: auto;
     max-height: none;
   }
-  .login-card,
   .success-card {
     padding: 28px 22px;
   }
+}
+
+.login-page-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #f5f7fb;
 }

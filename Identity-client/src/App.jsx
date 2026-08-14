@@ -18,7 +18,6 @@ import {
   Typography,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
@@ -225,15 +224,6 @@ function App() {
 
   let content;
   if (restoring) content = <CircularProgress aria-label="Restoring session" />;
-  else if (path === LOGIN_PATH)
-    content = (
-      <LoginPage
-        onLoginSuccess={(next) => {
-          publishSession(next);
-          navigate(firstMenuRoute(next));
-        }}
-      />
-    );
   else if (forbidden) content = <ForbiddenPage />;
   else if (path === USERS_PATH) content = <UsersPage session={session} />;
   else if (path === RESOURCES_PATH)
@@ -246,6 +236,23 @@ function App() {
   else if (path === USER_ROLES_PATH)
     content = <UserRolesPage session={session} />;
   else content = <ApplicationsPage session={session} />;
+
+  if (restoring)
+    return (
+      <Box className="login-page-loading">
+        <CircularProgress aria-label="Restoring session" />
+      </Box>
+    );
+
+  if (path === LOGIN_PATH)
+    return (
+      <LoginPage
+        onLoginSuccess={(next) => {
+          publishSession(next);
+          navigate(firstMenuRoute(next));
+        }}
+      />
+    );
 
   return (
     <Box className="app-shell">
@@ -290,17 +297,6 @@ function App() {
         )}
         <Divider />
         <List className="menu-list" aria-label="Main navigation">
-          {!loggedIn && (
-            <ListItemButton
-              selected={path === LOGIN_PATH}
-              onClick={() => navigate(LOGIN_PATH)}
-            >
-              <ListItemIcon>
-                <LoginRoundedIcon />
-              </ListItemIcon>
-              <ListItemText primary="Login" />
-            </ListItemButton>
-          )}
           {loggedIn &&
             navigationMenus.map((menu) => (
               <ListItemButton

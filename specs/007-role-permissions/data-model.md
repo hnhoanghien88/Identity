@@ -38,4 +38,9 @@ MÃ´ hÃ¬nh Ä‘á»c khÃ´ng lÆ°u riÃªng gá»“m `actionId`, `code`
 - Náº¿u Permission cÃ²n Ä‘Æ°á»£c Role khÃ¡c tham chiáº¿u, revoke bá»‹ tá»« chá»‘i vÃ  transaction rollback toÃ n bá»™.
 - Revoke khi Permission khÃ´ng tá»“n táº¡i Ä‘Æ°á»£c xem lÃ  thÃ nh cÃ´ng idempotent.
 - Unique indexes ngÄƒn báº£n ghi trÃ¹ng khi thao tÃ¡c Ä‘á»“ng thá»i.
+# Update 2026-08-13: Cross-entity invariant
 
+- A `Role` belongs to one `Application`.
+- A `Resource` belongs to one `Application`.
+- A Role Permission operation is valid only when `Role.ApplicationId == Resource.ApplicationId`.
+- Violating combinations are rejected before permission data is read or changed; no new fields or migration are required.

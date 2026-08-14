@@ -47,4 +47,10 @@
 **Rationale**: PhÃ¹ há»£p yÃªu cáº§u â€œkhÃ´ng yÃªu cáº§u quyá»nâ€ nhÆ°ng váº«n tuÃ¢n thá»§ constitution fail-closed cho há»‡ thá»‘ng quáº£n trá»‹ identity.
 
 **Alternatives considered**: Anonymous access vi pháº¡m constitution; policy CRUD riÃªng trÃ¡i yÃªu cáº§u feature.
+# Update 2026-08-13: Application-scoped Resources
 
+- **Decision**: Use `Role.applicationId` as the authoritative Resource filter after Role selection.
+- **Rationale**: Role is the permission subject and already belongs to exactly one Application, so its Application establishes the correct authorization boundary.
+- **Alternatives considered**: Loading all Resources and filtering only in the browser was rejected because it leaks unrelated data and can be bypassed; adding a new endpoint was rejected because the existing Resource search contract already supports `applicationId`.
+- **Decision**: Validate Role and Resource Application equality at the persistence boundary for all Role Permission operations.
+- **Rationale**: UI filtering improves usability but cannot enforce authorization integrity against direct API calls.

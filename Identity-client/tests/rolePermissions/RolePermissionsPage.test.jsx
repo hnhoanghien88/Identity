@@ -23,8 +23,20 @@ vi.mock("../../src/features/rolePermissions/api/rolePermissionsApi", () => ({
 }));
 
 const roles = [
-  { id: 1, code: "ADMIN" },
-  { id: 2, code: "AUDITOR" },
+  {
+    id: 1,
+    applicationId: 1000,
+    applicationCode: "PORTAL",
+    applicationName: "Portal",
+    code: "ADMIN",
+  },
+  {
+    id: 2,
+    applicationId: 2000,
+    applicationCode: "REPORTING",
+    applicationName: "Reporting",
+    code: "AUDITOR",
+  },
 ];
 const session = {
   authorization: {
@@ -38,7 +50,7 @@ const resources = [
 
 describe("RolePermissionsPage", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     searchRoles.mockResolvedValue({ items: roles, totalCount: 2 });
     searchResources.mockResolvedValue({ items: resources, totalCount: 2 });
     getRolePermissions.mockResolvedValue({
@@ -62,6 +74,13 @@ describe("RolePermissionsPage", () => {
     expect(screen.getByRole("checkbox", { name: /EDIT/ })).toBeChecked();
     expect(screen.getByRole("list", { name: "Roles" })).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Resources" })).toBeInTheDocument();
+    expect(screen.getByText("PORTAL — Portal")).toBeInTheDocument();
+    expect(searchResources).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filter: { applicationId: 1000, isActive: true },
+      }),
+      expect.any(AbortSignal),
+    );
     expect(getRolePermissions).toHaveBeenCalledWith(
       1,
       10,
@@ -70,6 +89,12 @@ describe("RolePermissionsPage", () => {
   });
 
   it("reloads Actions when the active selection changes", async () => {
+    searchResources
+      .mockResolvedValueOnce({ items: resources, totalCount: 2 })
+      .mockResolvedValueOnce({
+        items: [{ id: 20, code: "AUDIT_LOG" }],
+        totalCount: 1,
+      });
     const user = userEvent.setup();
     render(<RolePermissionsPage session={session} />);
     await screen.findByRole("checkbox", { name: /VIEW/ });
@@ -79,9 +104,15 @@ describe("RolePermissionsPage", () => {
     await waitFor(() =>
       expect(getRolePermissions).toHaveBeenCalledWith(
         2,
-        10,
+        20,
         expect.any(AbortSignal),
       ),
+    );
+    expect(searchResources).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        filter: { applicationId: 2000, isActive: true },
+      }),
+      expect.any(AbortSignal),
     );
     expect(screen.getByText("AUDITOR").closest(".Mui-selected")).not.toBeNull();
   });

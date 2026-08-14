@@ -52,6 +52,14 @@
 
 ## Dependencies
 
+## Phase 7: Application-scoped Role and Resource update
+
+- [X] T019 [P] [US4] Update specification and design artifacts in specs/007-role-permissions/ for Role Application display and Resource scoping
+- [X] T020 [P] [US4] Add frontend regression coverage in Identity-client/tests/rolePermissions/RolePermissionsPage.test.jsx
+- [X] T021 [US4] Display Role Application and reload Resources by selected Role Application in Identity-client/src/features/rolePermissions/RolePermissionsPage.jsx
+- [X] T022 [US4] Enforce Role–Resource Application equality in Identity-api/src/Identity.Infrastructure/Persistence/MySqlRolePermissionsRepository.cs
+- [X] T023 [US4] Run backend and frontend quality gates and record completion in specs/007-role-permissions/tasks.md
+
 - T001 Ã¢â€ â€™ T002-T004 Ã¢â€ â€™ US1 Ã¢â€ â€™ US2 Ã¢â€ â€™ US3 Ã¢â€ â€™ T018.
 - T002 vÃƒÂ  T003 Ã„â€˜Ã¡Â»â„¢c lÃ¡ÂºÂ­p sau setup; T004 phÃ¡Â»Â¥ thuÃ¡Â»â„¢c interface Ã¡Â»Å¸ T003.
 - US1 cung cÃ¡ÂºÂ¥p snapshot, controller vÃƒÂ  UI nÃ¡Â»Ân; US2/US3 bÃ¡Â»â€¢ sung hai transition Ã„â€˜Ã¡Â»â„¢c lÃ¡ÂºÂ­p trÃƒÂªn cÃƒÂ¹ng checkbox.
@@ -66,5 +74,3 @@
 ## Implementation Strategy
 
 MVP gÃ¡Â»â€œm Phase 1-3: xem snapshot Ã„â€˜ÃƒÂºng bÃ¡ÂºÂ±ng giao diÃ¡Â»â€¡n ba cÃ¡Â»â„¢t. Sau Ã„â€˜ÃƒÂ³ cÃ¡ÂºÂ¥p vÃƒÂ  gÃ¡Â»Â¡ quyÃ¡Â»Ân theo hai increment, mÃ¡Â»â€”i increment chÃ¡ÂºÂ¡y independent test trÃ†Â°Ã¡Â»â€ºc khi tiÃ¡ÂºÂ¿p tÃ¡Â»Â¥c. TÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ 18 tasks dÃƒÂ¹ng Ã„â€˜ÃƒÂºng checkbox, ID, marker story vÃƒÂ  Ã„â€˜Ã†Â°Ã¡Â»Âng dÃ¡ÂºÂ«n cÃ¡Â»Â¥ thÃ¡Â»Æ’.
-
-

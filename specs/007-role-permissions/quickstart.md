@@ -32,4 +32,11 @@ Bá» check Action Ä‘Ã£ cáº¥p, táº£i láº¡i vÃ  gá»­i láº�
 ## Scenario 4: Failure and accessibility
 
 MÃ´ phá»ng lá»—i lÆ°u Ä‘á»ƒ xÃ¡c nháº­n UI hoÃ n nguyÃªn; Ä‘á»•i lá»±a chá»n khi request cÅ© cháº­m; hoÃ n thÃ nh luá»“ng báº±ng bÃ n phÃ­m; gá»i API khÃ´ng token. Tráº¡ng thÃ¡i pháº£i khá»›p dá»¯ liá»‡u Ä‘Ã£ cam káº¿t, focus/active rÃµ rÃ ng vÃ  anonymous nháº­n 401.
+# Update validation: Application-scoped Resources
 
+1. Open Role Permissions with active Roles in at least two Applications.
+2. Confirm each Role displays Role Code, Application Code, and Application Name.
+3. Select a Role in Application A and confirm only Application A Resources appear.
+4. Select a Role in Application B and confirm the previous Resource/Actions clear before only Application B Resources appear.
+5. Send snapshot, grant, and revoke requests using a Role from A and Resource from B; each must fail and leave permission data unchanged.
+6. Run backend Role Permission tests and frontend Role Permissions tests, lint, and production build.

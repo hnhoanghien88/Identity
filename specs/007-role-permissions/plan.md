@@ -85,5 +85,14 @@ Identity-client/
 
 ## Complexity Tracking
 
-KhÃ´ng cÃ³ vi pháº¡m constitution cáº§n biá»‡n minh.
+## Update Plan 2026-08-13
 
+- Reuse the existing Role DTO fields `applicationId`, `applicationCode`, and `applicationName`; no schema migration is required.
+- Load Roles first. Derive the active Application from the selected Role, then load Resources with the existing `applicationId` filter.
+- Clear Resource and Action state whenever the Role Application changes; abort obsolete requests so stale responses cannot cross Application boundaries.
+- Enforce the same-Application invariant in the Role Permission persistence boundary for snapshot, grant, and revoke operations.
+- Add frontend regression coverage for Application labels, Resource filter requests, and Role switching; validate backend build and existing Role Permission tests.
+
+**Constitution re-check**: PASS. The backend invariant fails closed, layer boundaries remain unchanged, no dependency or migration is added, and automated regression coverage is required.
+
+KhÃ´ng cÃ³ vi pháº¡m constitution cáº§n biá»‡n minh.

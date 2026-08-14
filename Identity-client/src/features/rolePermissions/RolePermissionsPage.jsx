@@ -18,6 +18,7 @@ export function RolePermissionsPage({ session }) {
   const [activeResourceId, setActiveResourceId] = useState(null);
   const [actions, setActions] = useState([]);
   const [lookupsLoading, setLookupsLoading] = useState(true);
+  const [resourcesLoading, setResourcesLoading] = useState(false);
   const [lookupError, setLookupError] = useState("");
   const [actionsLoading, setActionsLoading] = useState(false);
   const [actionsError, setActionsError] = useState("");
@@ -30,34 +31,19 @@ export function RolePermissionsPage({ session }) {
     const controller = new AbortController();
     setLookupsLoading(true);
     setLookupError("");
-    Promise.all([
-      searchRoles(
-        {
-          filter: { isActive: true },
-          sorts: [{ column: 2, direction: 0 }],
-          page: 1,
-          pageSize: 100,
-        },
-        controller.signal,
-      ),
-      searchResources(
-        {
-          filter: { isActive: true },
-          sorts: [{ column: 1, direction: 0 }],
-          page: 1,
-          pageSize: 100,
-        },
-        controller.signal,
-      ),
-    ])
-      .then(([roleResult, resourceResult]) => {
+    searchRoles(
+      {
+        filter: { isActive: true },
+        sorts: [{ column: 2, direction: 0 }],
+        page: 1,
+        pageSize: 100,
+      },
+      controller.signal,
+    )
+      .then((roleResult) => {
         setRoles(roleResult.items);
-        setResources(resourceResult.items);
         setActiveRoleId(
           (current) => current ?? roleResult.items[0]?.id ?? null,
-        );
-        setActiveResourceId(
-          (current) => current ?? resourceResult.items[0]?.id ?? null,
         );
       })
       .catch((error) => {
@@ -66,6 +52,45 @@ export function RolePermissionsPage({ session }) {
       .finally(() => setLookupsLoading(false));
     return () => controller.abort();
   }, []);
+
+  const activeRole = roles.find((role) => role.id === activeRoleId);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setResources([]);
+    setActiveResourceId(null);
+    setActions([]);
+    setActionsError("");
+
+    if (!activeRole?.applicationId) return () => controller.abort();
+
+    setResourcesLoading(true);
+    setLookupError("");
+    searchResources(
+      {
+        filter: {
+          applicationId: activeRole.applicationId,
+          isActive: true,
+        },
+        sorts: [{ column: 2, direction: 0 }],
+        page: 1,
+        pageSize: 100,
+      },
+      controller.signal,
+    )
+      .then((result) => {
+        setResources(result.items);
+        setActiveResourceId(result.items[0]?.id ?? null);
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") setLookupError(error.message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setResourcesLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [activeRoleId, activeRole?.applicationId]);
 
   const loadActions = useCallback(() => {
     if (!activeRoleId || !activeResourceId) {
@@ -146,6 +171,9 @@ export function RolePermissionsPage({ session }) {
             error=""
             emptyMessage="No Roles are available."
             primary={(role) => role.code}
+            secondary={(role) =>
+              `${role.applicationCode} — ${role.applicationName}`
+            }
             onSelect={setActiveRoleId}
           />
           <SelectionColumn
@@ -153,11 +181,10 @@ export function RolePermissionsPage({ session }) {
             ariaLabel="Resources"
             items={resources}
             activeId={activeResourceId}
-            loading={lookupsLoading}
+            loading={resourcesLoading}
             error=""
             emptyMessage="No Resources are available."
             primary={(resource) => resource.resourceCode ?? resource.code}
-            secondary={(resource) => resource.applicationCode}
             onSelect={setActiveResourceId}
           />
           <ActionsColumn

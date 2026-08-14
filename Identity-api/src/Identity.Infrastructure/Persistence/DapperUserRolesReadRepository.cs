@@ -40,6 +40,7 @@ public sealed class DapperUserRolesReadRepository(MySqlConnectionFactory connect
               AND r.IsDeleted = FALSE
               AND resource.IsActive = TRUE
               AND resource.IsDeleted = FALSE
+              AND r.ApplicationId = resource.ApplicationId
               AND a.Code = @ApplicationCode
               AND a.IsActive = TRUE
               AND a.IsDeleted = FALSE
@@ -59,4 +60,3 @@ public sealed class DapperUserRolesReadRepository(MySqlConnectionFactory connect
         return new UserAuthorization(roles.AsList(), permissions.AsList());
     }
 }
-

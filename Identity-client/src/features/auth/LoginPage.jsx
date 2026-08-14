@@ -28,10 +28,7 @@ export function LoginPage({ onLoginSuccess }) {
     setIsLoading(true);
 
     try {
-      const session = await login({
-        code,
-        password,
-      });
+      const session = await login({ code, password });
       onLoginSuccess(session);
     } catch (loginError) {
       setError(
@@ -43,21 +40,21 @@ export function LoginPage({ onLoginSuccess }) {
   };
 
   return (
-    <Paper className={"login-card"} elevation={0}>
-      <Box className={"login-heading"}>
-        <Typography variant={"h4"} component={"h1"} fontWeight={700}>
+    <Paper elevation={0}>
+      <Box>
+        <Typography variant="h4" component="h1" fontWeight={700}>
           Welcome back
         </Typography>
-        <Typography color={"text.secondary"}>{LOGIN_DESCRIPTION}</Typography>
+        <Typography color="text.secondary">{LOGIN_DESCRIPTION}</Typography>
       </Box>
-      <Box component={"form"} onSubmit={handleSubmit} noValidate>
+      <Box component="form" onSubmit={handleSubmit} noValidate>
         <Stack spacing={2.5}>
-          {error && <Alert severity={"error"}>{error}</Alert>}
+          {error && <Alert severity="error">{error}</Alert>}
           <TextField
-            label={"Code"}
+            label="Code"
             value={code}
             onChange={(event) => setCode(event.target.value)}
-            autoComplete={"username"}
+            autoComplete="username"
             slotProps={{
               htmlInput: {
                 maxLength: 50,
@@ -69,22 +66,22 @@ export function LoginPage({ onLoginSuccess }) {
             autoFocus
           />
           <TextField
-            label={"Password"}
-            type={"password"}
+            label="Password"
+            type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            autoComplete={"current-password"}
+            autoComplete="current-password"
             required
             fullWidth
           />
           <Button
-            type={"submit"}
-            variant={"contained"}
-            size={"large"}
+            type="submit"
+            variant="contained"
+            size="large"
             disabled={isLoading || !code || !password}
           >
             {isLoading ? (
-              <CircularProgress size={24} color={"inherit"} />
+              <CircularProgress size={24} color="inherit" />
             ) : (
               "Login"
             )}

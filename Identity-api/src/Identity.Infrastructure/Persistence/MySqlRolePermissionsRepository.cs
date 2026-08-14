@@ -16,6 +16,7 @@ public sealed class MySqlRolePermissionsRepository(IdentityDbContext db)
     {
         await EnsureRoleAsync(roleId, cancellationToken);
         await EnsureResourceAsync(resourceId, cancellationToken);
+        await EnsureSameApplicationAsync(roleId, resourceId, cancellationToken);
         var actions = await db.PermissionActions
             .AsNoTracking()
             .OrderBy(action => action.Code)
@@ -42,6 +43,7 @@ public sealed class MySqlRolePermissionsRepository(IdentityDbContext db)
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         await EnsureRoleAsync(roleId, cancellationToken);
         var resource = await GetResourceAsync(resourceId, cancellationToken);
+        await EnsureSameApplicationAsync(roleId, resourceId, cancellationToken);
         var action = await GetActionAsync(actionId, cancellationToken);
         var permission = await db.Permissions.SingleOrDefaultAsync(
             value => value.ResourceId == resourceId && value.ActionId == actionId,
@@ -86,6 +88,7 @@ public sealed class MySqlRolePermissionsRepository(IdentityDbContext db)
     {
         await EnsureRoleAsync(roleId, cancellationToken);
         await EnsureResourceAsync(resourceId, cancellationToken);
+        await EnsureSameApplicationAsync(roleId, resourceId, cancellationToken);
         await EnsureActionAsync(actionId, cancellationToken);
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         var permission = await db.Permissions.SingleOrDefaultAsync(
@@ -141,6 +144,24 @@ public sealed class MySqlRolePermissionsRepository(IdentityDbContext db)
     private async Task EnsureResourceAsync(ulong id, CancellationToken cancellationToken) =>
         _ = await GetResourceAsync(id, cancellationToken);
 
+    private async Task EnsureSameApplicationAsync(
+        ulong roleId,
+        ulong resourceId,
+        CancellationToken cancellationToken)
+    {
+        var isSameApplication = await db.Roles
+            .Where(role => role.Id == roleId)
+            .AnyAsync(
+                role => db.Resources.Any(resource =>
+                    resource.Id == resourceId
+                    && resource.ApplicationId == role.ApplicationId),
+                cancellationToken);
+
+        if (!isSameApplication)
+            throw new ConflictException(
+                "Role and Resource must belong to the same Application.");
+    }
+
     private async Task<Resources> GetResourceAsync(ulong id, CancellationToken cancellationToken) =>
         await db.Resources.SingleOrDefaultAsync(
             resource => resource.Id == id && resource.IsActive && !resource.IsDeleted,
@@ -171,6 +192,5 @@ public sealed class MySqlRolePermissionsRepository(IdentityDbContext db)
         }
     }
 }
-
 
 

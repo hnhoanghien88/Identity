@@ -27,7 +27,7 @@ public sealed class GetMenusTests
     }
 
     private static MenuRowDto Row(ulong id, ulong? parentId, int order, string name) =>
-        new(id, 10, "App", parentId, null, null, $"M{id}", name, null, null,
+        new(id, 10, "App", parentId, null, null, null, $"M{id}", name, null, null,
             order, true, true, 1);
 
     private sealed class Stub(IReadOnlyList<MenuRowDto> rows) : IMenusReadRepository

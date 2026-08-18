@@ -1,4 +1,4 @@
-.app-shell {
+﻿.app-shell {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
@@ -170,4 +170,208 @@
   display: grid;
   place-items: center;
   background: #f5f7fb;
+}
+
+.cuba-login-page { position: relative; min-height: 100vh; display: grid; place-items: center; overflow: hidden; padding: 36px 20px; background: linear-gradient(135deg, #7366ff 0%, #6157d9 46%, #3e376f 100%); }
+.cuba-login-page::before { position: absolute; inset: 0; content: ""; background: radial-gradient(circle at 18% 18%, rgba(255,255,255,.22), transparent 28%), radial-gradient(circle at 82% 72%, rgba(84,186,74,.22), transparent 25%), linear-gradient(115deg, transparent 44%, rgba(255,255,255,.07) 44.2%, transparent 44.5%); }
+.cuba-login-decoration { position: absolute; width: 520px; height: 520px; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; opacity: .8; }
+.cuba-login-decoration::after { position: absolute; inset: 55px; content: ""; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; }
+.cuba-login-decoration-left { top: -280px; left: -210px; }
+.cuba-login-decoration-right { right: -260px; bottom: -300px; }
+.cuba-login-skyline { position: absolute; right: 0; bottom: 0; left: 0; height: 31%; opacity: .13; background: linear-gradient(to top, #19152d 0 18%, transparent 18%), linear-gradient(90deg, transparent 0 4%, #19152d 4% 8%, transparent 8% 12%, #19152d 12% 18%, transparent 18% 24%, #19152d 24% 27%, transparent 27% 34%, #19152d 34% 43%, transparent 43% 50%, #19152d 50% 54%, transparent 54% 60%, #19152d 60% 69%, transparent 69% 76%, #19152d 76% 81%, transparent 81% 88%, #19152d 88% 96%, transparent 96%); clip-path: polygon(0 66%,4% 66%,4% 30%,8% 30%,8% 58%,12% 58%,12% 40%,18% 40%,18% 70%,24% 70%,24% 20%,27% 20%,27% 54%,34% 54%,34% 32%,43% 32%,43% 64%,50% 64%,50% 5%,54% 5%,54% 48%,60% 48%,60% 25%,69% 25%,69% 61%,76% 61%,76% 37%,81% 37%,81% 57%,88% 57%,88% 16%,96% 16%,96% 70%,100% 70%,100% 100%,0 100%); }
+.cuba-login-card { position: relative; z-index: 1; width: min(100%, 470px); padding: 38px 44px 34px; border: 0; border-radius: 12px !important; box-shadow: 0 18px 55px rgba(25,21,45,.28) !important; }
+.cuba-login-brand { align-items: center; justify-content: center; margin-bottom: 28px; }
+.cuba-login-logo { width: 40px; height: 40px; display: grid; place-items: center; color: #fff; border-radius: 9px; background: #7366ff; box-shadow: 0 6px 14px rgba(115,102,255,.25); }
+.cuba-login-brand-name { color: #2f2f3b; font-size: 20px !important; font-weight: 750 !important; line-height: 1.1 !important; }
+.cuba-login-brand-caption { margin-top: 3px !important; color: #8f94a5; font-size: 8px !important; font-weight: 700 !important; letter-spacing: 2px !important; }
+.cuba-login-heading { margin-bottom: 24px; text-align: center; }
+.cuba-login-heading h1 { margin-bottom: 8px; color: #2f2f3b; font-size: 25px; font-weight: 700; }
+.cuba-login-card .MuiInputLabel-root { color: #454650; font-weight: 600; }
+.cuba-login-card .MuiOutlinedInput-root { border-radius: 6px; background: #fff; }
+.cuba-login-card .MuiOutlinedInput-notchedOutline { border-color: #dedee7; }
+.cuba-login-options .MuiFormControlLabel-root { margin-right: 0; margin-left: 8px; }
+.cuba-login-options .MuiFormControlLabel-label, .cuba-login-options a { font-size: 13px; }
+.cuba-login-options a, .cuba-login-register a { color: #7366ff; font-weight: 600; }
+.cuba-login-submit { min-height: 47px; border-radius: 6px !important; background: #7366ff !important; font-weight: 650 !important; text-transform: none !important; box-shadow: none !important; }
+.cuba-login-submit:hover { background: #6255e8 !important; }
+.cuba-login-submit.Mui-disabled { color: rgba(255,255,255,.72) !important; background: #aaa3f4 !important; }
+.cuba-login-social { margin-top: 25px; }
+.cuba-login-social > .MuiTypography-root { display: flex; align-items: center; gap: 12px; color: #8f94a5; font-size: 12px; white-space: nowrap; }
+.cuba-login-social > .MuiTypography-root::before, .cuba-login-social > .MuiTypography-root::after { width: 100%; height: 1px; content: ""; background: #e6e6ed; }
+.cuba-login-social .MuiButton-root { min-height: 42px; border-color: #dedee7; color: #4d4e59; text-transform: none; }
+.cuba-login-social .MuiButton-root:first-child .MuiSvgIcon-root { color: #4267b2; }
+.cuba-login-social .MuiButton-root:nth-child(2) .MuiSvgIcon-root { color: #1da1f2; }
+.cuba-login-social .MuiButton-root:nth-child(3) .MuiSvgIcon-root { color: #0a66c2; }
+.cuba-login-register { margin-top: 22px !important; text-align: center; font-size: 14px !important; }
+@media (max-width: 520px) {
+  .cuba-login-page { align-items: center; padding: 18px 14px; }
+  .cuba-login-card { padding: 30px 22px 28px; }
+  .cuba-login-brand { margin-bottom: 25px; }
+  .cuba-login-options { align-items: flex-start !important; flex-direction: column !important; gap: 4px; }
+  .cuba-login-social .MuiStack-root { flex-direction: column; }
+}
+
+
+/* Attex authentication layout */
+.cuba-login-page { position: relative; min-height: 100vh; display: grid; place-items: center; overflow: hidden; padding: 48px 20px 76px; color: #6c757d; background: #eef2f7; }
+.cuba-login-page::before { position: absolute; inset: 0; content: ""; background: url("/auth-login-background.svg") center / 100% 100% no-repeat; }
+.cuba-login-decoration, .cuba-login-skyline { display: none; }
+.cuba-login-card { position: relative; z-index: 1; width: min(100%, 490px); overflow: hidden; padding: 0 40px 36px; border: 0; border-radius: 4px !important; background: #fff; box-shadow: 0 0 35px rgba(50,58,70,.1) !important; }
+.cuba-login-brand { min-height: 88px; align-items: center; justify-content: center; margin: 0 -40px 34px; color: #fff; background: rgb(75, 94, 211); }
+.cuba-login-logo { width: 34px; height: 34px; display: grid; place-items: center; color: rgb(75, 94, 211); border-radius: 50%; background: #fff; box-shadow: none; }
+.cuba-login-brand-name { color: #fff; font-size: 22px !important; font-weight: 700 !important; line-height: 1.1 !important; }
+.cuba-login-brand-caption { margin-top: 3px !important; color: rgba(255,255,255,.75); font-size: 8px !important; font-weight: 700 !important; letter-spacing: 2px !important; }
+.cuba-login-heading { width: 80%; margin: 0 auto 28px; text-align: center; }
+.cuba-login-heading h1 { margin-bottom: 8px; color: #343a40; font-size: 18px; font-weight: 700; }
+.cuba-login-heading p { color: #8a969c; font-size: 14px; line-height: 1.55; }
+.cuba-login-card .MuiInputLabel-root { color: #343a40; font-size: 14px; font-weight: 600; }
+.cuba-login-card .MuiOutlinedInput-root { border-radius: 4px; background: #fff; }
+.cuba-login-card .MuiOutlinedInput-input { padding-block: 12px; font-size: 14px; }
+.cuba-login-card .MuiOutlinedInput-notchedOutline { border-color: #dee2e6; }
+.cuba-login-options { flex-direction: row-reverse; }
+.cuba-login-options .MuiFormControlLabel-root { margin: 0; }
+.cuba-login-options .MuiFormControlLabel-label, .cuba-login-options a { color: #8a969c; font-size: 13px; }
+.cuba-login-options .MuiCheckbox-root.Mui-checked { color: rgb(75, 94, 211); }
+.cuba-login-submit { width: 94px; min-height: 40px; align-self: center; border-radius: 4px !important; background: rgb(75, 94, 211) !important; font-size: 14px !important; font-weight: 500 !important; text-transform: none !important; box-shadow: none !important; }
+.cuba-login-submit:hover { background: #6169d0 !important; }
+.cuba-login-submit.Mui-disabled { color: rgba(255,255,255,.75) !important; background: #aab0f8 !important; }
+.cuba-login-social { display: none !important; }
+.cuba-login-register { position: absolute; top: calc(100% + 24px); right: 0; left: 0; margin: 0 !important; color: #8a969c; text-align: center; font-size: 14px !important; }
+.cuba-login-register a { color: #6c757d; font-weight: 700; text-decoration: underline; }
+@media (max-width: 520px) {
+  .cuba-login-page { padding: 24px 14px 68px; }
+  .cuba-login-card { padding: 0 22px 30px; }
+  .cuba-login-brand { min-height: 76px; margin: 0 -22px 28px; }
+  .cuba-login-heading { width: 100%; }
+  .cuba-login-options { align-items: center !important; flex-direction: row-reverse !important; }
+}
+
+
+
+/* Attex application layout */
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-rows: 70px minmax(0, 1fr);
+  grid-template-areas: "sidebar topbar" "sidebar content";
+  background: #f3f4f6;
+}
+.sidebar {
+  grid-area: sidebar;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  border: 0;
+  background: #313a46 !important;
+  color: #ced4da;
+  box-shadow: 0 0 35px rgba(49,58,70,.12);
+}
+.brand { min-height: 70px; padding: 0 24px; background: #2c343f; color: #fff; }
+.brand-icon { width: 36px; height: 36px; border-radius: 4px; color: rgb(75,94,211); background: #fff; box-shadow: none; }
+.brand .MuiTypography-h6 { color: #fff; font-size: 20px; }
+.brand .MuiTypography-caption { color: #8391a2; font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; }
+.sidebar-account { padding: 22px 20px 14px; justify-content: space-between; }
+.sidebar-user-name { color: #fff; font-weight: 600 !important; }
+.sidebar-account .MuiButton-root { color: #fa5c7c; border-color: rgba(250,92,124,.3); }
+.sidebar .MuiDivider-root { border-color: rgba(255,255,255,.08); }
+.menu-list { padding: 18px 12px !important; }
+.menu-list::before { display: block; padding: 0 12px 10px; color: #8391a2; content: "NAVIGATION"; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.menu-list .MuiListItemButton-root { min-height: 44px; margin-bottom: 3px; border-radius: 3px; color: #8391a2; }
+.menu-list .MuiListItemButton-root:hover { color: #fff; background: rgba(255,255,255,.05); }
+.menu-list .MuiListItemIcon-root { min-width: 40px; color: inherit; }
+.menu-list .Mui-selected { color: #fff !important; background: rgba(75,94,211,.32) !important; }
+.menu-list .Mui-selected:hover { background: rgba(75,94,211,.4) !important; }
+
+.attex-topbar {
+  grid-area: topbar;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 0 28px;
+  border-bottom: 1px solid #e7e9ed;
+  background: #fff;
+  box-shadow: 0 0 35px rgba(154,161,171,.12);
+}
+.attex-topbar-left, .attex-topbar-right { display: flex; align-items: center; gap: 18px; }
+.attex-topbar-title { color: #343a40; font-size: 16px !important; font-weight: 700 !important; }
+.attex-topbar-search { display: flex; align-items: center; width: 240px; height: 38px; padding: 0 14px; border-radius: 4px; color: #98a6ad; background: #f1f3fa; font-size: 13px; }
+.attex-topbar-icon { color: #6c757d !important; }
+.attex-user-avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; color: #fff; background: rgb(75,94,211); font-weight: 700; }
+.attex-user-meta { line-height: 1.15; }
+.attex-user-meta .MuiTypography-body2 { color: #343a40; font-weight: 700; }
+.attex-user-meta .MuiTypography-caption { color: #98a6ad; }
+
+.main-content {
+  grid-area: content;
+  display: block;
+  min-width: 0;
+  padding: 28px;
+  background: #f3f4f6;
+}
+.main-content > * { width: min(100%, 1500px); margin-inline: auto; }
+.applications-page, .resources-page, .actions-page, .roles-page, .users-page, .menus-page, .user-roles-page, .role-permissions-page { width: 100%; align-self: auto; }
+.main-content h1.MuiTypography-root { color: #343a40; font-size: 18px; line-height: 1.4; }
+.main-content h1 + .MuiTypography-root { margin-top: 4px; font-size: 13px; }
+.main-content .MuiStack-root:has(> h1), .main-content h1 { letter-spacing: 0; }
+.main-content .MuiButton-containedPrimary { background: rgb(75,94,211); }
+.main-content .MuiButton-containedPrimary:hover { background: rgb(62,79,181); }
+
+/* Attex cards, filters and Basic Data Table */
+.main-content .MuiPaper-root {
+  border-color: #eef0f2;
+  border-radius: 4px;
+  box-shadow: 0 0 35px rgba(50,58,70,.06);
+}
+.main-content .MuiPaper-root[variant="outlined"] { border: 1px solid #eef0f2; }
+.main-content .MuiTableContainer-root { border-radius: 4px 4px 0 0; }
+.main-content .MuiTable-root { border-collapse: collapse; color: #6c757d; }
+.main-content .MuiTableHead-root { background: #fff; }
+.main-content .MuiTableCell-head { height: 46px; color: #343a40; border-bottom: 1px solid #dee2e6; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.main-content .MuiTableCell-body { height: 44px; color: #6c757d; border-bottom: 1px solid #eef0f2; font-size: 13px; }
+.main-content .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) { background: rgba(241,243,250,.72); }
+.main-content .MuiTableBody-root .MuiTableRow-root:hover { background: #eef1fc; }
+.main-content .MuiTableSortLabel-root.Mui-active, .main-content .MuiTableSortLabel-root.Mui-active .MuiTableSortLabel-icon { color: rgb(75,94,211); }
+.main-content .MuiTablePagination-root { border-top: 1px solid #eef0f2; color: #6c757d; }
+.main-content .MuiIconButton-root { border-radius: 4px; }
+.main-content .MuiTableCell-body .MuiIconButton-root { padding: 6px; color: rgb(75,94,211); }
+.main-content .MuiTableCell-body .MuiIconButton-colorError { color: #fa5c7c; }
+.main-content form + *, .main-content .MuiAlert-root { border-radius: 4px; }
+.main-content .MuiTextField-root .MuiOutlinedInput-root { background: #fff; }
+.main-content .MuiOutlinedInput-notchedOutline { border-color: #dee2e6; }
+.main-content .MuiInputLabel-root { color: #6c757d; font-size: 13px; }
+.main-content .MuiChip-root { border-radius: 3px; }
+
+/* Dialogs follow the same Attex card language */
+.MuiDialog-paper { border-radius: 4px !important; box-shadow: 0 8px 28px rgba(49,58,70,.18) !important; }
+.MuiDialogTitle-root { padding: 20px 24px 14px !important; color: #343a40; font-size: 17px !important; font-weight: 700 !important; border-bottom: 1px solid #eef0f2; }
+.MuiDialogContent-root { padding-top: 22px !important; }
+.MuiDialogActions-root { padding: 14px 24px 20px !important; border-top: 1px solid #eef0f2; }
+.MuiSnackbarContent-root { border-radius: 4px !important; background: #313a46 !important; }
+
+.user-roles-grid, .role-permissions-grid { gap: 24px; }
+.user-roles-column, .role-permissions-column { border: 0 !important; background: #fff; }
+.user-roles-column h2, .role-permissions-column h2 { color: #343a40; font-size: 15px; }
+.user-roles-column .Mui-selected, .role-permissions-column .Mui-selected { color: rgb(75,94,211); background: #eef1fc !important; }
+
+@media (max-width: 900px) {
+  .app-shell { grid-template-columns: 82px minmax(0,1fr); }
+  .brand { justify-content: center; padding: 0 12px; }
+  .brand > div:last-child, .sidebar-account .sidebar-user-name, .menu-list .MuiListItemText-root { display: none; }
+  .sidebar-account { justify-content: center; padding-inline: 8px; }
+  .attex-topbar { padding-inline: 18px; }
+  .attex-topbar-search, .attex-user-meta { display: none; }
+  .main-content { padding: 22px 16px; }
+}
+@media (max-width: 600px) {
+  .app-shell { grid-template-columns: 64px minmax(0,1fr); grid-template-rows: 60px minmax(0,1fr); }
+  .brand { min-height: 60px; }
+  .brand-icon { width: 34px; height: 34px; }
+  .attex-topbar-right { gap: 6px; }
+  .attex-topbar-title { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }

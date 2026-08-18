@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -9,6 +9,7 @@ import {
   DialogContentText,
   DialogTitle,
   Divider,
+  IconButton,
   List,
   ListItemButton,
   ListItemIcon,
@@ -27,6 +28,8 @@ import CategoryIcon from "@mui/icons-material/Category";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import PeopleIcon from "@mui/icons-material/People";
 import SecurityIcon from "@mui/icons-material/Security";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
 import { LoginPage } from "./features/auth";
 import { ForbiddenPage } from "./features/auth/ForbiddenPage";
 import {
@@ -138,6 +141,8 @@ function App() {
   const loggedIn = Boolean(session);
   const userName = getSessionUserName(session);
   const navigationMenus = flattenMenus(session?.authorization?.menus);
+  const activeMenu = navigationMenus.find((menu) => menu.route === path);
+  const pageTitle = activeMenu?.name || "Identity Management";
   const navigate = (next, replace = false) => {
     if (window.location.pathname !== next)
       window.history[replace ? "replaceState" : "pushState"]({}, "", next);
@@ -313,6 +318,27 @@ function App() {
             ))}{" "}
         </List>
       </Paper>
+      <Box component="header" className="attex-topbar">
+        <Box className="attex-topbar-left">
+          <Typography className="attex-topbar-title">{pageTitle}</Typography>
+          <Box className="attex-topbar-search">
+            <SearchRoundedIcon fontSize="small" />
+            <Typography variant="body2" sx={{ ml: 1 }}>Search...</Typography>
+          </Box>
+        </Box>
+        <Box className="attex-topbar-right">
+          <IconButton className="attex-topbar-icon" aria-label="Notifications">
+            <NotificationsNoneRoundedIcon />
+          </IconButton>
+          <Box className="attex-user-avatar" aria-hidden="true">
+            {(userName || "U").charAt(0).toUpperCase()}
+          </Box>
+          <Box className="attex-user-meta">
+            <Typography variant="body2">{userName}</Typography>
+            <Typography variant="caption">Administrator</Typography>
+          </Box>
+        </Box>
+      </Box>
       <Box component="main" className="main-content">
         {content}
       </Box>

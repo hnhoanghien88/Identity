@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "test": "vitest",
     "preview": "vite preview",
-    "start": "vite --open"
+    "start": "vite --open msedge"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

@@ -23,6 +23,19 @@ export async function login(credentials) {
       throw new Error(INVALID_CREDENTIALS);
     }
 
+    if (response.status === 429) {
+      const retryAfter = Number.parseInt(
+        response.headers?.get?.("Retry-After") ?? "",
+        10,
+      );
+      const waitSeconds = Number.isFinite(retryAfter) && retryAfter > 0
+        ? retryAfter
+        : 60;
+      throw new Error(
+        `Too many login attempts. Please wait ${waitSeconds} seconds before trying again.`,
+      );
+    }
+
     if (response.status >= 500) {
       throw new Error(SERVER_ERROR);
     }

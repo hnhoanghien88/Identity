@@ -38,7 +38,7 @@ export function UsersTable({
   onDelete,
 }) {
   return (
-    <Paper variant="outlined">
+    <Paper className="users-table" variant="outlined">
       <TableContainer>
         <Table size="small" aria-label="Users">
           <TableHead>

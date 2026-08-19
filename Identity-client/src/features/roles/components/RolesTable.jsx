@@ -37,7 +37,7 @@ export function RolesTable({
   onDelete,
 }) {
   return (
-    <Paper>
+    <Paper className="roles-table">
       <TableContainer>
         <Table aria-label="Roles">
           <TableHead>

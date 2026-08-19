@@ -15,8 +15,6 @@ public sealed class DeleteResourceCommandHandler(IResourcesRepository repository
             ?? throw new NotFoundException($"Resource '{request.Id}' was not found.");
         if (resource.Version != request.Version)
             throw new ConflictException("The Resource was changed by another user. Reload and try again.");
-        if (await repository.HasDependenciesAsync(request.Id, cancellationToken))
-            throw new ConflictException("This Resource cannot be deleted while related data exists.");
 
         resource.IsActive = false;
         resource.IsDeleted = true;

@@ -63,7 +63,13 @@ public sealed class MySqlUsersRepository(IdentityDbContext db) : IUsersRepositor
 
     public async Task DeleteAsync(UsersEntity user, CancellationToken ct)
     {
-        await UpdateAsync(user, ct);
+        try
+        {
+            await SoftDeleteCascade.SaveAsync(db, () => SoftDeleteCascade.UserAsync(
+                db, user.Id, user.UpdatedBy, user.UpdatedDate ?? DateTime.UtcNow, ct), ct);
+        }
+        catch (DbUpdateConcurrencyException) { throw new ConflictException(); }
+        catch (DbUpdateException exception) { throw MapUniqueConflict(exception); }
     }
 
     private static ConflictException MapUniqueConflict(

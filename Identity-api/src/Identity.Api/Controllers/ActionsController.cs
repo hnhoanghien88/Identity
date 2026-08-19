@@ -57,7 +57,7 @@ public sealed class ActionsController(ISender sender) : ControllerBase
     [Authorize(Policy = "Actions.Delete")]
     public async Task<IActionResult> Delete(ulong id, [FromQuery] ulong version, CancellationToken cancellationToken)
     {
-        await sender.Send(new DeleteActionCommand(id, version), cancellationToken);
+        await sender.Send(new DeleteActionCommand(id, version, Actor()), cancellationToken);
         return Ok(new ApiResponse<object>(true, null, "Action deleted successfully."));
     }
 

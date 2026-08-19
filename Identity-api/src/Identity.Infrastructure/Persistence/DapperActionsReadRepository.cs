@@ -15,12 +15,12 @@ public sealed class DapperActionsReadRepository(MySqlConnectionFactory connectio
     {
         await using var connection = connectionFactory.CreateConnection();
         return await connection.QuerySingleOrDefaultAsync<ActionDto>(
-            new CommandDefinition($"{SelectActions} WHERE Id = @Id", new { Id = id }, cancellationToken: cancellationToken));
+            new CommandDefinition($"{SelectActions} WHERE IsDeleted = FALSE AND Id = @Id", new { Id = id }, cancellationToken: cancellationToken));
     }
 
     public async Task<PagedActionsDto> GetAsync(ActionsFilter filter, IReadOnlyList<ActionsSort> sorts, int page, int pageSize, CancellationToken cancellationToken)
     {
-        var where = new StringBuilder(" WHERE 1 = 1");
+        var where = new StringBuilder(" WHERE IsDeleted = FALSE");
         var parameters = new DynamicParameters();
         AddStringFilter(where, parameters, "Code", filter.Code);
         AddStringFilter(where, parameters, "Name", filter.Name);

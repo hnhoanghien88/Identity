@@ -12,7 +12,13 @@ export function ApplicationsFilters({ value, onChange, onApply }) {
         <TextField label="Code" size="small" {...field("code")} />
         <TextField label="Name" size="small" {...field("name")} />
         <TextField label="Audience" size="small" {...field("audience")} />
-        <TextField select label="Status" size="small" {...field("status")}>
+        <TextField
+          select
+          label="Status"
+          size="small"
+          {...field("status")}
+          sx={{ minWidth: 140 }}
+        >
           <MenuItem value="">All statuses</MenuItem>
           <MenuItem value="active">Active</MenuItem>
           <MenuItem value="inactive">Inactive</MenuItem>

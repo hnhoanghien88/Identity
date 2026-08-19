@@ -61,18 +61,28 @@ public sealed class AuthorizationController(
 
     private static IReadOnlyList<MenuDto> FilterMenus(
         IReadOnlyList<MenuDto> menus,
-        IReadOnlySet<string> permissions) =>
-        menus
-            .Where(menu => menu.IsActive && menu.IsVisible)
-            .Select(menu => menu with
+        IReadOnlySet<string> permissions)
+    {
+        var result = new List<MenuDto>();
+
+        foreach (var menu in menus.Where(menu => menu.IsActive))
+        {
+            var children = FilterMenus(menu.Children, permissions);
+
+            if (menu.IsVisible)
             {
-                Children = FilterMenus(menu.Children, permissions),
-            })
-            .Where(menu =>
-                menu.Children.Count > 0
+                result.AddRange(children);
+                continue;
+            }
+
+            if (children.Count > 0
                 || (menu.ResourceCode is not null
                     && permissions.Contains($"{menu.ResourceCode}.ViewMenu")))
-            .ToList();
+                result.Add(menu with { Children = children });
+        }
+
+        return result;
+    }
 
     public sealed record AuthorizationResponse(
         IReadOnlyList<string> Roles,

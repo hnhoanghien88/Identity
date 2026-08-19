@@ -32,6 +32,14 @@ describe("MenusTreeTable", () => {
       <MenusTreeTable menus={tree} expanded={new Set()} onToggle={onToggle} />,
     );
     expect(screen.queryByText("Child")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "IsVisible" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "IsActive" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Hidden")).toBeInTheDocument();
+    expect(screen.getByText("Active")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Expand Root" }));
     expect(onToggle).toHaveBeenCalledWith(1);
     rerender(

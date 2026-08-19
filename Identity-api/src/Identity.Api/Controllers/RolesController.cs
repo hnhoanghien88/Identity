@@ -101,7 +101,7 @@ public sealed class RolesController(ISender sender) : ControllerBase
     [Authorize(Policy = "Roles.Delete")]
     public async Task<IActionResult> Delete(ulong id, [FromQuery] ulong version, CancellationToken cancellationToken)
     {
-        await sender.Send(new DeleteRoleCommand(id, version), cancellationToken);
+        await sender.Send(new DeleteRoleCommand(id, version, Actor()), cancellationToken);
         return Ok(new ApiResponse<object>(true, null, "Role deleted successfully."));
     }
 

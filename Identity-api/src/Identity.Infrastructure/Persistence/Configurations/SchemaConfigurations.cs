@@ -95,12 +95,28 @@ public sealed class MenusConfiguration : IEntityTypeConfiguration<Menus>
         b.Property(x => x.Route).HasMaxLength(300);
         b.Property(x => x.Icon).HasMaxLength(100);
         b.Property(x => x.SortOrder).HasDefaultValue(0);
-        b.Property(x => x.IsVisible).HasDefaultValue(true);
+        b.Property(x => x.IsVisible).HasDefaultValue(false);
         b.Property(x => x.Version).HasDefaultValue(1UL).IsConcurrencyToken().IsRequired();
         b.HasIndex(x => new { x.ApplicationId, x.Code }).IsUnique().HasDatabaseName("UQMenus");
     }
 }
 
+public sealed class RateLimitPolicyConfiguration : IEntityTypeConfiguration<RateLimitPolicy>
+{
+    public void Configure(EntityTypeBuilder<RateLimitPolicy> b)
+    {
+        b.ToTable("rate_limit_policies");
+        b.Property(x => x.Name).HasMaxLength(150).IsRequired();
+        b.Property(x => x.RoutePattern).HasMaxLength(300).IsRequired();
+        b.Property(x => x.HttpMethods).HasMaxLength(100);
+        b.Property(x => x.PartitionBy).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Algorithm).HasMaxLength(30).IsRequired();
+        b.Property(x => x.Version).HasDefaultValue(1UL).IsConcurrencyToken().IsRequired();
+        b.HasIndex(x => x.Name).IsUnique().HasDatabaseName("UQRateLimitPoliciesName");
+        b.HasIndex(x => new { x.IsActive, x.Priority }).HasDatabaseName("IXRateLimitPoliciesActivePriority");
+        b.HasIndex(x => new { x.ApplicationId, x.RoutePattern }).HasDatabaseName("IXRateLimitPoliciesMatch");
+    }
+}
 public sealed class RefreshTokensConfiguration : IEntityTypeConfiguration<RefreshTokens>
 {
     public void Configure(EntityTypeBuilder<RefreshTokens> b)

@@ -44,7 +44,11 @@ public sealed class MySqlMenusRepository(IdentityDbContext db) : IMenusRepositor
     public async Task SaveAsync(MenuEntity menu, CancellationToken cancellationToken)
     {
         await LoadRelationsAsync(menu, cancellationToken);
-        await SaveChangesAsync(cancellationToken);
+        if (menu.IsDeleted)
+            await SoftDeleteCascade.SaveAsync(db, () => SoftDeleteCascade.MenuAsync(
+                db, menu.Id, menu.UpdatedBy, menu.UpdatedDate ?? DateTime.UtcNow, cancellationToken), cancellationToken);
+        else
+            await SaveChangesAsync(cancellationToken);
     }
 
     private async Task LoadRelationsAsync(MenuEntity menu, CancellationToken cancellationToken)

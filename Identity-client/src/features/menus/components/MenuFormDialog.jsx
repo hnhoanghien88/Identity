@@ -21,7 +21,7 @@ const empty = {
   route: "",
   icon: "",
   sortOrder: 0,
-  isVisible: true,
+  isVisible: false,
   isActive: true,
 };
 
@@ -154,7 +154,7 @@ export function MenuFormDialog({
                 }
               />
             }
-            label="Visible"
+            label="Hidden"
           />
           <FormControlLabel
             control={

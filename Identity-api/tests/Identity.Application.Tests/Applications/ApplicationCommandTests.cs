@@ -125,7 +125,7 @@ public sealed class ApplicationCommandTests
     }
 
     [Fact]
-    public async Task Delete_is_blocked_when_dependencies_exist()
+    public async Task Delete_soft_deletes_even_when_dependencies_exist()
     {
         var repository = new FakeApplicationsRepository
         {
@@ -134,13 +134,13 @@ public sealed class ApplicationCommandTests
         };
         var handler = new DeleteApplicationCommandHandler(repository);
 
-        await Assert.ThrowsAsync<ConflictException>(() =>
-            handler.Handle(
-                new DeleteApplicationCommand(1, 1, "admin"),
-                CancellationToken.None));
+        await handler.Handle(
+            new DeleteApplicationCommand(1, 1, "admin"),
+            CancellationToken.None);
 
-        Assert.False(repository.Value.IsDeleted);
-        Assert.Equal(0, repository.SaveCount);
+        Assert.True(repository.Value.IsDeleted);
+        Assert.False(repository.Value.IsActive);
+        Assert.Equal(1, repository.SaveCount);
     }
 
     [Fact]

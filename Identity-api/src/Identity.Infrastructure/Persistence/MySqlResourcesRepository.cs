@@ -72,7 +72,11 @@ public sealed class MySqlResourcesRepository(IdentityDbContext db)
             ?? throw new ConflictException(
                 "The selected Application is unavailable.",
                 "applicationId");
-        await SaveChangesAsync(cancellationToken);
+        if (resource.IsDeleted)
+            await SoftDeleteCascade.SaveAsync(db, () => SoftDeleteCascade.ResourceAsync(
+                db, resource.Id, resource.UpdatedBy, resource.UpdatedDate ?? DateTime.UtcNow, cancellationToken), cancellationToken);
+        else
+            await SaveChangesAsync(cancellationToken);
     }
 
     private async Task<Identity.Domain.Entities.Applications> AvailableApplicationAsync(

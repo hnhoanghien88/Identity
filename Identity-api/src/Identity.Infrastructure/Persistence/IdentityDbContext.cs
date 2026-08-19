@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Identity.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +16,7 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     public DbSet<UserRoles> UserRoles => Set<UserRoles>();
     public DbSet<RolePermissions> RolePermissions => Set<RolePermissions>();
     public DbSet<RefreshTokens> RefreshTokens => Set<RefreshTokens>();
+    public DbSet<RateLimitPolicy> RateLimitPolicies => Set<RateLimitPolicy>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,6 +30,12 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             entity.FindProperty(nameof(EntityBase.UpdatedDate))?.SetColumnType("datetime(6)");
             entity.FindProperty(nameof(ActiveEntity.IsActive))?.SetDefaultValue(true);
             entity.FindProperty(nameof(ActiveEntity.IsDeleted))?.SetDefaultValue(false);
+            if (typeof(ActiveEntity).IsAssignableFrom(entity.ClrType))
+            {
+                var parameter = Expression.Parameter(entity.ClrType, "entity");
+                var property = Expression.Property(parameter, nameof(ActiveEntity.IsDeleted));
+                entity.SetQueryFilter(Expression.Lambda(Expression.Not(property), parameter));
+            }
         }
         foreach (var foreignKey in modelBuilder.Model.GetEntityTypes().SelectMany(x => x.GetForeignKeys()))
             foreignKey.DeleteBehavior = DeleteBehavior.Restrict;

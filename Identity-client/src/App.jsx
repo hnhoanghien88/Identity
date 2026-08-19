@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -28,6 +28,7 @@ import CategoryIcon from "@mui/icons-material/Category";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import PeopleIcon from "@mui/icons-material/People";
 import SecurityIcon from "@mui/icons-material/Security";
+import SpeedIcon from "@mui/icons-material/Speed";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
 import { LoginPage } from "./features/auth";
@@ -44,6 +45,7 @@ import { RolesPage } from "./features/roles";
 import { MenusPage } from "./features/menus";
 import { RolePermissionsPage } from "./features/rolePermissions";
 import { UserRolesPage } from "./features/userRoles";
+import { RateLimitsPage } from "./features/rateLimits";
 import {
   canRestoreSession,
   clearSession,
@@ -66,6 +68,7 @@ const menuIcons = {
   ManageAccounts: ManageAccountsIcon,
   People: PeopleIcon,
   Security: SecurityIcon,
+  Speed: SpeedIcon,
 };
 
 function MenuIcon({ name }) {
@@ -82,6 +85,7 @@ const ROLES_PATH = "/roles";
 const MENUS_PATH = "/menus";
 const ROLE_PERMISSIONS_PATH = "/role-permissions";
 const USER_ROLES_PATH = "/user-roles";
+const RATE_LIMITS_PATH = "/rate-limiting";
 const knownPaths = new Set([
   LOGIN_PATH,
   APPLICATIONS_PATH,
@@ -91,6 +95,7 @@ const knownPaths = new Set([
   MENUS_PATH,
   ROLE_PERMISSIONS_PATH,
   USER_ROLES_PATH,
+  RATE_LIMITS_PATH,
   USERS_PATH,
 ]);
 const protectedPaths = new Set([
@@ -101,6 +106,7 @@ const protectedPaths = new Set([
   MENUS_PATH,
   ROLE_PERMISSIONS_PATH,
   USER_ROLES_PATH,
+  RATE_LIMITS_PATH,
   USERS_PATH,
 ]);
 const readPermissions = {
@@ -111,6 +117,7 @@ const readPermissions = {
   [MENUS_PATH]: "Menus.Read",
   [ROLE_PERMISSIONS_PATH]: "RolePermissions.Read",
   [USER_ROLES_PATH]: "UserRoles.Read",
+  [RATE_LIMITS_PATH]: "RateLimiting.Read",
   [USERS_PATH]: "Users.Read",
 };
 const currentPath = () =>
@@ -186,19 +193,12 @@ function App() {
       .then((next) => {
         if (active && next) {
           setSession(next);
+          const requiredPermission = readPermissions[path];
           const restoredPath =
-            path === ROLE_PERMISSIONS_PATH
-              ? ROLE_PERMISSIONS_PATH
-              : path === USER_ROLES_PATH
-                ? USER_ROLES_PATH
-                : path === ACTIONS_PATH
-                  ? ACTIONS_PATH
-                  : path === USERS_PATH && hasPermission(next, "Users.Read")
-                    ? USERS_PATH
-                    : path === RESOURCES_PATH &&
-                        hasPermission(next, "Resources.Read")
-                      ? RESOURCES_PATH
-                      : firstMenuRoute(next);
+            protectedPaths.has(path) &&
+            (!requiredPermission || hasPermission(next, requiredPermission))
+              ? path
+              : firstMenuRoute(next);
           navigate(restoredPath, true);
         }
       })
@@ -240,6 +240,8 @@ function App() {
     content = <RolePermissionsPage session={session} />;
   else if (path === USER_ROLES_PATH)
     content = <UserRolesPage session={session} />;
+  else if (path === RATE_LIMITS_PATH)
+    content = <RateLimitsPage session={session} />;
   else content = <ApplicationsPage session={session} />;
 
   if (restoring)
@@ -323,7 +325,9 @@ function App() {
           <Typography className="attex-topbar-title">{pageTitle}</Typography>
           <Box className="attex-topbar-search">
             <SearchRoundedIcon fontSize="small" />
-            <Typography variant="body2" sx={{ ml: 1 }}>Search...</Typography>
+            <Typography variant="body2" sx={{ ml: 1 }}>
+              Search...
+            </Typography>
           </Box>
         </Box>
         <Box className="attex-topbar-right">

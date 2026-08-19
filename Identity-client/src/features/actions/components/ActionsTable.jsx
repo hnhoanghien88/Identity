@@ -32,7 +32,7 @@ export function ActionsTable({
   onDelete,
 }) {
   return (
-    <Paper variant="outlined">
+    <Paper className="actions-table" variant="outlined">
       <TableContainer>
         <Table aria-label="Actions">
           <TableHead>

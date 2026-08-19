@@ -39,14 +39,16 @@ public sealed class ActionHandlersTests
     }
 
     [Fact]
-    public async Task Delete_is_blocked_by_permission_dependency()
+    public async Task Delete_soft_deletes_even_when_permission_dependencies_exist()
     {
         var repository = new Repository { Value = Existing(), Dependencies = true };
-        await Assert.ThrowsAsync<ConflictException>(() =>
-            new DeleteActionCommandHandler(repository).Handle(
-                new DeleteActionCommand(1, 1),
-                CancellationToken.None));
-        Assert.NotNull(repository.Value);
+        await new DeleteActionCommandHandler(repository).Handle(
+            new DeleteActionCommand(1, 1, "admin"),
+            CancellationToken.None);
+
+        Assert.True(repository.Value!.IsDeleted);
+        Assert.False(repository.Value.IsActive);
+        Assert.Equal("admin", repository.Value.UpdatedBy);
     }
 
     private static ActionEntity Existing(ulong version = 1) => new()

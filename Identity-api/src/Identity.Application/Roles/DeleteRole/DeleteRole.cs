@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Identity.Application.Roles.DeleteRole;
 
-public sealed record DeleteRoleCommand(ulong Id, ulong Version) : IRequest;
+public sealed record DeleteRoleCommand(ulong Id, ulong Version, string? Actor = null) : IRequest;
 
 public sealed class DeleteRoleCommandHandler(IRolesRepository repository) : IRequestHandler<DeleteRoleCommand>
 {
@@ -16,8 +16,11 @@ public sealed class DeleteRoleCommandHandler(IRolesRepository repository) : IReq
             throw new ConflictException("The Role was changed by another user. Reload and try again.");
         if (role.IsSystemRole)
             throw new ConflictException("System Roles cannot be deleted.");
-        if (await repository.HasDependenciesAsync(request.Id, cancellationToken))
-            throw new ConflictException("This Role cannot be deleted while related Users or Permissions exist.");
-        await repository.DeleteAsync(role, cancellationToken);
+        role.IsActive = false;
+        role.IsDeleted = true;
+        role.UpdatedBy = request.Actor;
+        role.UpdatedDate = DateTime.UtcNow;
+        role.Version++;
+        await repository.SaveAsync(role, cancellationToken);
     }
 }

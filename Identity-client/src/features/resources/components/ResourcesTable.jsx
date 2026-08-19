@@ -37,7 +37,7 @@ export function ResourcesTable({
   onDelete,
 }) {
   return (
-    <Paper variant="outlined">
+    <Paper className="resources-table" variant="outlined">
       <TableContainer>
         <Table aria-label="Resources">
           <TableHead>

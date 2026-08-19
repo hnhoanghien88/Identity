@@ -86,7 +86,7 @@ public sealed class MenusController(ISender sender) : ControllerBase
         ?? User.FindFirst("email")?.Value ?? User.FindFirst("code")?.Value;
 
     public record CreateRequest(ulong ApplicationId, ulong? ParentId, ulong? ResourceId, string Code,
-        string Name, string? Route, string? Icon, int SortOrder, bool IsVisible = true, bool IsActive = true);
+        string Name, string? Route, string? Icon, int SortOrder, bool IsVisible = false, bool IsActive = true);
     public sealed record UpdateRequest(ulong ApplicationId, ulong? ParentId, ulong? ResourceId, string Code,
         string Name, string? Route, string? Icon, int SortOrder, bool IsVisible, bool IsActive, ulong Version)
         : CreateRequest(ApplicationId, ParentId, ResourceId, Code, Name, Route, Icon, SortOrder, IsVisible, IsActive);

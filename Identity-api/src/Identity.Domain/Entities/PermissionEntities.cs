@@ -1,13 +1,13 @@
 namespace Identity.Domain.Entities;
 
-public sealed class PermissionActions : EntityBase
+public sealed class PermissionActions : ActiveEntity
 {
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public ulong Version { get; set; } = 1;
 }
 
-public sealed class Permissions : EntityBase
+public sealed class Permissions : ActiveEntity
 {
     public ulong ResourceId { get; set; }
     public Resources Resource { get; set; } = null!;
@@ -17,16 +17,15 @@ public sealed class Permissions : EntityBase
     public string Name { get; set; } = string.Empty;
 }
 
-public sealed class UserRoles : EntityBase
+public sealed class UserRoles : ActiveEntity
 {
     public ulong UserId { get; set; }
     public Users User { get; set; } = null!;
     public ulong RoleId { get; set; }
     public Roles Role { get; set; } = null!;
-    public bool IsActive { get; set; } = true;
 }
 
-public sealed class RolePermissions : EntityBase
+public sealed class RolePermissions : ActiveEntity
 {
     public ulong RoleId { get; set; }
     public Roles Role { get; set; } = null!;

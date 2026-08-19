@@ -36,7 +36,7 @@ export function ApplicationsTable({
   onDelete,
 }) {
   return (
-    <Paper variant="outlined">
+    <Paper className="applications-table" variant="outlined">
       <TableContainer>
         <Table aria-label="Applications">
           <TableHead>

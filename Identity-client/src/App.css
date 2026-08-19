@@ -315,7 +315,7 @@
   background: #f3f4f6;
 }
 .main-content > * { width: min(100%, 1500px); margin-inline: auto; }
-.applications-page, .resources-page, .actions-page, .roles-page, .users-page, .menus-page, .user-roles-page, .role-permissions-page { width: 100%; align-self: auto; }
+.applications-page, .resources-page, .actions-page, .roles-page, .users-page, .menus-page, .user-roles-page, .role-permissions-page, .rate-limits-page { width: 100%; align-self: auto; }
 .main-content h1.MuiTypography-root { color: #343a40; font-size: 18px; line-height: 1.4; }
 .main-content h1 + .MuiTypography-root { margin-top: 4px; font-size: 13px; }
 .main-content .MuiStack-root:has(> h1), .main-content h1 { letter-spacing: 0; }
@@ -358,6 +358,85 @@
 .user-roles-column, .role-permissions-column { border: 0 !important; background: #fff; }
 .user-roles-column h2, .role-permissions-column h2 { color: #343a40; font-size: 15px; }
 .user-roles-column .Mui-selected, .role-permissions-column .Mui-selected { color: rgb(75,94,211); background: #eef1fc !important; }
+.rate-limits-page,
+.resources-page,
+.actions-page,
+.roles-page,
+.users-page,
+.menus-page {
+  height: calc(100vh - 126px);
+}
+.resources-page > .MuiStack-root,
+.actions-page > .MuiStack-root,
+.roles-page > .MuiStack-root,
+.users-page > .MuiStack-root {
+  height: 100%;
+}
+.rate-limits-table,
+.resources-table,
+.actions-table,
+.roles-table,
+.users-table {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+.resources-table .MuiTableContainer-root,
+.actions-table .MuiTableContainer-root,
+.roles-table .MuiTableContainer-root,
+.users-table .MuiTableContainer-root {
+  flex: 1;
+  min-height: 0;
+}
+.users-table .MuiTableContainer-root {
+  display: flex;
+  flex-direction: column;
+}
+.users-table .MuiTablePagination-root { margin-top: auto; }
+.menus-page .menus-tree-table {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.applications-page { height: calc(100vh - 126px); }
+.applications-page > .MuiStack-root { height: 100%; }
+.applications-page .applications-table {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+.applications-page .applications-table .MuiTableContainer-root {
+  flex: 1;
+  min-height: 0;
+}
+.user-roles-page { height: calc(100vh - 126px); }
+.user-roles-page > .MuiStack-root { height: 100%; }
+.user-roles-page .user-roles-grid {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+.user-roles-page .user-roles-column {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+.role-permissions-page { height: calc(100vh - 126px); }
+.role-permissions-page > .MuiStack-root { height: 100%; }
+.role-permissions-page .role-permissions-grid {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+.role-permissions-page .role-permissions-column {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+}
 
 @media (max-width: 900px) {
   .app-shell { grid-template-columns: 82px minmax(0,1fr); }
@@ -367,6 +446,42 @@
   .attex-topbar { padding-inline: 18px; }
   .attex-topbar-search, .attex-user-meta { display: none; }
   .main-content { padding: 22px 16px; }
+}
+@media (max-width: 800px) {
+  .user-roles-page { height: auto; }
+  .user-roles-page > .MuiStack-root { height: auto; }
+  .user-roles-page .user-roles-grid { min-height: auto; }
+  .user-roles-page .user-roles-column { height: auto; }
+}
+@media (max-width: 700px) {
+  .rate-limits-page,
+.resources-page,
+  .actions-page,
+  .roles-page,
+  .users-page,
+  .menus-page {
+    height: auto;
+  }
+  .resources-page > .MuiStack-root,
+  .actions-page > .MuiStack-root,
+  .roles-page > .MuiStack-root,
+  .users-page > .MuiStack-root {
+    height: auto;
+  }
+  .rate-limits-table,
+.resources-table,
+  .actions-table,
+  .roles-table,
+  .users-table {
+    overflow: visible;
+  }
+  .applications-page { height: auto; }
+  .applications-page > .MuiStack-root { height: auto; }
+  .applications-page .applications-table { overflow: visible; }
+  .role-permissions-page { height: auto; }
+  .role-permissions-page > .MuiStack-root { height: auto; }
+  .role-permissions-page .role-permissions-grid { min-height: auto; }
+  .role-permissions-page .role-permissions-column { height: auto; }
 }
 @media (max-width: 600px) {
   .app-shell { grid-template-columns: 64px minmax(0,1fr); grid-template-rows: 60px minmax(0,1fr); }

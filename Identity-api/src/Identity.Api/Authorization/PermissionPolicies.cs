@@ -7,7 +7,7 @@ public static class PermissionPolicies
     private static readonly string[] Resources =
     [
         "Users", "Roles", "RolePermissions", "Resources",
-        "Applications", "Menus", "Actions", "UserRoles"
+        "Applications", "Menus", "Actions", "UserRoles", "RateLimiting"
     ];
 
     private static readonly string[] Actions =

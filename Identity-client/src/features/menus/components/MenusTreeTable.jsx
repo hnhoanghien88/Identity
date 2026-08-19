@@ -34,7 +34,11 @@ export function MenusTreeTable({
   onDelete,
 }) {
   return (
-    <TableContainer component={Paper} variant="outlined">
+    <TableContainer
+      className="menus-tree-table"
+      component={Paper}
+      variant="outlined"
+    >
       <Table aria-label="Menus tree">
         <TableHead>
           <TableRow>
@@ -43,7 +47,8 @@ export function MenusTreeTable({
             <TableCell>Resource</TableCell>
             <TableCell>Route</TableCell>
             <TableCell>Order</TableCell>
-            <TableCell>Status</TableCell>
+            <TableCell>IsVisible</TableCell>
+            <TableCell>IsActive</TableCell>
             <TableCell align="right">Actions</TableCell>
           </TableRow>
         </TableHead>
@@ -80,13 +85,8 @@ export function MenusTreeTable({
                   <TableCell>{node.resourceName || "—"}</TableCell>
                   <TableCell>{node.route || "—"}</TableCell>
                   <TableCell>{node.sortOrder}</TableCell>
-                  <TableCell>
-                    {node.isActive
-                      ? node.isVisible
-                        ? "Visible"
-                        : "Hidden"
-                      : "Inactive"}
-                  </TableCell>
+                  <TableCell>{node.isVisible ? "Hidden" : "Visible"}</TableCell>
+                  <TableCell>{node.isActive ? "Active" : "Inactive"}</TableCell>
                   <TableCell align="right">
                     {canEdit && (
                       <Tooltip title="Edit">
@@ -118,4 +118,3 @@ export function MenusTreeTable({
     </TableContainer>
   );
 }
-

@@ -8,7 +8,7 @@ namespace Identity.Infrastructure.Persistence;
 public sealed class MySqlActionsRepository(IdentityDbContext db) : IActionsRepository
 {
     public Task<ActionEntity?> GetByIdAsync(ulong id, CancellationToken cancellationToken) =>
-        db.PermissionActions.SingleOrDefaultAsync(action => action.Id == id, cancellationToken);
+        db.PermissionActions.SingleOrDefaultAsync(action => action.Id == id && !action.IsDeleted, cancellationToken);
 
     public Task<bool> CodeExistsAsync(string code, ulong? excludingId, CancellationToken cancellationToken) =>
         db.PermissionActions.AnyAsync(action => action.Id != excludingId && action.Code == code, cancellationToken);
@@ -22,7 +22,14 @@ public sealed class MySqlActionsRepository(IdentityDbContext db) : IActionsRepos
         await SaveChangesAsync(cancellationToken);
     }
 
-    public Task SaveAsync(ActionEntity action, CancellationToken cancellationToken) => SaveChangesAsync(cancellationToken);
+    public async Task SaveAsync(ActionEntity action, CancellationToken cancellationToken)
+    {
+        if (action.IsDeleted)
+            await SoftDeleteCascade.SaveAsync(db, () => SoftDeleteCascade.ActionAsync(
+                db, action.Id, action.UpdatedBy, action.UpdatedDate ?? DateTime.UtcNow, cancellationToken), cancellationToken);
+        else
+            await SaveChangesAsync(cancellationToken);
+    }
 
     public async Task DeleteAsync(ActionEntity action, CancellationToken cancellationToken)
     {

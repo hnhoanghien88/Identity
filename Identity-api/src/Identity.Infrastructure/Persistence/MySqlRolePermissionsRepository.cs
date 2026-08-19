@@ -100,21 +100,12 @@ public sealed class MySqlRolePermissionsRepository(IdentityDbContext db)
         var rolePermission = await db.RolePermissions.SingleOrDefaultAsync(
             value => value.RoleId == roleId && value.PermissionId == permission.Id,
             cancellationToken);
-        if (rolePermission is not null)
-        {
-            rolePermission.UpdatedBy = actor;
-            rolePermission.UpdatedDate = DateTime.UtcNow;
-            db.RolePermissions.Remove(rolePermission);
-            await SaveChangesAsync(cancellationToken);
-        }
+        if (rolePermission is null)
+            return;
 
-        if (await db.RolePermissions.AnyAsync(
-                value => value.PermissionId == permission.Id,
-                cancellationToken))
-            throw new ConflictException(
-                "The Permission is still assigned to another Role and cannot be deleted.");
-
-        db.Permissions.Remove(permission);
+        rolePermission.UpdatedBy = actor;
+        rolePermission.UpdatedDate = DateTime.UtcNow;
+        db.RolePermissions.Remove(rolePermission);
         await SaveChangesAsync(cancellationToken);
         await IncrementPermissionVersionsAsync(roleId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);

@@ -39,7 +39,14 @@ public sealed class MySqlRolesRepository(IdentityDbContext db, IRolesReadReposit
         await SaveChangesAsync(cancellationToken);
     }
 
-    public Task SaveAsync(RoleEntity role, CancellationToken cancellationToken) => SaveChangesAsync(cancellationToken);
+    public async Task SaveAsync(RoleEntity role, CancellationToken cancellationToken)
+    {
+        if (role.IsDeleted)
+            await SoftDeleteCascade.SaveAsync(db, () => SoftDeleteCascade.RoleAsync(
+                db, role.Id, role.UpdatedBy, role.UpdatedDate ?? DateTime.UtcNow, cancellationToken), cancellationToken);
+        else
+            await SaveChangesAsync(cancellationToken);
+    }
 
     public async Task DeleteAsync(RoleEntity role, CancellationToken cancellationToken)
     {

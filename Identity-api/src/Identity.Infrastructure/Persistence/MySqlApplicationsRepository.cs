@@ -29,8 +29,14 @@ public sealed class MySqlApplicationsRepository(IdentityDbContext db) : IApplica
         await SaveChangesAsync(cancellationToken);
     }
 
-    public Task SaveAsync(ApplicationEntity application, CancellationToken cancellationToken) =>
-        SaveChangesAsync(cancellationToken);
+    public async Task SaveAsync(ApplicationEntity application, CancellationToken cancellationToken)
+    {
+        if (application.IsDeleted)
+            await SoftDeleteCascade.SaveAsync(db, () => SoftDeleteCascade.ApplicationAsync(
+                db, application.Id, application.UpdatedBy, application.UpdatedDate ?? DateTime.UtcNow, cancellationToken), cancellationToken);
+        else
+            await SaveChangesAsync(cancellationToken);
+    }
 
     private async Task SaveChangesAsync(CancellationToken cancellationToken)
     {

@@ -30,6 +30,8 @@ builder.Logging.AddDebug();
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IAuthorizationCache, AuthorizationCache>();
+builder.Services.AddScoped<RateLimitPolicyProvider>();
+builder.Services.AddSingleton<RateLimitCounterStore>();
 builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
@@ -143,7 +145,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseHttpsRedirection();
+app.UseRouting();
 app.UseAuthentication();
+app.UseMiddleware<DynamicRateLimitMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

@@ -1,4 +1,4 @@
-﻿namespace Identity.Domain.Entities;
+namespace Identity.Domain.Entities;
 
 public sealed class Menus : ActiveEntity
 {
@@ -17,7 +17,7 @@ public sealed class Menus : ActiveEntity
     public ulong Version { get; set; } = 1;
 }
 
-public sealed class RefreshTokens : EntityBase
+public sealed class RefreshTokens : ActiveEntity
 {
     public ulong UserId { get; set; }
     public Users User { get; set; } = null!;
@@ -31,7 +31,6 @@ public sealed class RefreshTokens : EntityBase
     public ulong? RevokedBy { get; set; }
     public ulong? ReplacedByTokenId { get; set; }
     public RefreshTokens? ReplacedByToken { get; set; }
-    public bool IsActive { get; set; } = true;
 }
 
 

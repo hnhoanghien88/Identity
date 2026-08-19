@@ -6,7 +6,7 @@ namespace Identity.Application.Tests.Resources;
 public sealed class DeleteResourceTests
 {
     [Fact]
-    public async Task Delete_is_blocked_by_dependencies()
+    public async Task Delete_soft_deletes_even_when_dependencies_exist()
     {
         var repository = new TestResourcesRepository
         {
@@ -14,12 +14,12 @@ public sealed class DeleteResourceTests
             DependenciesExist = true,
         };
 
-        await Assert.ThrowsAsync<ConflictException>(() =>
-            new DeleteResourceCommandHandler(repository).Handle(
-                new DeleteResourceCommand(1, 1, "admin"),
-                CancellationToken.None));
+        await new DeleteResourceCommandHandler(repository).Handle(
+            new DeleteResourceCommand(1, 1, "admin"),
+            CancellationToken.None);
 
-        Assert.False(repository.Value!.IsDeleted);
+        Assert.True(repository.Value!.IsDeleted);
+        Assert.False(repository.Value.IsActive);
     }
 
     [Fact]

@@ -34,7 +34,13 @@ export function ResourcesFilters({ value, applications, onChange, onApply }) {
           size="small"
           {...field("resourceType")}
         />
-        <TextField select label="Status" size="small" {...field("status")}>
+        <TextField
+          select
+          label="Status"
+          size="small"
+          {...field("status")}
+          sx={{ minWidth: 140 }}
+        >
           <MenuItem value="">All statuses</MenuItem>
           <MenuItem value="active">Active</MenuItem>
           <MenuItem value="inactive">Inactive</MenuItem>

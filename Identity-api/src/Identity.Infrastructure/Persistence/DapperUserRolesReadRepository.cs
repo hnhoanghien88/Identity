@@ -18,6 +18,7 @@ public sealed class DapperUserRolesReadRepository(MySqlConnectionFactory connect
             INNER JOIN applications a ON a.Id = r.ApplicationId
             WHERE ur.UserId = @UserId
               AND ur.IsActive = TRUE
+              AND ur.IsDeleted = FALSE
               AND r.IsActive = TRUE
               AND r.IsDeleted = FALSE
               AND a.Code = @ApplicationCode
@@ -36,8 +37,13 @@ public sealed class DapperUserRolesReadRepository(MySqlConnectionFactory connect
             INNER JOIN applications a ON a.Id = resource.ApplicationId
             WHERE ur.UserId = @UserId
               AND ur.IsActive = TRUE
+              AND ur.IsDeleted = FALSE
               AND r.IsActive = TRUE
               AND r.IsDeleted = FALSE
+              AND rp.IsActive = TRUE
+              AND rp.IsDeleted = FALSE
+              AND p.IsActive = TRUE
+              AND p.IsDeleted = FALSE
               AND resource.IsActive = TRUE
               AND resource.IsDeleted = FALSE
               AND r.ApplicationId = resource.ApplicationId

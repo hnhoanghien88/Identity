@@ -22,6 +22,8 @@ import {
   updateMenu,
 } from "./api/menusApi";
 import { hasPermission, runIfPermitted } from "../auth/permissions";
+import { getAuthorization } from "../auth/api/authorization";
+import { publishSession } from "../auth/session";
 import { DeleteMenuDialog } from "./components/DeleteMenuDialog";
 import { MenuFormDialog } from "./components/MenuFormDialog";
 import { MenusTreeTable } from "./components/MenusTreeTable";
@@ -46,6 +48,10 @@ export function MenusPage({ session }) {
   const [pending, setPending] = useState(false);
   const [mutationError, setMutationError] = useState(null);
   const [notice, setNotice] = useState("");
+  const refreshNavigation = () =>
+    getAuthorization(session.accessToken)
+      .then((authorization) => publishSession({ ...session, authorization }))
+      .catch(() => undefined);
   useEffect(() => {
     const controller = new AbortController();
     getMenuApplications(controller.signal)
@@ -107,6 +113,7 @@ export function MenusPage({ session }) {
     try {
       if (form) await updateMenu(form.id, value);
       else await createMenu(value);
+      await refreshNavigation();
       setFormOpen(false);
       setNotice(form ? "Menu updated." : "Menu created.");
       setReload((key) => key + 1);
@@ -121,6 +128,7 @@ export function MenusPage({ session }) {
     setMutationError(null);
     try {
       await deleteMenu(deleting.id, deleting.version);
+      await refreshNavigation();
       setDeleting(null);
       setNotice("Menu deleted.");
       setReload((key) => key + 1);
@@ -131,8 +139,8 @@ export function MenusPage({ session }) {
     }
   };
   return (
-    <Box>
-      <Stack spacing={3}>
+    <>
+      <Stack className="menus-page" spacing={3}>
         <Stack
           direction={{ xs: "column", sm: "row" }}
           gap={2}
@@ -267,6 +275,6 @@ export function MenusPage({ session }) {
         onClose={() => setNotice("")}
         message={notice}
       />
-    </Box>
+    </>
   );
 }

@@ -1,148 +1,155 @@
-import { refreshSession } from './api/refresh'
+import { refreshSession } from "./api/refresh";
 
-const CHANNEL_NAME = 'identity-auth-session'
-const REFRESH_LOCK_NAME = 'identity-refresh-token'
-const SESSION_WAIT_MS = 200
-const EXPIRY_BUFFER_MS = 30_000
-const LOGOUT_MARKER = 'identity-explicitly-logged-out'
+const CHANNEL_NAME = "identity-auth-session";
+const REFRESH_LOCK_NAME = "identity-refresh-token";
+const SESSION_WAIT_MS = 200;
+const EXPIRY_BUFFER_MS = 30_000;
+const LOGOUT_MARKER = "identity-explicitly-logged-out";
 
-const channel = typeof BroadcastChannel === 'undefined'
-  ? null
-  : new BroadcastChannel(CHANNEL_NAME)
+const channel =
+  typeof BroadcastChannel === "undefined"
+    ? null
+    : new BroadcastChannel(CHANNEL_NAME);
 
-let currentSession = null
-let restorePromise = null
-let restorationBlocked = readLogoutMarker()
-const listeners = new Set()
-const pendingRequests = new Map()
+let currentSession = null;
+let restorePromise = null;
+let restorationBlocked = readLogoutMarker();
+const listeners = new Set();
+const pendingRequests = new Map();
 
-channel?.addEventListener('message', ({ data }) => {
-  if (!data?.type) return
+channel?.addEventListener("message", ({ data }) => {
+  if (!data?.type) return;
 
-  if (data.type === 'SESSION_REQUEST' && isUsable(currentSession)) {
+  if (data.type === "SESSION_REQUEST" && isUsable(currentSession)) {
     channel.postMessage({
-      type: 'SESSION_RESPONSE',
+      type: "SESSION_RESPONSE",
       requestId: data.requestId,
       session: currentSession,
-    })
-    return
+    });
+    return;
   }
 
-  if (data.type === 'SESSION_RESPONSE') {
-    pendingRequests.get(data.requestId)?.(data.session)
-    return
+  if (data.type === "SESSION_RESPONSE") {
+    pendingRequests.get(data.requestId)?.(data.session);
+    return;
   }
 
-  if (data.type === 'SESSION_UPDATED' && isUsable(data.session)) {
-    setRestorationBlocked(false)
-    updateLocalSession(data.session)
-    return
+  if (data.type === "SESSION_UPDATED" && isUsable(data.session)) {
+    setRestorationBlocked(false);
+    updateLocalSession(data.session);
+    return;
   }
 
-  if (data.type === 'SESSION_CLEARED') {
-    setRestorationBlocked(true)
-    updateLocalSession(null)
+  if (data.type === "SESSION_CLEARED") {
+    setRestorationBlocked(true);
+    updateLocalSession(null);
   }
-})
+});
 
 export function getSession() {
-  return isUsable(currentSession) ? currentSession : null
+  return isUsable(currentSession) ? currentSession : null;
 }
 
 export function publishSession(session) {
-  setRestorationBlocked(false)
-  updateLocalSession(session)
-  channel?.postMessage({ type: 'SESSION_UPDATED', session })
+  setRestorationBlocked(false);
+  updateLocalSession(session);
+  channel?.postMessage({ type: "SESSION_UPDATED", session });
 }
 
 export function clearSession() {
-  setRestorationBlocked(true)
-  updateLocalSession(null)
-  channel?.postMessage({ type: 'SESSION_CLEARED' })
+  setRestorationBlocked(true);
+  updateLocalSession(null);
+  channel?.postMessage({ type: "SESSION_CLEARED" });
 }
 
 export function canRestoreSession() {
-  return !restorationBlocked
+  return !restorationBlocked;
+}
+
+export function prepareExternalLogin() {
+  setRestorationBlocked(false);
 }
 
 export function subscribeToSession(listener) {
-  listeners.add(listener)
-  return () => listeners.delete(listener)
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
 export function restoreSession() {
-  if (restorationBlocked) return Promise.resolve(null)
-  if (isUsable(currentSession)) return Promise.resolve(currentSession)
-  if (restorePromise) return restorePromise
+  if (restorationBlocked) return Promise.resolve(null);
+  if (isUsable(currentSession)) return Promise.resolve(currentSession);
+  if (restorePromise) return restorePromise;
 
   restorePromise = restoreFromAnotherTab()
     .then((session) => session || refreshWithCrossTabLock())
     .finally(() => {
-      restorePromise = null
-    })
+      restorePromise = null;
+    });
 
-  return restorePromise
+  return restorePromise;
 }
 
 async function refreshWithCrossTabLock() {
   if (!navigator.locks?.request) {
-    return refreshAndPublish()
+    return refreshAndPublish();
   }
 
   return navigator.locks.request(REFRESH_LOCK_NAME, async () => {
-    const sharedSession = await restoreFromAnotherTab()
-    return sharedSession || refreshAndPublish()
-  })
+    const sharedSession = await restoreFromAnotherTab();
+    return sharedSession || refreshAndPublish();
+  });
 }
 
 async function refreshAndPublish() {
-  const session = await refreshSession()
-  publishSession(session)
-  return session
+  const session = await refreshSession();
+  publishSession(session);
+  return session;
 }
 
 function restoreFromAnotherTab() {
-  if (!channel) return Promise.resolve(null)
+  if (!channel) return Promise.resolve(null);
 
-  const requestId = crypto.randomUUID()
+  const requestId = crypto.randomUUID();
   return new Promise((resolve) => {
     const timeoutId = window.setTimeout(() => {
-      pendingRequests.delete(requestId)
-      resolve(null)
-    }, SESSION_WAIT_MS)
+      pendingRequests.delete(requestId);
+      resolve(null);
+    }, SESSION_WAIT_MS);
 
     pendingRequests.set(requestId, (session) => {
-      window.clearTimeout(timeoutId)
-      pendingRequests.delete(requestId)
+      window.clearTimeout(timeoutId);
+      pendingRequests.delete(requestId);
 
       if (isUsable(session)) {
-        updateLocalSession(session)
-        resolve(session)
+        updateLocalSession(session);
+        resolve(session);
       } else {
-        resolve(null)
+        resolve(null);
       }
-    })
+    });
 
-    channel.postMessage({ type: 'SESSION_REQUEST', requestId })
-  })
+    channel.postMessage({ type: "SESSION_REQUEST", requestId });
+  });
 }
 
 function updateLocalSession(session) {
-  currentSession = session
-  listeners.forEach((listener) => listener(session))
+  currentSession = session;
+  listeners.forEach((listener) => listener(session));
 }
 
 function isUsable(session) {
-  if (!session?.accessToken || !session?.accessTokenExpiresAtUtc) return false
-  return Date.parse(session.accessTokenExpiresAtUtc) > Date.now() + EXPIRY_BUFFER_MS
+  if (!session?.accessToken || !session?.accessTokenExpiresAtUtc) return false;
+  return (
+    Date.parse(session.accessTokenExpiresAtUtc) > Date.now() + EXPIRY_BUFFER_MS
+  );
 }
 function setRestorationBlocked(isBlocked) {
-  restorationBlocked = isBlocked
+  restorationBlocked = isBlocked;
   try {
     if (isBlocked) {
-      localStorage.setItem(LOGOUT_MARKER, 'true')
+      localStorage.setItem(LOGOUT_MARKER, "true");
     } else {
-      localStorage.removeItem(LOGOUT_MARKER)
+      localStorage.removeItem(LOGOUT_MARKER);
     }
   } catch {
     // Session coordination still works through memory and BroadcastChannel.
@@ -151,8 +158,8 @@ function setRestorationBlocked(isBlocked) {
 
 function readLogoutMarker() {
   try {
-    return localStorage.getItem(LOGOUT_MARKER) === 'true'
+    return localStorage.getItem(LOGOUT_MARKER) === "true";
   } catch {
-    return false
+    return false;
   }
 }

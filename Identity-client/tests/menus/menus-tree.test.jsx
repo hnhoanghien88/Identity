@@ -74,4 +74,23 @@ describe("MenusTreeTable", () => {
 
     expect(onEdit).toHaveBeenCalledWith(tree[0]);
   });
+
+  it("edits Order inline and saves on Enter", async () => {
+    const onOrderChange = vi.fn();
+    render(
+      <MenusTreeTable
+        menus={tree}
+        expanded={new Set()}
+        onToggle={vi.fn()}
+        canEdit
+        onOrderChange={onOrderChange}
+      />,
+    );
+
+    const input = screen.getByRole("spinbutton", { name: "Order for Root" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "12{Enter}");
+
+    expect(onOrderChange).toHaveBeenCalledWith(tree[0], 12);
+  });
 });

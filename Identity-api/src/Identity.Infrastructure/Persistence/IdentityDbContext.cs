@@ -17,6 +17,7 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     public DbSet<RolePermissions> RolePermissions => Set<RolePermissions>();
     public DbSet<RefreshTokens> RefreshTokens => Set<RefreshTokens>();
     public DbSet<RateLimitPolicy> RateLimitPolicies => Set<RateLimitPolicy>();
+    public DbSet<ExternalIdentity> ExternalIdentities => Set<ExternalIdentity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

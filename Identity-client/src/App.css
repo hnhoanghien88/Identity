@@ -35,9 +35,19 @@
 .sidebar-user-name {
   min-width: 0;
   overflow: hidden;
-  font-weight: 600 !important;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.sidebar-user-name .MuiTypography-body2 {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+.sidebar-user-name .MuiTypography-caption {
+  display: block;
+  overflow: hidden;
+  color: #8391a2;
+  text-overflow: ellipsis;
 }
 .brand-icon,
 .success-icon {
@@ -199,9 +209,8 @@
 .cuba-login-social > .MuiTypography-root { display: flex; align-items: center; gap: 12px; color: #8f94a5; font-size: 12px; white-space: nowrap; }
 .cuba-login-social > .MuiTypography-root::before, .cuba-login-social > .MuiTypography-root::after { width: 100%; height: 1px; content: ""; background: #e6e6ed; }
 .cuba-login-social .MuiButton-root { min-height: 42px; border-color: #dedee7; color: #4d4e59; text-transform: none; }
-.cuba-login-social .MuiButton-root:first-child .MuiSvgIcon-root { color: #4267b2; }
-.cuba-login-social .MuiButton-root:nth-child(2) .MuiSvgIcon-root { color: #1da1f2; }
-.cuba-login-social .MuiButton-root:nth-child(3) .MuiSvgIcon-root { color: #0a66c2; }
+.cuba-login-social .MuiButton-root:first-child .MuiSvgIcon-root { color: #4285f4; }
+.cuba-login-social .MuiButton-root:nth-child(2) .MuiSvgIcon-root { color: #4267b2; }
 .cuba-login-register { margin-top: 22px !important; text-align: center; font-size: 14px !important; }
 @media (max-width: 520px) {
   .cuba-login-page { align-items: center; padding: 18px 14px; }
@@ -235,7 +244,6 @@
 .cuba-login-submit { width: 94px; min-height: 40px; align-self: center; border-radius: 4px !important; background: rgb(75, 94, 211) !important; font-size: 14px !important; font-weight: 500 !important; text-transform: none !important; box-shadow: none !important; }
 .cuba-login-submit:hover { background: #6169d0 !important; }
 .cuba-login-submit.Mui-disabled { color: rgba(255,255,255,.75) !important; background: #aab0f8 !important; }
-.cuba-login-social { display: none !important; }
 .cuba-login-register { position: absolute; top: calc(100% + 24px); right: 0; left: 0; margin: 0 !important; color: #8a969c; text-align: center; font-size: 14px !important; }
 .cuba-login-register a { color: #6c757d; font-weight: 700; text-decoration: underline; }
 @media (max-width: 520px) {
@@ -275,7 +283,7 @@
 .brand .MuiTypography-h6 { color: #fff; font-size: 20px; }
 .brand .MuiTypography-caption { color: #8391a2; font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; }
 .sidebar-account { padding: 22px 20px 14px; justify-content: space-between; }
-.sidebar-user-name { color: #fff; font-weight: 600 !important; }
+.sidebar-user-name { color: #fff; }
 .sidebar-account .MuiButton-root { color: #fa5c7c; border-color: rgba(250,92,124,.3); }
 .sidebar .MuiDivider-root { border-color: rgba(255,255,255,.08); }
 .menu-list { padding: 18px 12px !important; }

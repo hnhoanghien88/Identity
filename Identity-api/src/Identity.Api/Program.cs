@@ -13,7 +13,10 @@ using Identity.Application.Menus.CreateMenu;
 using Identity.Application.Menus.UpdateMenu;
 using System.Text;
 using Identity.Api.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OAuth.Claims;
 using Microsoft.IdentityModel.Tokens;
 
 using Identity.Application.Users.CreateUsers;
@@ -61,8 +64,23 @@ var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOption
 if (Encoding.UTF8.GetByteCount(jwt.Key) < 32)
     throw new InvalidOperationException("Jwt:Key must contain at least 32 bytes.");
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+var externalAuthentication = builder.Configuration
+    .GetSection(ExternalAuthenticationOptions.SectionName)
+    .Get<ExternalAuthenticationOptions>() ?? new ExternalAuthenticationOptions();
+builder.Services.Configure<ExternalAuthenticationOptions>(
+    builder.Configuration.GetSection(ExternalAuthenticationOptions.SectionName));
+if (externalAuthentication.Google.Enabled)
+{
+    if (string.IsNullOrWhiteSpace(externalAuthentication.Google.ClientId)
+        || string.IsNullOrWhiteSpace(externalAuthentication.Google.ClientSecret))
+        throw new InvalidOperationException("Google external authentication credentials are missing.");
+    if (!Uri.TryCreate(externalAuthentication.FrontendLoginUrl, UriKind.Absolute, out var frontendLoginUri)
+        || (frontendLoginUri.Scheme != Uri.UriSchemeHttps && !frontendLoginUri.IsLoopback))
+        throw new InvalidOperationException("ExternalAuthentication:FrontendLoginUrl must use HTTPS except on loopback.");
+}
 builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+var authenticationBuilder = builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
+authenticationBuilder.AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -109,6 +127,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
             ProblemDetailsAuthorizationResults.WriteForbiddenAsync(context.HttpContext),
     };
 });
+authenticationBuilder.AddCookie("ExternalCookie", options =>
+{
+    options.Cookie.Name = "__Host-identity-external";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.Path = "/";
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+});
+if (externalAuthentication.Google.Enabled)
+{
+    authenticationBuilder.AddGoogle("Google", options =>
+    {
+        options.SignInScheme = "ExternalCookie";
+        options.ClientId = externalAuthentication.Google.ClientId;
+        options.ClientSecret = externalAuthentication.Google.ClientSecret;
+        options.Scope.Add("email");
+        options.Scope.Add("profile");
+        options.ClaimActions.MapJsonKey("email_verified", "verified_email");
+        options.ClaimActions.MapJsonKey("email_verified", "email_verified");
+        options.ClaimActions.MapJsonKey("picture", "picture");
+    });
+}
 builder.Services.AddAuthorization(options =>
 {
     options.AddPermissionPolicies();

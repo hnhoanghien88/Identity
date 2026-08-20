@@ -91,7 +91,7 @@ Người quản trị có quyền loại bỏ một Application không còn sử
 
 - **FR-001**: Hệ thống MUST sử dụng mục **Application** có sẵn trong menu làm điểm truy cập màn hình quản lý Applications.
 - **FR-002**: Khi chọn mục **Application**, hệ thống MUST thay nội dung trang chào hiện tại bằng màn hình quản lý Applications và thể hiện rõ mục điều hướng đang được chọn.
-- **FR-003**: Người dùng đã đăng nhập MUST có thể xem, tạo, cập nhật và xóa Application; người chưa đăng nhập MUST bị từ chối an toàn ở cả giao diện và điểm xử lý dữ liệu.
+- **FR-003**: Hệ thống MUST yêu cầu quyền `Applications.Read`, `Applications.Create`, `Applications.Update` hoặc `Applications.Delete` tương ứng cho từng thao tác; thiếu quyền MUST bị từ chối an toàn ở cả giao diện và điểm xử lý dữ liệu.
 - **FR-004**: Danh sách MUST đọc từ tập Applications và hiển thị tối thiểu Code, Name, Audience, trạng thái hoạt động, ngày tạo và các hành động mà người dùng được phép thực hiện.
 - **FR-005**: Người dùng MUST có thể lọc danh sách theo Code, Name, Audience và trạng thái hoạt động.
 - **FR-006**: Người dùng MUST có thể sắp xếp danh sách theo các cột được hỗ trợ và chuyển trang bằng các kích thước trang hợp lệ.

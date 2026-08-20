@@ -18,7 +18,6 @@ public sealed class AuthController(
     IUserRolesReadRepository userRoles,
     IOptions<JwtOptions> jwtOptions) : ControllerBase
 {
-    private const string RefreshTokenCookie = "refresh_token";
     private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
     [AllowAnonymous]
@@ -38,7 +37,7 @@ public sealed class AuthController(
             TimeSpan.FromDays(_jwtOptions.RefreshTokenDays),
             ct);
 
-        WriteRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAtUtc);
+        Authentication.RefreshTokenCookie.Write(HttpContext, refreshToken.Token, refreshToken.ExpiresAtUtc);
         return Ok(ToResponse(accessToken));
     }
 
@@ -46,7 +45,16 @@ public sealed class AuthController(
     [HttpPost("/refresh")]
     public async Task<ActionResult<LoginResponse>> Refresh(CancellationToken ct)
     {
-        var currentToken = ReadRefreshTokenCookie();
+        if (!Authentication.RefreshTokenCookie.TryRead(HttpContext, out var currentToken))
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = "No refresh session is available."
+            });
+        }
+
         var rotatedToken = await refreshTokens.RotateAsync(
             currentToken,
             TimeSpan.FromDays(_jwtOptions.RefreshTokenDays),
@@ -59,24 +67,21 @@ public sealed class AuthController(
         {
             await refreshTokens.RevokeAsync(
                 rotatedToken.Token, user.Email, ct);
-            DeleteRefreshTokenCookie();
+            Authentication.RefreshTokenCookie.Delete(HttpContext);
             throw new UnauthorizedAccessException("The user account is inactive.");
         }
 
         var authorization = await userRoles.GetAuthorizationAsync(user.Id, _jwtOptions.ApplicationCode, ct);
         var accessToken = tokens.CreateAccessToken(user, authorization);
 
-        WriteRefreshTokenCookie(
-            rotatedToken.Token,
-            rotatedToken.ExpiresAtUtc);
+        Authentication.RefreshTokenCookie.Write(HttpContext, rotatedToken.Token, rotatedToken.ExpiresAtUtc);
 
         return Ok(ToResponse(accessToken));
     }
     [HttpPost("/logout")]
     public async Task<IActionResult> Logout(CancellationToken ct)
     {
-        if (Request.Cookies.TryGetValue(RefreshTokenCookie, out var refreshToken)
-            && !string.IsNullOrWhiteSpace(refreshToken))
+        if (Authentication.RefreshTokenCookie.TryRead(HttpContext, out var refreshToken))
         {
             await refreshTokens.RevokeAsync(
                 refreshToken,
@@ -85,46 +90,12 @@ public sealed class AuthController(
         }
 
         tokens.RevokeAccessToken(User);
-        DeleteRefreshTokenCookie();
+        Authentication.RefreshTokenCookie.Delete(HttpContext);
         return NoContent();
     }
 
     private string? GetCurrentUserEmail() =>
         User.FindFirst("email")?.Value;
-
-    private string ReadRefreshTokenCookie()
-    {
-        if (!Request.Cookies.TryGetValue(RefreshTokenCookie, out var refreshToken)
-            || string.IsNullOrWhiteSpace(refreshToken))
-        {
-            throw new UnauthorizedAccessException(
-                "The refresh token cookie is missing.");
-        }
-
-        return refreshToken;
-    }
-
-    private void WriteRefreshTokenCookie(
-        string refreshToken,
-        DateTime expiresAtUtc)
-    {
-        var options = RefreshCookieOptions();
-        options.Expires = expiresAtUtc;
-        Response.Cookies.Append(RefreshTokenCookie, refreshToken, options);
-    }
-
-    private void DeleteRefreshTokenCookie() =>
-        Response.Cookies.Delete(
-            RefreshTokenCookie,
-            RefreshCookieOptions());
-
-    private CookieOptions RefreshCookieOptions() => new()
-    {
-        HttpOnly = true,
-        Secure = Request.IsHttps,
-        SameSite = SameSiteMode.Strict,
-        Path = "/"
-    };
 
     private static LoginResponse ToResponse(AccessTokenResult accessToken) =>
         new(accessToken.Token, accessToken.ExpiresAtUtc);

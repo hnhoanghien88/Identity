@@ -1,22 +1,22 @@
-# Specification Quality Checklist: Phân quyền theo Role
+# Specification Quality Checklist: Role Permissions
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2026-08-12
+**Created**: 2026-08-20
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 
-- [x] No implementation details (languages, frameworks, APIs)
+- [x] No implementation details in user-facing requirements
 - [x] Focused on user value and business needs
 - [x] Written for non-technical stakeholders
 - [x] All mandatory sections completed
 
 ## Requirement Completeness
 
-- [x] No [NEEDS CLARIFICATION] markers remain
+- [x] No `[NEEDS CLARIFICATION]` markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
-- [x] Success criteria are technology-agnostic (no implementation details)
+- [x] Success criteria are technology-agnostic
 - [x] All acceptance scenarios are defined
 - [x] Edge cases are identified
 - [x] Scope is clearly bounded
@@ -27,8 +27,8 @@
 - [x] All functional requirements have clear acceptance criteria
 - [x] User scenarios cover primary flows
 - [x] Feature meets measurable outcomes defined in Success Criteria
-- [x] No implementation details leak into specification
+- [x] No implementation details leak into user scenarios or success criteria
 
 ## Notes
 
-- Validation passed in the first review iteration; no clarification markers remain.
+- Validated against the implemented controller surface and current authorization policies on 2026-08-20.

@@ -36,6 +36,8 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
         List<Claim> claims =
         [
             new("uid", user.Id.ToString()),
+            new("code", user.Code),
+            new("display_name", user.Name),
             new("permissionversion", user.PermissionVersion.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new(ClaimTypes.Email, user.Email),

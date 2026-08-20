@@ -63,6 +63,8 @@ Người quản trị chỉnh sửa thông tin Menu, trạng thái hiển thị,
 5. **Given** Menu đã bị người khác cập nhật hoặc xóa sau khi form được mở, **When** người dùng lưu dữ liệu cũ, **Then** hệ thống không ghi đè âm thầm và yêu cầu tải dữ liệu mới nhất.
 6. **Given** một Menu có cả Resource và Route không được thiết lập, **When** người dùng mở màn hình index, **Then** mỗi giá trị trống được hiển thị bằng dấu gạch ngang dài `—` dễ đọc và thao tác chỉnh sửa của Menu vẫn khả dụng.
 7. **Given** một Menu đang hiển thị `—` cho Resource hoặc Route chưa được thiết lập, **When** người dùng chọn chỉnh sửa, nhập hoặc giữ trống các trường tùy chọn rồi lưu dữ liệu hợp lệ, **Then** form mở bình thường, giá trị trống không bị chuyển thành chuỗi ký tự đại diện và Menu được cập nhật thành công.
+8. **Given** cây có nhiều Menu và người dùng có quyền cập nhật, **When** người dùng sửa SortOrder trực tiếp trên dòng rồi nhấn Enter hoặc rời ô, **Then** thứ tự mới được lưu, cây và điều hướng được tải lại theo thứ tự mới mà không cần mở form đầy đủ.
+9. **Given** người dùng đang sửa SortOrder trực tiếp, **When** nhập giá trị không phải số nguyên hoặc nhấn Escape, **Then** giá trị cũ được khôi phục và không có thay đổi nào được gửi.
 
 ---
 
@@ -132,6 +134,7 @@ Người quản trị xóa một Menu không còn sử dụng sau khi thấy rõ
 - **FR-029**: Giao diện MUST hỗ trợ bàn phím, focus nhìn thấy được, nhãn có ý nghĩa, trạng thái mở/thu gọn có thể nhận biết và bố cục dùng được trên các kích thước desktop/mobile được hỗ trợ.
 - **FR-030**: Khi Resource hoặc Route của Menu không có giá trị, màn hình index MUST hiển thị ký hiệu thay thế `—` cho trường tương ứng; MUST NOT hiển thị chuỗi lỗi mã hóa như `â€”` hoặc coi ký hiệu thay thế là dữ liệu thực.
 - **FR-031**: Menu có Resource và/hoặc Route không có giá trị MUST vẫn cho phép người dùng có quyền mở form chỉnh sửa, xem đúng trạng thái trống, cập nhật các trường hợp lệ và lưu; giá trị `—` dùng để hiển thị MUST NOT được đưa vào dữ liệu chỉnh sửa hoặc dữ liệu lưu.
+- **FR-032**: Người dùng có quyền cập nhật Menu MUST có thể sửa SortOrder trực tiếp trên từng dòng của tree grid; thao tác MUST chỉ chấp nhận số nguyên, hỗ trợ lưu bằng Enter hoặc khi rời ô, hỗ trợ hủy bằng Escape, hiển thị trạng thái đang lưu và vẫn áp dụng kiểm tra xung đột phiên bản hiện hành.
 
 ### Key Entities
 

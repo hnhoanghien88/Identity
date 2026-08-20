@@ -42,6 +42,14 @@ public sealed class UserPersistenceContractTests
         Assert.Null(entity.FindProperty("NormalizedEmail"));
     }
 
+    [Fact]
+    public void User_code_supports_full_email_length()
+    {
+        var property = BuildEntity().FindProperty(nameof(UserEntity.Code))!;
+
+        Assert.Equal(254, property.GetMaxLength());
+    }
+
     private static Microsoft.EntityFrameworkCore.Metadata.IMutableEntityType BuildEntity()
     {
         var builder = new ModelBuilder();

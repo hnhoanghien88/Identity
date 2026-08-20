@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: Chức năng mới Roles, logic chức năng giống Actions, không cần phân quyền.
+**Input**: Quản lý Roles theo từng Application, có phân quyền đọc, tạo, cập nhật và xóa.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -16,7 +16,7 @@ Người quản trị đã đăng nhập mở mục **Roles** để xem, tìm ki
 
 **Why this priority**: Danh sách là điểm vào cho toàn bộ nghiệp vụ quản lý Roles và giúp người dùng nhận biết vai trò thuộc đúng ứng dụng.
 
-**Independent Test**: Đăng nhập, mở **Roles**, xác nhận có thể lọc, sắp xếp và chuyển trang mà không cần quyền Roles riêng.
+**Independent Test**: Đăng nhập bằng tài khoản có `Roles.Read`, mở **Roles**, xác nhận có thể lọc, sắp xếp và chuyển trang; tài khoản thiếu quyền bị từ chối.
 
 **Acceptance Scenarios**:
 
@@ -90,16 +90,16 @@ Người quản trị đã đăng nhập xóa một Role không còn sử dụng
 ### Functional Requirements
 
 - **FR-001**: Hệ thống MUST cung cấp mục **Roles** và địa chỉ `/roles` làm điểm truy cập chức năng.
-- **FR-002**: Mọi người dùng đã đăng nhập MUST có thể xem, tạo, cập nhật và xóa Roles mà không kiểm tra quyền Roles.View/Create/Update/Delete; người chưa đăng nhập MUST bị từ chối an toàn.
+- **FR-002**: Hệ thống MUST yêu cầu quyền `Roles.Read`, `Roles.Create`, `Roles.Update` hoặc `Roles.Delete` tương ứng cho từng thao tác; người chưa đăng nhập hoặc thiếu quyền MUST bị từ chối an toàn.
 - **FR-003**: Danh sách MUST hiển thị tối thiểu Application, Code, Name, IsSystemRole, IsActive, ngày tạo và thao tác quản lý.
 - **FR-004**: Người dùng MUST có thể lọc theo Application, Code và Name, sắp xếp các cột được hỗ trợ và phân trang.
 - **FR-005**: Màn hình MUST có trạng thái tải, rỗng, lỗi và thử lại rõ ràng; lỗi đọc MUST NOT xóa kết quả hợp lệ còn dùng được.
-- **FR-006**: Người dùng MUST có thể tạo Role bằng Application, Code, Name, IsSystemRole và IsActive; mặc định Role mới không phải Role hệ thống và đang hoạt động.
+- **FR-006**: Người dùng có quyền `Roles.Create` MUST có thể tạo Role bằng Application, Code, Name, IsSystemRole và IsActive; mặc định Role mới không phải Role hệ thống và đang hoạt động.
 - **FR-007**: Application MUST tham chiếu một Application đang tồn tại.
 - **FR-008**: Code MUST bắt buộc, dài 1-100 ký tự sau khi trim và duy nhất không phân biệt hoa/thường trong từng Application.
 - **FR-009**: Name MUST bắt buộc và dài 1-150 ký tự sau khi trim.
 - **FR-010**: Validation MUST áp dụng khi tạo/cập nhật, chỉ rõ trường lỗi và không lưu một phần.
-- **FR-011**: Người dùng MUST có thể cập nhật Application, Code, Name, IsSystemRole và IsActive của Role hiện có.
+- **FR-011**: Người dùng có quyền `Roles.Update` MUST có thể cập nhật Application, Code, Name, IsSystemRole và IsActive của Role hiện có.
 - **FR-012**: Tạo, cập nhật và xóa thành công MUST được phản ánh trong lần đọc tiếp theo và ghi nhận audit hiện có.
 - **FR-013**: Trước khi xóa, hệ thống MUST yêu cầu xác nhận với Application, Code và Name.
 - **FR-014**: Hệ thống MUST từ chối xóa Role hệ thống hoặc Role đang liên kết với User hay Permission, giữ nguyên dữ liệu và trả thông báo dễ hiểu.
@@ -107,14 +107,14 @@ Người quản trị đã đăng nhập xóa một Role không còn sử dụng
 - **FR-016**: Hệ thống MUST phát hiện xung đột đồng thời khi cập nhật/xóa và MUST NOT ghi đè dữ liệu mới hơn.
 - **FR-017**: Màn hình MUST ngăn gửi lặp khi thao tác đang xử lý và thông báo kết quả rõ ràng.
 - **FR-018**: Giao diện MUST hỗ trợ bàn phím, focus nhìn thấy, nhãn có nghĩa và responsive theo chuẩn dự án.
-- **FR-019**: Chức năng MUST NOT tạo hoặc gán quyền quản trị mới hay phụ thuộc Permission để quyết định truy cập Roles.
+- **FR-019**: Chức năng quản lý Roles MUST không trực tiếp cấp Permission hoặc gán User; các quan hệ này thuộc phạm vi Role Permissions và User Roles.
 
 ### Key Entities
 
 - **Role**: Vai trò thuộc một Application, gồm Code duy nhất trong Application, Name, cờ hệ thống, trạng thái hoạt động, audit và phiên bản dữ liệu.
 - **Application**: Phạm vi sở hữu Role và quyết định ranh giới duy nhất của Code.
 - **Role dependency**: Liên kết từ User hoặc Permission tới Role; sự tồn tại của liên kết ngăn Role bị xóa.
-- **Authenticated administrator**: Người dùng có phiên hợp lệ, không cần quyền Roles riêng.
+- **Authorized administrator**: Người dùng có phiên hợp lệ và quyền Roles tương ứng với thao tác cần thực hiện.
 
 ## Success Criteria *(mandatory)*
 
@@ -123,7 +123,7 @@ Người quản trị đã đăng nhập xóa một Role không còn sử dụng
 - **SC-001**: Ít nhất 95% người dùng tìm được Role theo Application, Code hoặc Name trong 30 giây ở lần thử đầu.
 - **SC-002**: Ít nhất 95% thao tác tạo/cập nhật hợp lệ hoàn thành trong 2 phút.
 - **SC-003**: 100% dữ liệu không hợp lệ trong kịch bản chấp nhận bị từ chối mà không tạo thay đổi một phần hoặc Code trùng.
-- **SC-004**: 100% người dùng đã đăng nhập dùng đầy đủ Roles không cần quyền Roles riêng; 100% người chưa đăng nhập bị từ chối.
+- **SC-004**: 100% yêu cầu thiếu quyền Roles tương ứng bị từ chối; người có quyền chỉ thực hiện được đúng nhóm thao tác đã cấp.
 - **SC-005**: Với tối đa 10.000 Roles, 95% lượt mở, lọc, sắp xếp hoặc chuyển trang hiển thị trong 2 giây dưới tải bình thường.
 - **SC-006**: 100% thao tác xóa bị hủy, bị chặn do Role hệ thống/dữ liệu liên kết hoặc xung đột giữ dữ liệu nhất quán và có kết quả rõ ràng.
 - **SC-007**: Tất cả kịch bản CRUD chính hoàn thành được chỉ bằng bàn phím trên các kích thước màn hình dự án hỗ trợ.

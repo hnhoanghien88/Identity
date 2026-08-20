@@ -144,6 +144,11 @@ Quản trị viên xóa một User không còn được phép sử dụng hệ t
 - **FR-026**: Đăng nhập thất bại MUST dùng thông báo chung, không tiết lộ Code tồn tại, mật khẩu sai, tài khoản bị xóa hay chi tiết nội bộ.
 - **FR-027**: Sau khi chứng thực thành công, hệ thống MUST cung cấp danh tính, vai trò và quyền hiện hành cần thiết để điều hướng và bảo vệ chức năng Users.
 - **FR-028**: Việc tìm Code khi đăng nhập và kiểm tra trùng Code/Email MUST không phân biệt chữ hoa/thường dù không lưu các bản sao đã chuẩn hóa.
+- **FR-029**: Người quản trị có quyền cập nhật User MUST có thể kích hoạt hoặc vô hiệu hóa tài khoản; tài khoản vô hiệu hóa MUST không thể đăng nhập, làm mới phiên hoặc tiếp tục sử dụng access token cũ.
+- **FR-030**: Hệ thống MUST cấp access token ngắn hạn sau đăng nhập thành công và giữ refresh token trong cookie chỉ dành cho HTTP, không trả refresh token trong nội dung phản hồi.
+- **FR-031**: Khi làm mới phiên, hệ thống MUST xoay vòng refresh token, từ chối token thiếu, hết hạn, đã thu hồi hoặc đã bị thay thế, và cấp access token phản ánh vai trò cùng quyền hiện hành.
+- **FR-032**: Khi đăng xuất, hệ thống MUST thu hồi refresh token hiện tại, vô hiệu hóa access token hiện tại trong phạm vi thời hạn còn lại và xóa cookie phiên.
+- **FR-033**: Mọi endpoint quản lý Users MUST yêu cầu quyền tương ứng `Users.Read`, `Users.Create`, `Users.Update` hoặc `Users.Delete`; quyền cập nhật MUST bao gồm thao tác kích hoạt/vô hiệu hóa.
 
 ### Key Entities
 

@@ -11,6 +11,13 @@ vi.mock("../../src/features/auth/api/login", () => ({
 describe("Code login", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ google: false }),
+      }),
+    );
   });
 
   it("submits Code and password without an Email field", async () => {
@@ -58,5 +65,17 @@ describe("Code login", () => {
     expect(
       await screen.findByText("Code hoặc mật khẩu không đúng."),
     ).toBeVisible();
+  });
+
+  it("enables Google sign-in only when the backend provider is configured", async () => {
+    fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ google: true }),
+    });
+
+    render(<LoginPage onLoginSuccess={vi.fn()} />);
+
+    expect(await screen.findByRole("button", { name: "Google" })).toBeEnabled();
+    expect(fetch).toHaveBeenCalledWith("/backend/external-login/providers");
   });
 });

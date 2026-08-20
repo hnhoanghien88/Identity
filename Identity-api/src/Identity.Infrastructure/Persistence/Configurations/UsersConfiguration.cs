@@ -11,7 +11,7 @@ public sealed class UsersConfiguration : IEntityTypeConfiguration<Users>
         b.ToTable("users");
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedOnAdd();
-        b.Property(x => x.Code).HasMaxLength(50).UseCollation("utf8mb4_unicode_ci").IsRequired();
+        b.Property(x => x.Code).HasMaxLength(254).UseCollation("utf8mb4_unicode_ci").IsRequired();
         b.Property(x => x.Email).HasMaxLength(254).UseCollation("utf8mb4_unicode_ci").IsRequired();
         b.Property(x => x.DisplayName).HasMaxLength(255).IsRequired();
         b.Property(x => x.PasswordHash).HasMaxLength(500);

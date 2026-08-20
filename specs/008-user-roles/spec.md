@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: Chức năng user-roles, không cần phân quyền; màn hình hai cột gồm danh sách Roles và danh sách Users thuộc Role đang active; hỗ trợ xóa từng User và thêm nhiều Users qua dialog rồi lưu vào quan hệ User–Role.
+**Input**: Chức năng user-roles có phân quyền đọc, gán và gỡ; màn hình hai cột gồm danh sách Roles và Users thuộc Role đang active, hỗ trợ thêm nhiều Users qua dialog.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -24,6 +24,7 @@ Người dùng đã đăng nhập mở màn hình **User Roles**, xem danh sách
 2. **Given** một Role đang active, **When** người dùng chọn Role khác, **Then** trạng thái active chuyển sang Role mới và danh sách Users được tải lại theo Role mới.
 3. **Given** Role active chưa có thành viên, **When** danh sách Users được tải, **Then** cột Users hiển thị trạng thái rỗng rõ ràng và vẫn cho phép thêm User.
 4. **Given** người dùng điều hướng bằng bàn phím, **When** focus và kích hoạt một dòng Role, **Then** dòng active nhìn thấy rõ và danh sách Users cập nhật như khi dùng chuột.
+5. **Given** Roles thuộc nhiều Applications hoặc có Code/Name giống nhau, **When** danh sách Roles được hiển thị, **Then** mỗi dòng thể hiện rõ Application Code và Application Name để người dùng chọn đúng phạm vi.
 
 ---
 
@@ -75,8 +76,8 @@ Người dùng nhấn nút xóa ở một dòng User để gỡ User đó khỏi
 ### Functional Requirements
 
 - **FR-001**: Hệ thống MUST cung cấp màn hình **User Roles** gồm đúng hai cột chính: Roles và Users thuộc Role active.
-- **FR-002**: Mọi người dùng đã đăng nhập MUST có thể sử dụng chức năng mà không cần permission chức năng riêng; người chưa đăng nhập MUST bị từ chối an toàn.
-- **FR-003**: Cột Roles MUST hiển thị danh sách Roles, thể hiện rõ dòng active và cho phép chọn bằng chuột hoặc bàn phím.
+- **FR-002**: Hệ thống MUST yêu cầu `UserRoles.Read` để xem thành viên và ứng viên, `UserRoles.Create` để gán Users, và `UserRoles.Delete` để gỡ User khỏi Role; người chưa đăng nhập hoặc thiếu quyền MUST bị từ chối an toàn.
+- **FR-003**: Cột Roles MUST hiển thị Role Code, Role Name, Application Code và Application Name cho từng Role, thể hiện rõ dòng active và cho phép chọn bằng chuột hoặc bàn phím.
 - **FR-004**: Khi mở màn hình, hệ thống MUST tự chọn Role khả dụng đầu tiên theo thứ tự hiển thị ổn định nếu có.
 - **FR-005**: Cột Users MUST chỉ hiển thị Users đang thuộc Role active và MUST làm mới khi Role active thay đổi.
 - **FR-006**: Mỗi dòng User thuộc Role MUST có nút xóa với nhãn truy cập có ý nghĩa.
@@ -97,7 +98,7 @@ Người dùng nhấn nút xóa ở một dòng User để gỡ User đó khỏi
 - **Role**: Vai trò được hiển thị và chọn ở cột thứ nhất; là phía nhận thành viên trong quan hệ.
 - **User**: Tài khoản có thể là thành viên của không, một hoặc nhiều Roles; hiển thị ở cột thứ hai hoặc trong dialog lựa chọn.
 - **User Role Membership**: Quan hệ duy nhất giữa một User và một Role; sự tồn tại của quan hệ quyết định User có xuất hiện trong danh sách thành viên của Role hay không.
-- **Authenticated User**: Người vận hành có phiên đăng nhập hợp lệ; không cần permission riêng của chức năng.
+- **Authorized administrator**: Người vận hành có phiên hợp lệ và quyền UserRoles tương ứng với thao tác cần thực hiện.
 
 ## Success Criteria *(mandatory)*
 
@@ -109,7 +110,7 @@ Người dùng nhấn nút xóa ở một dòng User để gỡ User đó khỏi
 - **SC-004**: 100% thao tác thêm hoặc xóa thành công vẫn phản ánh đúng sau khi tải lại màn hình.
 - **SC-005**: 100% kịch bản đồng thời được kiểm thử không tạo quan hệ trùng, không xóa tài khoản và không báo thành công sai.
 - **SC-006**: 100% luồng chọn Role, mở dialog, chọn nhiều, lưu, xác nhận xóa và hủy có thể hoàn thành chỉ bằng bàn phím.
-- **SC-007**: 100% người dùng đã đăng nhập có thể truy cập chức năng mà không cần permission riêng; 100% người chưa đăng nhập bị từ chối an toàn.
+- **SC-007**: 100% yêu cầu thiếu quyền UserRoles tương ứng bị từ chối an toàn; người có quyền chỉ thực hiện được đúng thao tác đọc, gán hoặc gỡ đã cấp.
 
 ## Assumptions
 

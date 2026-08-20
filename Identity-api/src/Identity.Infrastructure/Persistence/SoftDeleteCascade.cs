@@ -58,6 +58,7 @@ internal static class SoftDeleteCascade
 
     public static async Task UserAsync(IdentityDbContext db, ulong id, string? actor, DateTime now, CancellationToken ct)
     {
+        await MarkAsync(db.ExternalIdentities.IgnoreQueryFilters().Where(x => x.UserId == id), actor, now, ct);
         await MarkAsync(db.UserRoles.IgnoreQueryFilters().Where(x => x.UserId == id), actor, now, ct);
         await MarkAsync(db.RefreshTokens.IgnoreQueryFilters().Where(x => x.UserId == id), actor, now, ct);
     }

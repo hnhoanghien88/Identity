@@ -8,7 +8,7 @@ public sealed class UserValidatorsTests
     [Theory]
     [InlineData("has space")]
     [InlineData("người-dùng")]
-    [InlineData("user@email")]
+    [InlineData("user code")]
     [InlineData("")]
     public void Create_rejects_invalid_code(string code)
     {
@@ -19,6 +19,21 @@ public sealed class UserValidatorsTests
                 "Name",
                 "password1"));
         Assert.Contains(result.Errors, x => x.PropertyName == nameof(CreateUsersCommand.Code));
+    }
+
+    [Fact]
+    public void Create_accepts_email_as_code()
+    {
+        var result = new CreateUsersValidator().Validate(
+            new CreateUsersCommand(
+                "google.user+portfolio@example.com",
+                "google.user+portfolio@example.com",
+                "Google User",
+                "password1"));
+
+        Assert.DoesNotContain(
+            result.Errors,
+            error => error.PropertyName == nameof(CreateUsersCommand.Code));
     }
 
     [Theory]

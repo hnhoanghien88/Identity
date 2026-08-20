@@ -1,5 +1,6 @@
-import { Fragment } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
+  CircularProgress,
   IconButton,
   Paper,
   Stack,
@@ -10,6 +11,7 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  TextField,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -24,6 +26,55 @@ const flattenMenus = (nodes, expanded, depth = 0) =>
       : []),
   ]);
 
+function InlineOrderCell({ menu, canEdit, pending, onChange }) {
+  const [value, setValue] = useState(String(menu.sortOrder));
+
+  useEffect(() => {
+    setValue(String(menu.sortOrder));
+  }, [menu.sortOrder]);
+
+  if (!canEdit) return menu.sortOrder;
+
+  const save = (candidate = value) => {
+    const next = Number(candidate);
+    if (!Number.isInteger(next)) {
+      setValue(String(menu.sortOrder));
+      return;
+    }
+    if (next !== menu.sortOrder) onChange(menu, next);
+  };
+
+  return (
+    <TextField
+      size="small"
+      type="number"
+      value={value}
+      disabled={pending}
+      onChange={(event) => setValue(event.target.value)}
+      onBlur={save}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          save(event.currentTarget.value);
+        }
+        if (event.key === "Escape") {
+          setValue(String(menu.sortOrder));
+        }
+      }}
+      slotProps={{
+        htmlInput: {
+          "aria-label": `Order for ${menu.name}`,
+          step: 1,
+        },
+        input: {
+          endAdornment: pending ? <CircularProgress size={16} /> : null,
+        },
+      }}
+      sx={{ width: 100 }}
+    />
+  );
+}
+
 export function MenusTreeTable({
   menus,
   expanded,
@@ -32,6 +83,8 @@ export function MenusTreeTable({
   canDelete,
   onEdit,
   onDelete,
+  orderPendingIds = new Set(),
+  onOrderChange,
 }) {
   return (
     <TableContainer
@@ -84,7 +137,14 @@ export function MenusTreeTable({
                   <TableCell>{node.code}</TableCell>
                   <TableCell>{node.resourceName || "—"}</TableCell>
                   <TableCell>{node.route || "—"}</TableCell>
-                  <TableCell>{node.sortOrder}</TableCell>
+                  <TableCell>
+                    <InlineOrderCell
+                      menu={node}
+                      canEdit={canEdit && Boolean(onOrderChange)}
+                      pending={orderPendingIds.has(node.id)}
+                      onChange={onOrderChange}
+                    />
+                  </TableCell>
                   <TableCell>{node.isVisible ? "Hidden" : "Visible"}</TableCell>
                   <TableCell>{node.isActive ? "Active" : "Inactive"}</TableCell>
                   <TableCell align="right">

@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRolesReadRepository, DapperUserRolesReadRepository>();
         services.AddScoped<IUserRolesRepository, MySqlUserRolesRepository>();
         services.AddScoped<IRefreshTokenRepository, MySqlRefreshTokenRepository>();
+        services.AddScoped<IExternalIdentityProvisioner, MySqlExternalIdentityProvisioner>();
         return services;
     }
 }

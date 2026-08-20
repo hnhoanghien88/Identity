@@ -138,7 +138,10 @@ export function UserRolesPage({ session }) {
                   aria-current={role.id === roleId ? "true" : undefined}
                   onClick={() => setRoleId(role.id)}
                 >
-                  <ListItemText primary={role.code} secondary={role.name} />
+                  <ListItemText
+                    primary={`${role.code} — ${role.name}`}
+                    secondary={`${role.applicationCode} — ${role.applicationName}`}
+                  />
                 </ListItemButton>
               ))}
             </List>
@@ -153,6 +156,9 @@ export function UserRolesPage({ session }) {
             >
               <Typography component="h2" variant="h6" fontWeight={700}>
                 Users in {activeRole?.code ?? "Role"}
+                {activeRole
+                  ? ` (${activeRole.applicationCode} — ${activeRole.applicationName})`
+                  : ""}
               </Typography>
               <Button
                 startIcon={<Add />}

@@ -55,7 +55,7 @@ import {
   subscribeToSession,
 } from "./features/auth/session";
 import { logout } from "./features/auth/api/logout";
-import { getSessionUserName } from "./features/auth/sessionUser";
+import { getSessionUser } from "./features/auth/sessionUser";
 import "./App.css";
 
 const menuIcons = {
@@ -146,7 +146,7 @@ function App() {
       window.removeEventListener(PERMISSION_DENIED_EVENT, showPermissionDenied);
   }, []);
   const loggedIn = Boolean(session);
-  const userName = getSessionUserName(session);
+  const sessionUser = getSessionUser(session);
   const navigationMenus = flattenMenus(session?.authorization?.menus);
   const activeMenu = navigationMenus.find((menu) => menu.route === path);
   const pageTitle = activeMenu?.name || "Identity Management";
@@ -289,9 +289,14 @@ function App() {
             spacing={1}
             sx={{ alignItems: "center" }}
           >
-            <Typography className="sidebar-user-name" variant="body2">
-              {userName}
-            </Typography>
+            <Box className="sidebar-user-name">
+              <Typography variant="body2">
+                {sessionUser.displayName}
+              </Typography>
+              <Typography variant="caption">
+                {sessionUser.code}
+              </Typography>
+            </Box>
             <Button
               size="small"
               color="error"
@@ -335,11 +340,11 @@ function App() {
             <NotificationsNoneRoundedIcon />
           </IconButton>
           <Box className="attex-user-avatar" aria-hidden="true">
-            {(userName || "U").charAt(0).toUpperCase()}
+            {(sessionUser.displayName || "U").charAt(0).toUpperCase()}
           </Box>
           <Box className="attex-user-meta">
-            <Typography variant="body2">{userName}</Typography>
-            <Typography variant="caption">Administrator</Typography>
+            <Typography variant="body2">{sessionUser.displayName}</Typography>
+            <Typography variant="caption">{sessionUser.code}</Typography>
           </Box>
         </Box>
       </Box>

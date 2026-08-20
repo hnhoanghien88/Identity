@@ -33,6 +33,7 @@ const allIds = (nodes) =>
 
 export function MenusPage({ session }) {
   const canLoadResources = hasPermission(session, "Resources.Read");
+  const canUpdateMenus = hasPermission(session, "Menus.Update");
   const [applications, setApplications] = useState([]);
   const [applicationId, setApplicationId] = useState("");
   const [menus, setMenus] = useState([]);
@@ -48,6 +49,7 @@ export function MenusPage({ session }) {
   const [pending, setPending] = useState(false);
   const [mutationError, setMutationError] = useState(null);
   const [notice, setNotice] = useState("");
+  const [orderPendingIds, setOrderPendingIds] = useState(new Set());
   const refreshNavigation = () =>
     getAuthorization(session.accessToken)
       .then((authorization) => publishSession({ ...session, authorization }))
@@ -136,6 +138,36 @@ export function MenusPage({ session }) {
       setMutationError(reason);
     } finally {
       setPending(false);
+    }
+  };
+  const updateSortOrder = async (menu, sortOrder) => {
+    setOrderPendingIds((current) => new Set(current).add(menu.id));
+    setError("");
+    try {
+      await updateMenu(menu.id, {
+        applicationId: menu.applicationId,
+        parentId: menu.parentId,
+        resourceId: menu.resourceId,
+        code: menu.code,
+        name: menu.name,
+        route: menu.route,
+        icon: menu.icon,
+        sortOrder,
+        isVisible: menu.isVisible,
+        isActive: menu.isActive,
+        version: menu.version,
+      });
+      await refreshNavigation();
+      setNotice(`Order for ${menu.name} updated.`);
+      setReload((key) => key + 1);
+    } catch (reason) {
+      setError(reason.message);
+    } finally {
+      setOrderPendingIds((current) => {
+        const next = new Set(current);
+        next.delete(menu.id);
+        return next;
+      });
     }
   };
   return (
@@ -230,8 +262,10 @@ export function MenusPage({ session }) {
                 return next;
               })
             }
-            canEdit
+            canEdit={canUpdateMenus}
             canDelete
+            orderPendingIds={orderPendingIds}
+            onOrderChange={updateSortOrder}
             onEdit={(value) =>
               runIfPermitted(session, "Menus.Update", () => {
                 setForm(value);

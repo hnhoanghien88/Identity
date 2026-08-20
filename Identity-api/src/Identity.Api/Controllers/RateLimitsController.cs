@@ -93,7 +93,8 @@ public sealed class RateLimitsController(
         if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 150) throw new ArgumentException("Name is required and must not exceed 150 characters.");
         if (string.IsNullOrWhiteSpace(request.RoutePattern) || request.RoutePattern.Length > 300) throw new ArgumentException("Route pattern is required.");
         if (request.PermitLimit == 0 || request.WindowSeconds == 0) throw new ArgumentException("Permit limit and window seconds must be greater than zero.");
-        if (request.Algorithm is not ("TokenBucket" or "SlidingWindow" or "FixedWindow")) throw new ArgumentException("Algorithm is invalid.");
+        if (!RateLimitAlgorithms.IsSupported(request.Algorithm))
+            throw new ArgumentException("Algorithm must be FixedWindow, SlidingWindow, TokenBucket, or Concurrency.");
     }
 
     private static void Apply(RateLimitPolicy value, SaveRateLimitPolicyRequest request)

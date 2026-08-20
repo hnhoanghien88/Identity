@@ -133,6 +133,7 @@ function PolicyDialog({
             <MenuItem value="TokenBucket">Token Bucket</MenuItem>
             <MenuItem value="SlidingWindow">Sliding Window</MenuItem>
             <MenuItem value="FixedWindow">Fixed Window</MenuItem>
+            <MenuItem value="Concurrency">Concurrency</MenuItem>
           </TextField>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField

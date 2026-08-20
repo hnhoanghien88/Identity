@@ -20,6 +20,7 @@ using Identity.Application.Users.CreateUsers;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Infrastructure;
 using Microsoft.OpenApi;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,7 +32,27 @@ builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IAuthorizationCache, AuthorizationCache>();
 builder.Services.AddScoped<RateLimitPolicyProvider>();
-builder.Services.AddSingleton<RateLimitCounterStore>();
+var rateLimiting = builder.Configuration.GetSection(RateLimitingOptions.SectionName)
+    .Get<RateLimitingOptions>() ?? new RateLimitingOptions();
+if (rateLimiting.Store is not ("Redis" or "InMemory"))
+    throw new InvalidOperationException("RateLimiting:Store must be either 'Redis' or 'InMemory'.");
+if (rateLimiting.PolicyCacheSeconds <= 0)
+    throw new InvalidOperationException("RateLimiting:PolicyCacheSeconds must be greater than zero.");
+if (rateLimiting.FailureMode is not ("Open" or "Closed"))
+    throw new InvalidOperationException("RateLimiting:FailureMode must be either 'Open' or 'Closed'.");
+builder.Services.Configure<RateLimitingOptions>(
+    builder.Configuration.GetSection(RateLimitingOptions.SectionName));
+if (rateLimiting.Store == "Redis")
+{
+    var redisConnection = builder.Configuration.GetConnectionString("Redis")
+        ?? throw new InvalidOperationException("ConnectionStrings:Redis is required when RateLimiting:Store is Redis.");
+    builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnection));
+    builder.Services.AddSingleton<IRateLimitStore, RedisRateLimitStore>();
+}
+else
+{
+    builder.Services.AddSingleton<IRateLimitStore, InMemoryRateLimitStore>();
+}
 builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();

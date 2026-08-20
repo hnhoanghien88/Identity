@@ -70,7 +70,7 @@ CREATE TABLE `applications` (
 
 LOCK TABLES `applications` WRITE;
 /*!40000 ALTER TABLE `applications` DISABLE KEYS */;
-INSERT INTO `applications` VALUES (1,'Identity-api','Identity API','Identity-api','Main authentication application','system@company.com','2026-08-05 14:20:19.881534','admin','2026-08-11 07:10:58.047105',1,0,2),(2,'Identity-client','Identity client','Identity-client','Identity client','admin','2026-08-11 07:11:28.557225',NULL,NULL,1,0,1);
+INSERT INTO `applications` VALUES (1,'Identity','Identity API','Identity','Main authentication application','system@company.com','2026-08-05 14:20:19.881534','admin','2026-08-11 07:10:58.047105',1,0,2),(2,'Identity-client','Identity client','Identity-client','Identity client','admin','2026-08-11 07:11:28.557225',NULL,NULL,1,0,1);
 /*!40000 ALTER TABLE `applications` ENABLE KEYS */;
 UNLOCK TABLES;
 

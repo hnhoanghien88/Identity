@@ -6,7 +6,7 @@ FROM resources AS resource
 INNER JOIN applications AS application ON application.Id = resource.ApplicationId
 INNER JOIN permission_actions AS action
     ON action.Code IN ('Read', 'Create', 'Update', 'Delete', 'ViewMenu')
-WHERE application.Code = 'Identity-api'
+WHERE application.Code = 'Identity'
     AND resource.Code = 'RateLimiting'
     AND resource.IsDeleted = 0
     AND NOT EXISTS (

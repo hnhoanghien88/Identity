@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   Box,
@@ -26,9 +26,6 @@ import { prepareExternalLogin } from "./session";
 
 const CONNECTION_ERROR =
   "Kh\u00f4ng th\u1ec3 k\u1ebft n\u1ed1i \u0111\u1ebfn m\u00e1y ch\u1ee7. Vui l\u00f2ng th\u1eed l\u1ea1i.";
-const EXTERNAL_LOGIN_BASE_URL =
-  import.meta.env.VITE_EXTERNAL_LOGIN_BASE_URL || "/backend";
-
 export function LoginPage({ onLoginSuccess }) {
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
@@ -80,7 +77,7 @@ export function LoginPage({ onLoginSuccess }) {
   const loginWithGoogle = () => {
     prepareExternalLogin();
     window.location.assign(
-      `${EXTERNAL_LOGIN_BASE_URL}/external-login/google`,
+      `/backend/external-login/google`,
     );
   };
 

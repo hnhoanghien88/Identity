@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using Identity.Api.Authentication;
 using Identity.Api.Authorization;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Applications.GetApplications;
@@ -9,7 +8,6 @@ using Identity.Application.Users.GetUsers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace Identity.Api.Controllers;
 
@@ -19,11 +17,11 @@ namespace Identity.Api.Controllers;
 public sealed class AuthorizationController(
     IAuthorizationCache authorizationCache,
     IApplicationsReadRepository applications,
-    ISender sender,
-    IOptions<JwtOptions> jwtOptions) : ControllerBase
+    ISender sender) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<AuthorizationResponse>> Get(
+        [FromQuery] string? applicationCode,
         CancellationToken cancellationToken)
     {
         if (!ulong.TryParse(User.FindFirstValue("uid"), out var userId)
@@ -32,13 +30,23 @@ public sealed class AuthorizationController(
                 out var permissionVersion))
             throw new UnauthorizedAccessException("Authorization claims are invalid.");
 
+        if (string.IsNullOrWhiteSpace(applicationCode))
+        {
+            ModelState.AddModelError(
+                nameof(applicationCode),
+                "Application code is required.");
+            return ValidationProblem(ModelState);
+        }
+
+        var requestedApplicationCode = applicationCode.Trim();
         var authorization = await authorizationCache.GetAsync(
             userId,
             permissionVersion,
+            requestedApplicationCode,
             cancellationToken);
         var application = await applications.GetAsync(
             new ApplicationsFilter(
-                Code: new StringFilter(Values: [jwtOptions.Value.ApplicationCode]),
+                Code: new StringFilter(Values: [requestedApplicationCode]),
                 IsActive: true),
             [new ApplicationsSort(ApplicationsSortColumn.Code, SortDirection.Ascending)],
             1,

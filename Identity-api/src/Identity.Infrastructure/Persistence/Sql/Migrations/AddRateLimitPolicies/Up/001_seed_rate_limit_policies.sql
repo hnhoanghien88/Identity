@@ -41,7 +41,7 @@ INNER JOIN (
         20,
         50
 ) AS seed
-WHERE application.Code = 'Identity-api'
+WHERE application.Code = 'Identity'
     AND application.IsDeleted = 0
     AND NOT EXISTS (
         SELECT 1

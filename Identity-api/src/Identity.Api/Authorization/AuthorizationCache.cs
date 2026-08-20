@@ -11,6 +11,12 @@ public interface IAuthorizationCache
         ulong userId,
         int permissionVersion,
         CancellationToken cancellationToken);
+
+    Task<UserAuthorization> GetAsync(
+        ulong userId,
+        int permissionVersion,
+        string applicationCode,
+        CancellationToken cancellationToken);
 }
 
 public sealed class AuthorizationCache(
@@ -23,8 +29,26 @@ public sealed class AuthorizationCache(
         int permissionVersion,
         CancellationToken cancellationToken)
     {
-        var applicationCode = jwtOptions.Value.ApplicationCode;
-        var key = $"authorization:{applicationCode}:{userId}:{permissionVersion}";
+        return GetAsync(
+            userId,
+            permissionVersion,
+            jwtOptions.Value.ApplicationCode,
+            cancellationToken);
+    }
+
+    public Task<UserAuthorization> GetAsync(
+        ulong userId,
+        int permissionVersion,
+        string applicationCode,
+        CancellationToken cancellationToken)
+    {
+        var normalizedApplicationCode = applicationCode.Trim();
+        if (normalizedApplicationCode.Length == 0)
+            throw new ArgumentException(
+                "Application code is required.",
+                nameof(applicationCode));
+
+        var key = $"authorization:{normalizedApplicationCode}:{userId}:{permissionVersion}";
         return cache.GetOrCreateAsync(
             key,
             entry =>
@@ -33,7 +57,7 @@ public sealed class AuthorizationCache(
                 entry.SlidingExpiration = TimeSpan.FromMinutes(5);
                 return repository.GetAuthorizationAsync(
                     userId,
-                    applicationCode,
+                    normalizedApplicationCode,
                     cancellationToken);
             })!;
     }

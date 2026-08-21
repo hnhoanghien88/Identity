@@ -9,6 +9,8 @@ Identity Management Platform là một dự án full-stack mô phỏng hệ th�
 - Token mang `permissionversion`; khi Role hoặc Permission thay đổi, token cũ bị vô hiệu hóa ở lần sử dụng tiếp theo.
 - Phân quyền theo từng thao tác `Read`, `Create`, `Update`, `Delete` thay vì chỉ kiểm tra đã đăng nhập.
 - Menu nhiều cấp được lọc theo Permission thực tế của User.
+- Runtime authorization nhận `applicationCode` và chỉ trả Roles, Permissions cùng cây menu thuộc Application đang chạy.
+- Frontend dùng HTTP client tập trung theo mô hình interceptor để gắn access token, gửi refresh-token cookie, refresh phiên và retry request khi gặp `401`.
 - Distributed rate limiting dùng Redis và Lua script nguyên tử, hỗ trợ Fixed Window, Sliding Window, Token Bucket và Concurrency.
 - Optimistic concurrency bằng trường Version, audit metadata và soft-delete cascade cho dữ liệu Identity liên quan.
 - Backend phân lớp, CQRS cho use cases và test ở Application, API contract, persistence boundary.
@@ -26,7 +28,7 @@ Identity Management Platform là một dự án full-stack mô phỏng hệ th�
 | Role Permissions | Cấp/thu hồi Permission theo tổ hợp Role–Resource–Action |
 | User Roles | Gán nhiều Users vào Role và gỡ từng quan hệ |
 | Menus | Quản lý cây menu nhiều cấp theo Application và Resource |
-| Runtime Authorization | Trả Roles, Permissions và menu đã lọc cho phiên hiện hành |
+| Runtime Authorization | Trả Roles, Permissions và menu đã lọc theo User và từng Application cho phiên hiện hành |
 | Rate Limiting | Policy động trong database, counter phân tán trong Redis, quản trị qua UI |
 
 ## Kiến trúc
@@ -73,6 +75,7 @@ Dependency direction của backend là `Domain ← Application ← Infrastructur
 - React 19
 - Vite 8
 - Material UI 9 và Emotion
+- Fetch-based `apiClient` dùng chung như interceptor: tự động gắn Bearer token, gửi HttpOnly cookie, xử lý `401`, refresh session và retry request một lần
 - Vitest, Testing Library và oxlint
 
 ### Data & vận hành
@@ -92,6 +95,24 @@ Dependency direction của backend là `Domain ← Application ← Infrastructur
 5. Permission policy tại controller quyết định thao tác cụ thể có được phép hay không.
 6. Khi gán Role hoặc thay đổi Permission, `permissionversion` tăng; access token cũ lập tức trở nên lỗi thời.
 7. Rate-limit middleware kiểm tra policy động trước khi request đi vào authorization/business handler.
+
+## HTTP client và xử lý phiên ở frontend
+
+- Các feature gọi một `apiFetch` dùng chung thay vì tự lặp lại cấu hình `fetch`.
+- Client tự động gắn access token hiện hành vào `Authorization: Bearer ...` và luôn dùng `credentials: "include"` để gửi refresh token trong HttpOnly cookie.
+- Khi API trả `401`, client gọi endpoint refresh, cập nhật session rồi retry request ban đầu đúng một lần; nếu refresh thất bại, session được xóa và User phải đăng nhập lại.
+- Refresh request được dùng chung qua một pending promise để tránh nhiều API cùng nhận `401` tạo ra nhiều lần refresh/rotation đồng thời.
+- Session được giữ trong memory và đồng bộ giữa các tab bằng `BroadcastChannel`; refresh giữa các tab được điều phối bằng Web Locks API khi trình duyệt hỗ trợ.
+- Lỗi Problem Details từ backend được chuẩn hóa nhưng vẫn được ánh xạ sang lớp lỗi riêng của từng feature.
+
+## Runtime authorization theo Application
+
+1. Frontend lấy mã Application đang chạy từ `VITE_APPLICATION_CODE` và gọi `GET /authorization?applicationCode=...` sau login hoặc refresh session.
+2. Backend dùng `UserId`, `permissionversion` trong access token và `applicationCode` được yêu cầu để tải authorization đúng phạm vi Application.
+3. Response gồm `roles`, `permissions` và `menus`; quyền của Application khác không được trộn vào phiên hiện hành.
+4. Backend tải cây menu của Application, bỏ các node không active rồi lọc đệ quy theo Permission. Menu gắn Resource yêu cầu Permission `{ResourceCode}.ViewMenu`; menu cha vẫn được giữ khi còn menu con hợp lệ.
+5. React lưu kết quả vào `session.authorization`, dựng navigation từ `menus` và dùng `permissions` để ẩn/chặn thao tác trên giao diện. API vẫn là lớp kiểm soát quyền cuối cùng.
+6. Authorization cache được phân vùng theo Application, User và `permissionversion`, nên thay đổi Role/Permission làm token và dữ liệu cache cũ mất hiệu lực.
 
 ## Thiết kế rate limiting
 

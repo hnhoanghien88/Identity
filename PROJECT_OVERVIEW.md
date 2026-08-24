@@ -64,8 +64,9 @@ Dependency direction của backend là `Domain ← Application ← Infrastructur
 - .NET 10, ASP.NET Core Web API
 - Entity Framework Core và MySql.EntityFrameworkCore
 - Dapper và MySqlConnector
-- MediatR cho command/query dispatch và pipeline behavior dùng chung
+- MediatR cho command/query dispatch, validation pipeline và cảnh báo command/query chạy chậm theo threshold cấu hình
 - FluentValidation chạy trước handler qua `ValidationBehavior`; lỗi được chuẩn hóa thành HTTP Validation Problem Details
+- Slow MediatR requests được ghi bằng Serilog vào `Identity-api/src/Identity.Api/logs/performance-YYYYMMDD.log`, rolling theo ngày/kích thước và giữ 14 file gần nhất
 - JWT Bearer authentication
 - StackExchange.Redis và Lua scripts
 - Swagger/OpenAPI
@@ -85,6 +86,20 @@ Dependency direction của backend là `Domain ← Application ← Infrastructur
 - EF Core migrations kết hợp SQL migration scripts có rollback
 - Docker Compose file để chạy Redis khi môi trường có Docker
 - Cấu hình phân tách theo environment và hỗ trợ environment variables
+
+## Theo dõi hiệu năng MediatR
+
+`PerformanceBehavior<TRequest, TResponse>` là open pipeline behavior áp dụng cho mọi command/query được gửi bằng `mediator.Send(...)`. Behavior bắt đầu đo trước `ValidationBehavior`, gọi tiếp pipeline trong khối `try/finally` và luôn hoàn tất phép đo kể cả khi validation hoặc handler phát sinh exception.
+
+- Chỉ ghi cảnh báo khi tổng thời gian pipeline lớn hơn hoặc bằng `Observability:SlowRequestThresholdMilliseconds`; mặc định là `500` ms và ứng dụng từ chối khởi động nếu giá trị không lớn hơn `0`.
+- Log chỉ chứa tên request, thời gian thực thi và threshold; không serialize request/response nên tránh đưa password, token hoặc dữ liệu định danh vào log.
+- Serilog lọc riêng cảnh báo từ `PerformanceBehavior` và ghi vào `Identity-api/src/Identity.Api/logs/performance-YYYYMMDD.log`.
+- File được rolling theo ngày hoặc khi đạt `10 MB`, giữ tối đa `14` file gần nhất và thư mục `logs/` không được commit vào Git.
+- Phép đo bao gồm validation, handler và repository/database được handler chờ; không bao gồm model binding, authentication, authorization hoặc HTTP response serialization.
+
+```text
+PerformanceBehavior → ValidationBehavior → Command/Query Handler → Repository
+```
 
 ## Luồng bảo mật tiêu biểu
 
@@ -125,7 +140,7 @@ Dependency direction của backend là `Domain ← Application ← Infrastructur
 
 ## Chất lượng và tài liệu
 
-- 95 test cases đang pass trong ba test project: Application, API integration và Infrastructure integration.
+- 97 test cases đang pass trong ba test project: Application, API integration và Infrastructure integration.
 - Test suite bao phủ Application handlers/validators, API contracts và persistence integration.
 - Mỗi feature nghiệp vụ có specification, acceptance scenarios, functional requirements và measurable outcomes trong thư mục [`specs`](specs).
 - Project constitution quy định security-first, dependency boundaries, explicit API contracts, test release gates và accessibility.

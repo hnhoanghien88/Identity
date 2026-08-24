@@ -25,12 +25,42 @@ using Identity.Application.Common.Behaviors;
 using Identity.Infrastructure;
 using Microsoft.OpenApi;
 using StackExchange.Redis;
+using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.AddDebug();
+var performanceLogPath = Path.Combine(
+    builder.Environment.ContentRootPath,
+    "logs",
+    "performance-.log");
+builder.Host.UseSerilog((_, _, loggerConfiguration) => loggerConfiguration
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.Logger(performanceLogger => performanceLogger
+        .Filter.ByIncludingOnly(logEvent =>
+            logEvent.Level >= LogEventLevel.Warning
+            && logEvent.Properties.TryGetValue("SourceContext", out var sourceContext)
+            && sourceContext.ToString().Contains(
+                "PerformanceBehavior",
+                StringComparison.Ordinal))
+        .WriteTo.File(
+            performanceLogPath,
+            rollingInterval: RollingInterval.Day,
+            rollOnFileSizeLimit: true,
+            fileSizeLimitBytes: 10 * 1024 * 1024,
+            retainedFileCountLimit: 14,
+            shared: true,
+            flushToDiskInterval: TimeSpan.FromSeconds(1),
+            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")));
+var performance = builder.Configuration.GetSection(PerformanceOptions.SectionName)
+    .Get<PerformanceOptions>() ?? new PerformanceOptions();
+if (performance.SlowRequestThresholdMilliseconds <= 0)
+    throw new InvalidOperationException("Observability:SlowRequestThresholdMilliseconds must be greater than zero.");
+builder.Services.AddSingleton(performance);
+
 
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
@@ -184,6 +214,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddMediatR(c =>
 {
     c.RegisterServicesFromAssembly(typeof(CreateUsersCommand).Assembly);
+    c.AddOpenBehavior(typeof(PerformanceBehavior<,>));
     c.AddOpenBehavior(typeof(ValidationBehavior<,>));
 });
 builder.Services.AddTransient<IValidator<CreateUsersCommand>, CreateUsersValidator>();

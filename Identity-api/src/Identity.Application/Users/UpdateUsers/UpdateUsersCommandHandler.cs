@@ -1,5 +1,4 @@
 using Identity.Application.Users.Dtos;
-using FluentValidation;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Common.Exceptions;
 using MediatR;
@@ -7,12 +6,10 @@ using MediatR;
 namespace Identity.Application.Users.UpdateUsers;
 
 public sealed class UpdateUsersCommandHandler(
-    IUsersRepository repository,
-    IValidator<UpdateUsersCommand> validator) : IRequestHandler<UpdateUsersCommand, UsersDto>
+    IUsersRepository repository) : IRequestHandler<UpdateUsersCommand, UsersDto>
 {
     public async Task<UsersDto> Handle(UpdateUsersCommand request, CancellationToken ct)
     {
-        await validator.ValidateAndThrowAsync(request, ct);
 
         var user = await repository.GetByIdAsync(request.Id, ct)
             ?? throw new NotFoundException($"User '{request.Id}' was not found.");

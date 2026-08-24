@@ -25,12 +25,11 @@ public sealed class CreateRoleValidator : AbstractValidator<CreateRoleCommand>
     }
 }
 
-public sealed class CreateRoleCommandHandler(IRolesRepository repository, IValidator<CreateRoleCommand> validator)
+public sealed class CreateRoleCommandHandler(IRolesRepository repository)
     : IRequestHandler<CreateRoleCommand, RoleDto>
 {
     public async Task<RoleDto> Handle(CreateRoleCommand request, CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken);
         if (!await repository.ApplicationExistsAsync(request.ApplicationId, cancellationToken))
             throw new ConflictException("The selected Application is unavailable.", "applicationId");
         var code = RoleRules.Clean(request.Code);

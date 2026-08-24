@@ -13,7 +13,7 @@ public sealed class ActionHandlersTests
     public async Task Create_trims_values_and_sets_version_and_audit()
     {
         var repository = new Repository();
-        var result = await new CreateActionCommandHandler(repository, new CreateActionValidator()).Handle(
+        var result = await new CreateActionCommandHandler(repository).Handle(
             new CreateActionCommand(" READ ", " Read ", "admin"),
             CancellationToken.None);
 
@@ -27,7 +27,7 @@ public sealed class ActionHandlersTests
     public async Task Update_increments_version_and_rejects_stale_request()
     {
         var repository = new Repository { Value = Existing(2) };
-        var handler = new UpdateActionCommandHandler(repository, new UpdateActionValidator());
+        var handler = new UpdateActionCommandHandler(repository);
         var result = await handler.Handle(
             new UpdateActionCommand(1, "WRITE", "Write", 2, "admin"),
             CancellationToken.None);

@@ -21,6 +21,7 @@ using Microsoft.IdentityModel.Tokens;
 
 using Identity.Application.Users.CreateUsers;
 using Identity.Application.Abstractions.Persistence;
+using Identity.Application.Common.Behaviors;
 using Identity.Infrastructure;
 using Microsoft.OpenApi;
 using StackExchange.Redis;
@@ -180,7 +181,11 @@ builder.Services.AddSwaggerGen(options =>
 
     options.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
 });
-builder.Services.AddMediatR(c => c.RegisterServicesFromAssembly(typeof(CreateUsersCommand).Assembly));
+builder.Services.AddMediatR(c =>
+{
+    c.RegisterServicesFromAssembly(typeof(CreateUsersCommand).Assembly);
+    c.AddOpenBehavior(typeof(ValidationBehavior<,>));
+});
 builder.Services.AddTransient<IValidator<CreateUsersCommand>, CreateUsersValidator>();
 builder.Services.AddTransient<IValidator<CreateApplicationCommand>, CreateApplicationValidator>();
 builder.Services.AddTransient<IValidator<CreateActionCommand>, CreateActionValidator>();

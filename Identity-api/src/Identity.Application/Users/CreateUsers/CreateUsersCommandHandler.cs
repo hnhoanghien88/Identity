@@ -1,5 +1,4 @@
 using Identity.Application.Users.Dtos;
-using FluentValidation;
 using Identity.Application.Abstractions.Persistence;
 using MediatR;
 using Identity.Application.Common.Exceptions;
@@ -9,12 +8,10 @@ namespace Identity.Application.Users.CreateUsers;
 
 public sealed class CreateUsersCommandHandler(
     IUsersRepository repository,
-    IPasswordHasher passwordHasher,
-    IValidator<CreateUsersCommand> validator) : IRequestHandler<CreateUsersCommand, UsersDto>
+    IPasswordHasher passwordHasher) : IRequestHandler<CreateUsersCommand, UsersDto>
 {
     public async Task<UsersDto> Handle(CreateUsersCommand request, CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken);
         if (await repository.CodeExistsAsync(request.Code, null, cancellationToken))
         {
             throw new ConflictException("Code is already in use.", "code");

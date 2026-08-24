@@ -14,9 +14,7 @@ public sealed class ApplicationCommandTests
     public async Task Create_trims_values_and_sets_audit_and_version()
     {
         var repository = new FakeApplicationsRepository();
-        var handler = new CreateApplicationCommandHandler(
-            repository,
-            new CreateApplicationValidator());
+        var handler = new CreateApplicationCommandHandler(repository);
 
         var result = await handler.Handle(
             new CreateApplicationCommand(
@@ -40,9 +38,7 @@ public sealed class ApplicationCommandTests
     public async Task Create_rejects_duplicate_code()
     {
         var repository = new FakeApplicationsRepository { Duplicate = true };
-        var handler = new CreateApplicationCommandHandler(
-            repository,
-            new CreateApplicationValidator());
+        var handler = new CreateApplicationCommandHandler(repository);
 
         var error = await Assert.ThrowsAsync<ConflictException>(() =>
             handler.Handle(
@@ -56,12 +52,9 @@ public sealed class ApplicationCommandTests
     [Fact]
     public async Task Create_rejects_whitespace_required_values()
     {
-        var handler = new CreateApplicationCommandHandler(
-            new FakeApplicationsRepository(),
-            new CreateApplicationValidator());
 
         await Assert.ThrowsAsync<ValidationException>(() =>
-            handler.Handle(
+            new CreateApplicationValidator().ValidateAndThrowAsync(
                 new CreateApplicationCommand(" ", "Name", "Audience", null, null),
                 CancellationToken.None));
     }
@@ -73,9 +66,7 @@ public sealed class ApplicationCommandTests
         {
             Value = Existing(version: 2),
         };
-        var handler = new UpdateApplicationCommandHandler(
-            repository,
-            new UpdateApplicationValidator());
+        var handler = new UpdateApplicationCommandHandler(repository);
 
         await Assert.ThrowsAsync<ConflictException>(() =>
             handler.Handle(
@@ -101,9 +92,7 @@ public sealed class ApplicationCommandTests
         {
             Value = Existing(version: 3),
         };
-        var handler = new UpdateApplicationCommandHandler(
-            repository,
-            new UpdateApplicationValidator());
+        var handler = new UpdateApplicationCommandHandler(repository);
 
         var result = await handler.Handle(
             new UpdateApplicationCommand(

@@ -28,12 +28,11 @@ public sealed class UpdateRoleValidator : AbstractValidator<UpdateRoleCommand>
     }
 }
 
-public sealed class UpdateRoleCommandHandler(IRolesRepository repository, IValidator<UpdateRoleCommand> validator)
+public sealed class UpdateRoleCommandHandler(IRolesRepository repository)
     : IRequestHandler<UpdateRoleCommand, RoleDto>
 {
     public async Task<RoleDto> Handle(UpdateRoleCommand request, CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken);
         var role = await repository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException($"Role '{request.Id}' was not found.");
         if (role.Version != request.Version)

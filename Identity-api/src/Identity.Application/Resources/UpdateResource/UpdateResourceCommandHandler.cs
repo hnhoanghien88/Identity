@@ -1,4 +1,3 @@
-using FluentValidation;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Common.Exceptions;
 using Identity.Application.Resources.Dtos;
@@ -7,15 +6,13 @@ using MediatR;
 namespace Identity.Application.Resources.UpdateResource;
 
 public sealed class UpdateResourceCommandHandler(
-    IResourcesRepository repository,
-    IValidator<UpdateResourceCommand> validator)
+    IResourcesRepository repository)
     : IRequestHandler<UpdateResourceCommand, ResourceDto>
 {
     public async Task<ResourceDto> Handle(
         UpdateResourceCommand request,
         CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken);
         var resource = await repository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException($"Resource '{request.Id}' was not found.");
         if (resource.Version != request.Version)

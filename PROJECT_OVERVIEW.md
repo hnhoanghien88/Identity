@@ -64,8 +64,8 @@ Dependency direction của backend là `Domain ← Application ← Infrastructur
 - .NET 10, ASP.NET Core Web API
 - Entity Framework Core và MySql.EntityFrameworkCore
 - Dapper và MySqlConnector
-- MediatR cho command/query dispatch
-- FluentValidation
+- MediatR cho command/query dispatch và pipeline behavior dùng chung
+- FluentValidation chạy trước handler qua `ValidationBehavior`; lỗi được chuẩn hóa thành HTTP Validation Problem Details
 - JWT Bearer authentication
 - StackExchange.Redis và Lua scripts
 - Swagger/OpenAPI
@@ -125,7 +125,7 @@ Dependency direction của backend là `Domain ← Application ← Infrastructur
 
 ## Chất lượng và tài liệu
 
-- 65 test cases được đánh dấu bằng `Fact` hoặc `Theory` trong các project test hiện tại.
+- 95 test cases đang pass trong ba test project: Application, API integration và Infrastructure integration.
 - Test suite bao phủ Application handlers/validators, API contracts và persistence integration.
 - Mỗi feature nghiệp vụ có specification, acceptance scenarios, functional requirements và measurable outcomes trong thư mục [`specs`](specs).
 - Project constitution quy định security-first, dependency boundaries, explicit API contracts, test release gates và accessibility.

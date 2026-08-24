@@ -12,9 +12,7 @@ public sealed class UpdateResourceTests
         {
             Value = TestResourcesRepository.Existing(3),
         };
-        var handler = new UpdateResourceCommandHandler(
-            repository,
-            new UpdateResourceValidator());
+        var handler = new UpdateResourceCommandHandler(repository);
 
         var result = await handler.Handle(
             new UpdateResourceCommand(
@@ -42,9 +40,7 @@ public sealed class UpdateResourceTests
         {
             Value = TestResourcesRepository.Existing(2),
         };
-        var handler = new UpdateResourceCommandHandler(
-            repository,
-            new UpdateResourceValidator());
+        var handler = new UpdateResourceCommandHandler(repository);
 
         await Assert.ThrowsAsync<ConflictException>(() =>
             handler.Handle(

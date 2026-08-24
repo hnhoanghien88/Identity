@@ -14,7 +14,7 @@ public sealed class RoleHandlersTests
     public async Task Create_trims_and_defaults_are_preserved()
     {
         var repository = new Repository();
-        var result = await new CreateRoleCommandHandler(repository, new CreateRoleValidator()).Handle(
+        var result = await new CreateRoleCommandHandler(repository).Handle(
             new CreateRoleCommand(10, " ADMIN ", " Administrators ", false, true, "tester"),
             CancellationToken.None);
         Assert.Equal("ADMIN", result.Code);
@@ -26,7 +26,7 @@ public sealed class RoleHandlersTests
     public async Task Update_rejects_stale_version()
     {
         var repository = new Repository { Value = Existing(version: 2) };
-        var handler = new UpdateRoleCommandHandler(repository, new UpdateRoleValidator());
+        var handler = new UpdateRoleCommandHandler(repository);
         await Assert.ThrowsAsync<ConflictException>(() => handler.Handle(
             new UpdateRoleCommand(1, 10, "ADMIN", "Admin", false, true, 1, "tester"),
             CancellationToken.None));

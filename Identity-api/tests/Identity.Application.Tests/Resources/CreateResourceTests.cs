@@ -10,9 +10,7 @@ public sealed class CreateResourceTests
     public async Task Create_trims_fields_and_sets_scope_audit_and_version()
     {
         var repository = new TestResourcesRepository();
-        var handler = new CreateResourceCommandHandler(
-            repository,
-            new CreateResourceValidator());
+        var handler = new CreateResourceCommandHandler(repository);
 
         var result = await handler.Handle(
             new CreateResourceCommand(
@@ -37,9 +35,7 @@ public sealed class CreateResourceTests
         {
             ApplicationAvailable = false,
         };
-        var firstHandler = new CreateResourceCommandHandler(
-            unavailable,
-            new CreateResourceValidator());
+        var firstHandler = new CreateResourceCommandHandler(unavailable);
         var applicationError = await Assert.ThrowsAsync<ConflictException>(() =>
             firstHandler.Handle(
                 new CreateResourceCommand(1, "R", "Name", "Api", null, null),
@@ -50,9 +46,7 @@ public sealed class CreateResourceTests
         {
             Duplicate = true,
         };
-        var secondHandler = new CreateResourceCommandHandler(
-            duplicate,
-            new CreateResourceValidator());
+        var secondHandler = new CreateResourceCommandHandler(duplicate);
         var codeError = await Assert.ThrowsAsync<ConflictException>(() =>
             secondHandler.Handle(
                 new CreateResourceCommand(1, "R", "Name", "Api", null, null),
@@ -63,12 +57,9 @@ public sealed class CreateResourceTests
     [Fact]
     public async Task Create_rejects_whitespace_and_overlength_values()
     {
-        var handler = new CreateResourceCommandHandler(
-            new TestResourcesRepository(),
-            new CreateResourceValidator());
 
         await Assert.ThrowsAsync<ValidationException>(() =>
-            handler.Handle(
+            new CreateResourceValidator().ValidateAndThrowAsync(
                 new CreateResourceCommand(1, " ", "Name", "Api", null, null),
                 CancellationToken.None));
     }

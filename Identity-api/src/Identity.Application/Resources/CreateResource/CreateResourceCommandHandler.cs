@@ -1,4 +1,3 @@
-using FluentValidation;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Common.Exceptions;
 using Identity.Application.Resources.Dtos;
@@ -8,15 +7,13 @@ using ResourceEntity = Identity.Domain.Entities.Resources;
 namespace Identity.Application.Resources.CreateResource;
 
 public sealed class CreateResourceCommandHandler(
-    IResourcesRepository repository,
-    IValidator<CreateResourceCommand> validator)
+    IResourcesRepository repository)
     : IRequestHandler<CreateResourceCommand, ResourceDto>
 {
     public async Task<ResourceDto> Handle(
         CreateResourceCommand request,
         CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken);
         if (!await repository.IsApplicationAvailableAsync(
                 request.ApplicationId,
                 cancellationToken))

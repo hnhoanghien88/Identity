@@ -1,4 +1,3 @@
-using FluentValidation;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Common.Exceptions;
 using Identity.Application.Menus.Dtos;
@@ -7,12 +6,11 @@ using MenuEntity = Identity.Domain.Entities.Menus;
 
 namespace Identity.Application.Menus.CreateMenu;
 
-public sealed class CreateMenuCommandHandler(IMenusRepository repository, IValidator<CreateMenuCommand> validator)
+public sealed class CreateMenuCommandHandler(IMenusRepository repository)
     : IRequestHandler<CreateMenuCommand, MenuDto>
 {
     public async Task<MenuDto> Handle(CreateMenuCommand request, CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken);
         await ValidateRelations(request.ApplicationId, request.ParentId, request.ResourceId, null, cancellationToken);
         var code = MenuRules.Clean(request.Code);
         if (await repository.CodeExistsAsync(request.ApplicationId, code, null, cancellationToken))

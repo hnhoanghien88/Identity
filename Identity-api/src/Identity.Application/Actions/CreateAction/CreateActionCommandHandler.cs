@@ -1,4 +1,3 @@
-using FluentValidation;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Actions.Dtos;
 using Identity.Application.Common.Exceptions;
@@ -7,11 +6,10 @@ using ActionEntity = Identity.Domain.Entities.PermissionActions;
 
 namespace Identity.Application.Actions.CreateAction;
 
-public sealed class CreateActionCommandHandler(IActionsRepository repository, IValidator<CreateActionCommand> validator) : IRequestHandler<CreateActionCommand, ActionDto>
+public sealed class CreateActionCommandHandler(IActionsRepository repository) : IRequestHandler<CreateActionCommand, ActionDto>
 {
     public async Task<ActionDto> Handle(CreateActionCommand request, CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken);
         var code = ActionRules.Clean(request.Code);
         if (await repository.CodeExistsAsync(code, null, cancellationToken))
             throw new ConflictException("Code is already in use.", "code");

@@ -1,4 +1,3 @@
-using FluentValidation;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Actions.Dtos;
 using Identity.Application.Common.Exceptions;
@@ -6,11 +5,10 @@ using MediatR;
 
 namespace Identity.Application.Actions.UpdateAction;
 
-public sealed class UpdateActionCommandHandler(IActionsRepository repository, IValidator<UpdateActionCommand> validator) : IRequestHandler<UpdateActionCommand, ActionDto>
+public sealed class UpdateActionCommandHandler(IActionsRepository repository) : IRequestHandler<UpdateActionCommand, ActionDto>
 {
     public async Task<ActionDto> Handle(UpdateActionCommand request, CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken);
         var action = await repository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException($"Action '{request.Id}' was not found.");
         if (action.Version != request.Version)

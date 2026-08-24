@@ -1,4 +1,3 @@
-using FluentValidation;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Common.Exceptions;
 using Identity.Application.Menus.Dtos;
@@ -6,12 +5,11 @@ using MediatR;
 
 namespace Identity.Application.Menus.UpdateMenu;
 
-public sealed class UpdateMenuCommandHandler(IMenusRepository repository, IValidator<UpdateMenuCommand> validator)
+public sealed class UpdateMenuCommandHandler(IMenusRepository repository)
     : IRequestHandler<UpdateMenuCommand, MenuDto>
 {
     public async Task<MenuDto> Handle(UpdateMenuCommand request, CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(request, cancellationToken);
         var menu = await repository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException($"Menu '{request.Id}' was not found.");
         if (menu.Version != request.Version) throw new ConflictException("The Menu was changed by another user. Reload and try again.");

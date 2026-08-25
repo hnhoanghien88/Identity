@@ -15,6 +15,7 @@ public static class ProblemDetailsAuthorizationResults
                 Status = StatusCodes.Status401Unauthorized,
                 Title = "Unauthorized",
                 Detail = "Authentication is required or the access token is invalid.",
+                Extensions = { ["correlationId"] = context.TraceIdentifier },
             });
     }
 
@@ -29,6 +30,7 @@ public static class ProblemDetailsAuthorizationResults
                 Status = StatusCodes.Status403Forbidden,
                 Title = "Forbidden",
                 Detail = "You do not have permission to perform this action.",
+                Extensions = { ["correlationId"] = context.TraceIdentifier },
             });
     }
 }

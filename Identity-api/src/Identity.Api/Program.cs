@@ -27,6 +27,7 @@ using Microsoft.OpenApi;
 using StackExchange.Redis;
 using Serilog;
 using Serilog.Events;
+using Serilog.Formatting.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,12 +35,33 @@ var performanceLogPath = Path.Combine(
     builder.Environment.ContentRootPath,
     "logs",
     "performance-.log");
-builder.Host.UseSerilog((_, _, loggerConfiguration) => loggerConfiguration
-    .MinimumLevel.Information()
-    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.Logger(performanceLogger => performanceLogger
+var applicationLogPath = Path.Combine(
+    builder.Environment.ContentRootPath,
+    "logs",
+    "application-.log");
+builder.Host.UseSerilog((context, _, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+        .Enrich.FromLogContext();
+
+    if (context.HostingEnvironment.IsDevelopment())
+        loggerConfiguration.WriteTo.Console();
+    else
+        loggerConfiguration.WriteTo.Console(new JsonFormatter(renderMessage: true));
+
+    loggerConfiguration
+        .WriteTo.File(
+            applicationLogPath,
+            rollingInterval: RollingInterval.Day,
+            rollOnFileSizeLimit: true,
+            fileSizeLimitBytes: 25 * 1024 * 1024,
+            retainedFileCountLimit: 30,
+            shared: true,
+            flushToDiskInterval: TimeSpan.FromSeconds(1),
+            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] CorrelationId={CorrelationId} TraceId={TraceId} UserId={UserId} StatusCode={StatusCode} ElapsedMs={ElapsedMs} | {Message:lj}{NewLine}{Exception}")
+        .WriteTo.Logger(performanceLogger => performanceLogger
         .Filter.ByIncludingOnly(logEvent =>
             logEvent.Level >= LogEventLevel.Warning
             && logEvent.Properties.TryGetValue("SourceContext", out var sourceContext)
@@ -54,7 +76,8 @@ builder.Host.UseSerilog((_, _, loggerConfiguration) => loggerConfiguration
             retainedFileCountLimit: 14,
             shared: true,
             flushToDiskInterval: TimeSpan.FromSeconds(1),
-            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")));
+            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"));
+});
 var performance = builder.Configuration.GetSection(PerformanceOptions.SectionName)
     .Get<PerformanceOptions>() ?? new PerformanceOptions();
 if (performance.SlowRequestThresholdMilliseconds <= 0)
@@ -241,6 +264,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<StructuredRequestLoggingMiddleware>();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseHttpsRedirection();
 app.UseRouting();

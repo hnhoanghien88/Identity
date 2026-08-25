@@ -67,6 +67,7 @@ Dependency direction của backend là `Domain ← Application ← Infrastructur
 - MediatR cho command/query dispatch, validation pipeline và cảnh báo command/query chạy chậm theo threshold cấu hình
 - FluentValidation chạy trước handler qua `ValidationBehavior`; lỗi được chuẩn hóa thành HTTP Validation Problem Details
 - Slow MediatR requests được ghi bằng Serilog vào `Identity-api/src/Identity.Api/logs/performance-YYYYMMDD.log`, rolling theo ngày/kích thước và giữ 14 file gần nhất
+- Mọi HTTP request được gắn Correlation ID và ghi structured log gồm method, path, status code, elapsed time, Trace ID và User ID vào `Identity-api/src/Identity.Api/logs/application-YYYYMMDD.log`
 - JWT Bearer authentication
 - StackExchange.Redis và Lua scripts
 - Swagger/OpenAPI
@@ -99,6 +100,31 @@ Dependency direction của backend là `Domain ← Application ← Infrastructur
 
 ```text
 PerformanceBehavior → ValidationBehavior → Command/Query Handler → Repository
+```
+
+## Correlation ID và Structured Logging
+
+`CorrelationIdMiddleware` chạy ở đầu HTTP pipeline để mọi log phát sinh trong vòng đời request dùng chung một định danh. API nhận Correlation ID qua header `X-Correlation-ID`; nếu header bị thiếu, dài quá `128` ký tự hoặc chứa ký tự không an toàn thì server tự sinh ID mới. Giá trị cuối cùng được gán vào `HttpContext.TraceIdentifier`, đưa vào Serilog `LogContext` và trả lại trong response header `X-Correlation-ID`.
+
+- `CorrelationId` dùng để tìm toàn bộ log thuộc cùng một request; `TraceId` lấy từ W3C `Activity` để sẵn sàng liên kết với distributed tracing.
+- Các response lỗi do exception, validation, conflict, `401` hoặc `403` chứa thêm `correlationId` trong Problem Details để đối chiếu với log server.
+- Request completion log có các property riêng biệt: `CorrelationId`, `TraceId`, `RequestMethod`, `RequestPath`, `StatusCode`, `ElapsedMs` và `UserId`.
+- Request có `StatusCode >= 500` được ghi ở mức `Error`; request có `ElapsedMs > 3000` được ghi ở mức `Warning`; các request còn lại được ghi ở mức `Information`.
+- `UserId` lấy từ claim `uid` sau authentication. Request login có thể chưa có `UserId`, trong khi các request tiếp theo sử dụng Bearer token sẽ có giá trị này.
+- Không ghi request/response body, password, JWT, refresh token hoặc cookie vào log.
+
+Application log được ghi theo định dạng một dòng dễ đọc:
+
+```text
+2026-08-25 10:15:20.123 +07:00 [INF] CorrelationId=abc-123 TraceId=... UserId=79 StatusCode=200 ElapsedMs=125.42 | HTTP GET /users responded 200 in 125.420 ms for user 79
+```
+
+File nằm tại `Identity-api/src/Identity.Api/logs/application-YYYYMMDD.log`, rolling theo ngày hoặc khi đạt `25 MB`, giữ tối đa `30` file gần nhất và flush xuống đĩa mỗi giây. Vì vậy application log được giới hạn xấp xỉ `750 MB`; performance log vẫn được giữ riêng với giới hạn `10 MB` mỗi file và `14` file.
+
+Có thể tìm một request cụ thể bằng PowerShell:
+
+```powershell
+Select-String "CorrelationId=abc-123" Identity-api/src/Identity.Api/logs/application-*.log
 ```
 
 ## Luồng bảo mật tiêu biểu

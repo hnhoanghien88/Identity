@@ -46,7 +46,8 @@ public sealed class ExceptionMiddleware(
                 await context.Response.WriteAsJsonAsync(new ValidationProblemDetails(errors)
                 {
                     Status = context.Response.StatusCode,
-                    Title = "Validation failed"
+                    Title = "Validation failed",
+                    Extensions = { ["correlationId"] = context.TraceIdentifier }
                 });
                 return;
             }
@@ -61,7 +62,8 @@ public sealed class ExceptionMiddleware(
                         })
                     {
                         Status = context.Response.StatusCode,
-                        Title = "Conflict"
+                        Title = "Conflict",
+                        Extensions = { ["correlationId"] = context.TraceIdentifier }
                     });
                 return;
             }
@@ -77,7 +79,8 @@ public sealed class ExceptionMiddleware(
                 },
                 Detail = exception is NotFoundException or ConflictException or UnauthorizedAccessException or ArgumentException
                     ? exception.Message
-                    : "An unexpected error occurred."
+                    : "An unexpected error occurred.",
+                Extensions = { ["correlationId"] = context.TraceIdentifier }
             });
         }
     }

@@ -15,7 +15,7 @@ public sealed class StructuredRequestLoggingMiddleware(
         await next(context);
 
         var elapsedMs = Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds;
-        var userId = context.User.FindFirst("uid")?.Value;
+        var userId = context.User.FindFirst("sub")?.Value;
         var statusCode = context.Response.StatusCode;
 
         if (statusCode >= StatusCodes.Status500InternalServerError)

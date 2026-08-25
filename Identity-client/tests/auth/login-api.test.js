@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../src/features/auth/api/authorization", () => ({
+  applicationCode: "Identity",
   getAuthorization: vi.fn(),
 }));
 

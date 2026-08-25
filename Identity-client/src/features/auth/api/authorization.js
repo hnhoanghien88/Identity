@@ -1,4 +1,4 @@
-const applicationCode = import.meta.env.VITE_APPLICATION_CODE?.trim();
+export const applicationCode = import.meta.env.VITE_APPLICATION_CODE?.trim();
 
 export async function getAuthorization(accessToken) {
   if (!applicationCode) {

@@ -24,7 +24,7 @@ public sealed class AuthorizationController(
         [FromQuery] string? applicationCode,
         CancellationToken cancellationToken)
     {
-        if (!ulong.TryParse(User.FindFirstValue("uid"), out var userId)
+        if (!ulong.TryParse(User.FindFirstValue("sub"), out var userId)
             || !int.TryParse(
                 User.FindFirstValue("permissionversion"),
                 out var permissionVersion))
@@ -39,11 +39,12 @@ public sealed class AuthorizationController(
         }
 
         var requestedApplicationCode = applicationCode.Trim();
-        var authorization = await authorizationCache.GetAsync(
-            userId,
-            permissionVersion,
-            requestedApplicationCode,
-            cancellationToken);
+        if (!string.Equals(
+                User.FindFirstValue("application_code"),
+                requestedApplicationCode,
+                StringComparison.Ordinal))
+            return Forbid();
+
         var application = await applications.GetAsync(
             new ApplicationsFilter(
                 Code: new StringFilter(Values: [requestedApplicationCode]),
@@ -52,20 +53,42 @@ public sealed class AuthorizationController(
             1,
             1,
             cancellationToken);
-        var menus = application.Items.Count == 0
-            ? []
-            : await sender.Send(
-                new GetMenusQuery(application.Items[0].Id),
-                cancellationToken);
+        if (application.Items.Count == 0)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Application not found",
+                Detail = $"Application '{requestedApplicationCode}' does not exist or is inactive."
+            });
+        }
+
+        var authorization = await authorizationCache.GetAsync(
+            userId,
+            permissionVersion,
+            requestedApplicationCode,
+            cancellationToken);
+        var menus = await sender.Send(
+            new GetMenusQuery(application.Items[0].Id),
+            cancellationToken);
         var visibleMenus = FilterMenus(
             menus,
-            authorization.Permissions.ToHashSet(StringComparer.Ordinal));
+            authorization.Permissions.ToHashSet(StringComparer.Ordinal))
+            .Select(ToRuntimeMenu)
+            .ToArray();
 
         return Ok(new AuthorizationResponse(
             authorization.Roles,
             authorization.Permissions,
             visibleMenus));
     }
+
+    private static RuntimeMenuResponse ToRuntimeMenu(MenuDto menu) =>
+        new(
+            menu.Id,
+            menu.Name,
+            menu.Route,
+            menu.Children.Select(ToRuntimeMenu).ToArray());
 
     private static IReadOnlyList<MenuDto> FilterMenus(
         IReadOnlyList<MenuDto> menus,
@@ -95,5 +118,11 @@ public sealed class AuthorizationController(
     public sealed record AuthorizationResponse(
         IReadOnlyList<string> Roles,
         IReadOnlyList<string> Permissions,
-        IReadOnlyList<MenuDto> Menus);
+        IReadOnlyList<RuntimeMenuResponse> Menus);
+
+    public sealed record RuntimeMenuResponse(
+        ulong Id,
+        string Name,
+        string? Route,
+        IReadOnlyList<RuntimeMenuResponse> Children);
 }

@@ -14,7 +14,7 @@ public interface IRefreshTokenRepository
         TimeSpan lifetime,
         CancellationToken cancellationToken);
 
-    Task RevokeAsync(
+    Task RevokeFamilyAsync(
         string refreshToken,
         string? revokedBy,
         CancellationToken cancellationToken);
@@ -31,5 +31,6 @@ public sealed record IssuedRefreshToken(
 
 public sealed record RotatedRefreshToken(
     ulong UserId,
+    ulong ApplicationId,
     string Token,
     DateTime ExpiresAtUtc);

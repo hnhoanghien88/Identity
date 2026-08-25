@@ -1,10 +1,13 @@
-export async function logout(accessToken) {
-  const response = await fetch("/backend/logout", {
+import { applicationCode } from "./authorization";
+
+export async function logout() {
+  if (!applicationCode) {
+    throw new Error("VITE_APPLICATION_CODE is required.");
+  }
+  const query = new URLSearchParams({ applicationCode });
+  const response = await fetch(`/backend/logout?${query}`, {
     method: "POST",
     credentials: "include",
-    headers: {
-      Authorization: "Bearer " + accessToken,
-    },
   });
 
   if (!response.ok && response.status !== 401) {

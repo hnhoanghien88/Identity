@@ -1,15 +1,15 @@
 # Identity Management Platform
 
-Identity Management Platform là một dự án full-stack mô phỏng hệ thống quản trị danh tính và phân quyền cho nhiều ứng dụng. Dự án không chỉ dừng ở CRUD người dùng: nó quản lý toàn bộ chuỗi **User → Role → Permission → Resource → Action**, cấp phiên JWT có thể thu hồi, tạo menu động theo quyền và bảo vệ API bằng distributed rate limiting.
+Identity Management Platform là một dự án full-stack mô phỏng hệ thống quản trị danh tính và phân quyền cho nhiều ứng dụng. Dự án không chỉ dừng ở CRUD người dùng: nó quản lý toàn bộ chuỗi **User → Role → Permission → Resource → Action**, cấp access token JWT ngắn hạn cùng refresh session có thể thu hồi, tạo menu động theo quyền và bảo vệ API bằng distributed rate limiting.
 
 ## Điểm nổi bật cho portfolio
 
 - Xác thực bằng Code/mật khẩu băm PBKDF2 hoặc Google; phản hồi đăng nhập không làm lộ trạng thái tài khoản.
-- Access token ngắn hạn và refresh token rotation; refresh token chỉ truyền qua HttpOnly cookie và chỉ lưu bản băm.
+- Access token ngắn hạn và refresh token rotation theo Application; mỗi Application dùng một HttpOnly cookie và refresh-token family riêng. Logout thu hồi toàn bộ family của Application được chọn, còn access token tự hết hạn.
 - Token mang `permissionversion`; khi Role hoặc Permission thay đổi, token cũ bị vô hiệu hóa ở lần sử dụng tiếp theo.
 - Phân quyền theo từng thao tác `Read`, `Create`, `Update`, `Delete` thay vì chỉ kiểm tra đã đăng nhập.
 - Menu nhiều cấp được lọc theo Permission thực tế của User.
-- Runtime authorization nhận `applicationCode` và chỉ trả Roles, Permissions cùng cây menu thuộc Application đang chạy.
+- Runtime authorization nhận `applicationCode` và chỉ trả Roles, Permissions cùng cây menu runtime tối giản thuộc Application đang chạy; Application không tồn tại hoặc inactive trả `404 Problem Details`.
 - Frontend dùng HTTP client tập trung theo mô hình interceptor để gắn access token, gửi refresh-token cookie, refresh phiên và retry request khi gặp `401`.
 - Distributed rate limiting dùng Redis và Lua script nguyên tử, hỗ trợ Fixed Window, Sliding Window, Token Bucket và Concurrency.
 - Optimistic concurrency bằng trường Version, audit metadata và soft-delete cascade cho dữ liệu Identity liên quan.
@@ -20,7 +20,7 @@ Identity Management Platform là một dự án full-stack mô phỏng hệ th�
 
 | Nhóm | Khả năng |
 |---|---|
-| Authentication | Login bằng Code hoặc Google, external identity provisioning, refresh token rotation, logout và thu hồi phiên |
+| Authentication | Login bằng Code hoặc Google, external identity provisioning, JWT theo audience, refresh-token family và cookie riêng cho từng Application, logout và thu hồi phiên |
 | Users | Tìm kiếm, phân trang, tạo, cập nhật, kích hoạt/vô hiệu hóa và xóa User |
 | Applications | Quản lý các Application/audience được phục vụ bởi Identity system |
 | Resources & Actions | Mô hình hóa đối tượng được bảo vệ và thao tác có thể cấp quyền |
@@ -110,7 +110,7 @@ PerformanceBehavior → ValidationBehavior → Command/Query Handler → Reposit
 - Các response lỗi do exception, validation, conflict, `401` hoặc `403` chứa thêm `correlationId` trong Problem Details để đối chiếu với log server.
 - Request completion log có các property riêng biệt: `CorrelationId`, `TraceId`, `RequestMethod`, `RequestPath`, `StatusCode`, `ElapsedMs` và `UserId`.
 - Request có `StatusCode >= 500` được ghi ở mức `Error`; request có `ElapsedMs > 3000` được ghi ở mức `Warning`; các request còn lại được ghi ở mức `Information`.
-- `UserId` lấy từ claim `uid` sau authentication. Request login có thể chưa có `UserId`, trong khi các request tiếp theo sử dụng Bearer token sẽ có giá trị này.
+- `UserId` lấy từ claim chuẩn `sub` sau authentication. Request login có thể chưa có `UserId`, trong khi các request tiếp theo sử dụng Bearer token sẽ có giá trị này.
 - Không ghi request/response body, password, JWT, refresh token hoặc cookie vào log.
 
 Application log được ghi theo định dạng một dòng dễ đọc:
@@ -130,11 +130,11 @@ Select-String "CorrelationId=abc-123" Identity-api/src/Identity.Api/logs/applica
 ## Luồng bảo mật tiêu biểu
 
 1. User đăng nhập bằng Code và mật khẩu.
-2. API xác minh trạng thái tài khoản, tải Roles/Permissions và cấp access token ngắn hạn.
-3. Refresh token được lưu trong HttpOnly cookie, phía server chỉ lưu hash và quan hệ rotation.
-4. Mỗi request xác minh chữ ký, issuer, audience, thời hạn, loại token, trạng thái thu hồi, trạng thái User và `permissionversion`.
+2. API xác minh trạng thái tài khoản và Application, tải Roles rồi cấp access token ngắn hạn với audience của Application.
+3. Refresh token được gắn `ApplicationId`; raw token nằm trong HttpOnly cookie riêng của Application với tên `identity_refresh_<hash(applicationCode)>`, còn phía server chỉ lưu hash và quan hệ rotation/family.
+4. Mỗi request xác minh chữ ký, issuer, audience/Application, thời hạn, loại token, trạng thái User và `permissionversion`.
 5. Permission policy tại controller quyết định thao tác cụ thể có được phép hay không.
-6. Khi gán Role hoặc thay đổi Permission, `permissionversion` tăng; access token cũ lập tức trở nên lỗi thời.
+6. Khi gán Role hoặc thay đổi Permission, `permissionversion` tăng; access token cũ lập tức trở nên lỗi thời. Logout thu hồi toàn bộ refresh family của Application; access token hiện hành không dùng denylist trong memory và tự hết hạn sau thời gian ngắn.
 7. Rate-limit middleware kiểm tra policy động trước khi request đi vào authorization/business handler.
 
 ## HTTP client và xử lý phiên ở frontend
@@ -142,6 +142,7 @@ Select-String "CorrelationId=abc-123" Identity-api/src/Identity.Api/logs/applica
 - Các feature gọi một `apiFetch` dùng chung thay vì tự lặp lại cấu hình `fetch`.
 - Client tự động gắn access token hiện hành vào `Authorization: Bearer ...` và luôn dùng `credentials: "include"` để gửi refresh token trong HttpOnly cookie.
 - Khi API trả `401`, client gọi endpoint refresh, cập nhật session rồi retry request ban đầu đúng một lần; nếu refresh thất bại, session được xóa và User phải đăng nhập lại.
+- Login gửi `VITE_APPLICATION_CODE`; refresh và logout gọi lần lượt `POST /refresh?applicationCode=...` và `POST /logout?applicationCode=...` để server chọn đúng cookie của Application.
 - Refresh request được dùng chung qua một pending promise để tránh nhiều API cùng nhận `401` tạo ra nhiều lần refresh/rotation đồng thời.
 - Session được giữ trong memory và đồng bộ giữa các tab bằng `BroadcastChannel`; refresh giữa các tab được điều phối bằng Web Locks API khi trình duyệt hỗ trợ.
 - Lỗi Problem Details từ backend được chuẩn hóa nhưng vẫn được ánh xạ sang lớp lỗi riêng của từng feature.
@@ -149,11 +150,21 @@ Select-String "CorrelationId=abc-123" Identity-api/src/Identity.Api/logs/applica
 ## Runtime authorization theo Application
 
 1. Frontend lấy mã Application đang chạy từ `VITE_APPLICATION_CODE` và gọi `GET /authorization?applicationCode=...` sau login hoặc refresh session.
-2. Backend dùng `UserId`, `permissionversion` trong access token và `applicationCode` được yêu cầu để tải authorization đúng phạm vi Application.
-3. Response gồm `roles`, `permissions` và `menus`; quyền của Application khác không được trộn vào phiên hiện hành.
+2. Backend đối chiếu `applicationCode` được yêu cầu với claim `application_code`, sau đó dùng `sub`, `permissionversion` và Application để tải authorization đúng phạm vi. Yêu cầu khác Application trong token trả `403`.
+3. Response gồm `roles`, `permissions` và `menus`; menu runtime chỉ chứa `id`, `name`, `route`, `children`. Quyền và metadata quản trị của Application khác không được trộn vào phiên hiện hành.
 4. Backend tải cây menu của Application, bỏ các node không active rồi lọc đệ quy theo Permission. Menu gắn Resource yêu cầu Permission `{ResourceCode}.ViewMenu`; menu cha vẫn được giữ khi còn menu con hợp lệ.
 5. React lưu kết quả vào `session.authorization`, dựng navigation từ `menus` và dùng `permissions` để ẩn/chặn thao tác trên giao diện. API vẫn là lớp kiểm soát quyền cuối cùng.
 6. Authorization cache được phân vùng theo Application, User và `permissionversion`, nên thay đổi Role/Permission làm token và dữ liệu cache cũ mất hiệu lực.
+
+## JWT và refresh session theo Application
+
+- Access token dùng claim chuẩn `sub` cùng `code`, `role`, `permissionversion`, `application_id`, `application_code` và `token_type=access`; token không chứa menu hoặc toàn bộ Permission.
+- `aud` lấy từ cấu hình dữ liệu của Application. Identity đối chiếu `application_id`, `application_code` và audience với Application active khi xác thực token.
+- Login nhận `applicationCode` tùy chọn để giữ tương thích; frontend luôn gửi `VITE_APPLICATION_CODE`. User phải có ít nhất một Role active trong Application mới được cấp phiên.
+- Rotation giữ nguyên `ApplicationId` và `FamilyId`. Refresh không cho client chuyển Application: mã trong query phải khớp Application của refresh token đã lưu.
+- Nếu Application inactive, bị xóa hoặc User không còn Role active, refresh family bị thu hồi và cookie tương ứng bị xóa.
+- Logout là thao tác idempotent dựa trên HttpOnly cookie nên vẫn đóng được refresh session khi access token đã hết hạn.
+- Tên cookie dùng hash SHA-256 đã chuẩn hóa của `applicationCode`, vì vậy Identity và Business có thể duy trì phiên đồng thời trên cùng cookie scope mà không ghi đè nhau.
 
 ## Thiết kế rate limiting
 
@@ -166,8 +177,8 @@ Select-String "CorrelationId=abc-123" Identity-api/src/Identity.Api/logs/applica
 
 ## Chất lượng và tài liệu
 
-- 97 test cases đang pass trong ba test project: Application, API integration và Infrastructure integration.
-- Test suite bao phủ Application handlers/validators, API contracts và persistence integration.
+- 104 backend test cases đang pass trong ba test project: Application, API integration và Infrastructure integration; 39 frontend test cases đang pass.
+- Test suite bao phủ Application handlers/validators, API contracts, persistence integration, JWT application scope, cookie isolation và frontend refresh/logout theo Application.
 - Mỗi feature nghiệp vụ có specification, acceptance scenarios, functional requirements và measurable outcomes trong thư mục [`specs`](specs).
 - Project constitution quy định security-first, dependency boundaries, explicit API contracts, test release gates và accessibility.
 

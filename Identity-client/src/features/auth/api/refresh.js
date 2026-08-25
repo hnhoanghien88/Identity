@@ -1,4 +1,4 @@
-import { getAuthorization } from "./authorization";
+import { applicationCode, getAuthorization } from "./authorization";
 
 let pendingRefresh = null;
 
@@ -13,7 +13,11 @@ export function refreshSession() {
 }
 
 async function requestRefresh() {
-  const response = await fetch("/backend/refresh", {
+  if (!applicationCode) {
+    throw new Error("VITE_APPLICATION_CODE is required.");
+  }
+  const query = new URLSearchParams({ applicationCode });
+  const response = await fetch(`/backend/refresh?${query}`, {
     method: "POST",
     credentials: "include",
   });

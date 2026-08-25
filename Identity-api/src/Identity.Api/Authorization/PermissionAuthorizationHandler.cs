@@ -14,15 +14,18 @@ public sealed class PermissionAuthorizationHandler(
         AuthorizationHandlerContext context,
         PermissionRequirement requirement)
     {
-        var userIdValue = context.User.FindFirstValue("uid");
+        var userIdValue = context.User.FindFirstValue("sub");
         var versionValue = context.User.FindFirstValue("permissionversion");
+        var applicationCode = context.User.FindFirstValue("application_code");
         if (!ulong.TryParse(userIdValue, out var userId)
-            || !int.TryParse(versionValue, out var permissionVersion))
+            || !int.TryParse(versionValue, out var permissionVersion)
+            || string.IsNullOrWhiteSpace(applicationCode))
             return;
 
         var authorization = await authorizationCache.GetAsync(
             userId,
             permissionVersion,
+            applicationCode,
             CancellationToken.None);
         if (authorization.Permissions.Contains(
                 requirement.Permission,

@@ -136,12 +136,13 @@ builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 var authenticationBuilder = builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
 authenticationBuilder.AddJwtBearer(options =>
 {
+    options.MapInboundClaims = false;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidIssuer = jwt.Issuer,
-        ValidateAudience = true,
-        ValidAudience = jwt.Audience,
+        // Audience is validated against the active application record below.
+        ValidateAudience = false,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
         ValidateLifetime = true,
@@ -153,13 +154,30 @@ authenticationBuilder.AddJwtBearer(options =>
     {
         if (context.Principal?.FindFirst("token_type")?.Value != "access")
             context.Fail("Only access tokens are accepted.");
-        else if (context.HttpContext.RequestServices
-                     .GetRequiredService<IJwtTokenService>()
-                     .IsAccessTokenRevoked(context.Principal))
-            context.Fail("The access token has been revoked.");
         else
         {
-            var subject = context.Principal.FindFirst("uid")?.Value;
+            var applicationIdValue = context.Principal.FindFirst("application_id")?.Value;
+            var applicationCode = context.Principal.FindFirst("application_code")?.Value;
+            var audience = context.Principal.FindFirst("aud")?.Value;
+            if (!ulong.TryParse(applicationIdValue, out var applicationId))
+            {
+                context.Fail("The access token application is invalid.");
+                return;
+            }
+
+            var application = await context.HttpContext.RequestServices
+                .GetRequiredService<IApplicationsReadRepository>()
+                .GetByIdAsync(applicationId, context.HttpContext.RequestAborted);
+            if (application is null
+                || !application.IsActive
+                || !string.Equals(application.Code, applicationCode, StringComparison.Ordinal)
+                || !string.Equals(application.Audience, audience, StringComparison.Ordinal))
+            {
+                context.Fail("The access token audience is invalid.");
+                return;
+            }
+
+            var subject = context.Principal.FindFirst("sub")?.Value;
             if (!ulong.TryParse(subject, out var userId)) context.Fail("The access token subject is invalid.");
             else
             {

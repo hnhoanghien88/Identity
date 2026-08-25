@@ -103,11 +103,12 @@ public sealed class MySqlRefreshTokenRepository(IdentityDbContext dbContext)
 
         return new RotatedRefreshToken(
             current.UserId,
+            current.ApplicationId,
             replacement.RawToken,
             replacement.Entity.ExpiresDate);
     }
 
-    public async Task RevokeAsync(
+    public async Task RevokeFamilyAsync(
         string refreshToken,
         string? revokedBy,
         CancellationToken cancellationToken)
@@ -117,15 +118,21 @@ public sealed class MySqlRefreshTokenRepository(IdentityDbContext dbContext)
             .Include(x => x.User)
             .SingleOrDefaultAsync(x => x.TokenHash == tokenHash, cancellationToken);
 
-        if (token is null || !token.IsActive)
+        if (token is null)
             return;
 
         var now = DateTime.UtcNow;
-        token.IsActive = false;
-        token.RevokedDate = now;
-        token.RevokedBy = token.UserId;
-        token.UpdatedDate = now;
-        token.UpdatedBy = revokedBy ?? token.User.Email;
+        var family = await dbContext.RefreshTokens
+            .Where(x => x.FamilyId == token.FamilyId && x.IsActive)
+            .ToListAsync(cancellationToken);
+        foreach (var familyToken in family)
+        {
+            familyToken.IsActive = false;
+            familyToken.RevokedDate = now;
+            familyToken.RevokedBy = token.UserId;
+            familyToken.UpdatedDate = now;
+            familyToken.UpdatedBy = revokedBy ?? token.User.Email;
+        }
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 

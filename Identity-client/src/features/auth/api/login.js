@@ -1,4 +1,4 @@
-import { getAuthorization } from "./authorization";
+import { applicationCode, getAuthorization } from "./authorization";
 
 const INVALID_CREDENTIALS =
   "Code ho\u1eb7c m\u1eadt kh\u1ea9u kh\u00f4ng \u0111\u00fang.";
@@ -13,7 +13,10 @@ export async function login(credentials) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(credentials),
+    body: JSON.stringify({
+      ...credentials,
+      ...(applicationCode ? { applicationCode } : {}),
+    }),
   });
 
   if (!response.ok) {

@@ -75,7 +75,11 @@ public sealed class ExternalAuthController(
                 TimeSpan.FromDays(_jwt.RefreshTokenDays),
                 cancellationToken);
 
-            RefreshTokenCookie.Write(HttpContext, refreshToken.Token, refreshToken.ExpiresAtUtc);
+            RefreshTokenCookie.Write(
+                HttpContext,
+                _jwt.ApplicationCode,
+                refreshToken.Token,
+                refreshToken.ExpiresAtUtc);
             return RedirectToFrontend("google", isError: false);
         }
         catch (Exception exception) when (

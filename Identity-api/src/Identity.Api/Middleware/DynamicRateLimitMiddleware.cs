@@ -141,7 +141,7 @@ public sealed class DynamicRateLimitMiddleware(RequestDelegate next, ILogger<Dyn
         foreach (var dimension in dimensions)
             parts.Add(dimension switch
             {
-                "User" => context.User.FindFirstValue("uid") ?? "anonymous",
+                "User" => context.User.FindFirstValue("sub") ?? "anonymous",
                 "IpAddress" => context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 "Application" => policy.ApplicationId?.ToString() ?? application,
                 "Endpoint" => $"{context.Request.Method}:{route}",

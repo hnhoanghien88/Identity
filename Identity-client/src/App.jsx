@@ -215,7 +215,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await logout(session?.accessToken);
+      await logout();
     } finally {
       clearSession();
       navigate(LOGIN_PATH, true);

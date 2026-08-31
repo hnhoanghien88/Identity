@@ -88,6 +88,7 @@ public sealed class AuthorizationController(
             menu.Id,
             menu.Name,
             menu.Route,
+            menu.Icon,
             menu.Children.Select(ToRuntimeMenu).ToArray());
 
     private static IReadOnlyList<MenuDto> FilterMenus(
@@ -124,5 +125,6 @@ public sealed class AuthorizationController(
         ulong Id,
         string Name,
         string? Route,
+        string? Icon,
         IReadOnlyList<RuntimeMenuResponse> Children);
 }

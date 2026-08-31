@@ -31,6 +31,20 @@ import { MenusTreeTable } from "./components/MenusTreeTable";
 const allIds = (nodes) =>
   nodes.flatMap((node) => [node.id, ...allIds(node.children || [])]);
 
+const updateMenuInTree = (nodes, id, update) =>
+  nodes.map((node) =>
+    node.id === id
+      ? {
+          ...node,
+          ...update,
+          children: node.children,
+        }
+      : {
+          ...node,
+          children: updateMenuInTree(node.children || [], id, update),
+        },
+  );
+
 export function MenusPage({ session }) {
   const canLoadResources = hasPermission(session, "Resources.Read");
   const canUpdateMenus = hasPermission(session, "Menus.Update");
@@ -38,6 +52,9 @@ export function MenusPage({ session }) {
   const [applicationId, setApplicationId] = useState("");
   const [menus, setMenus] = useState([]);
   const [resources, setResources] = useState([]);
+  const [formMenus, setFormMenus] = useState([]);
+  const [formApplicationId, setFormApplicationId] = useState("");
+  const [lookupsLoading, setLookupsLoading] = useState(false);
   const [expanded, setExpanded] = useState(new Set());
   const expandedApplicationId = useRef(null);
   const [loading, setLoading] = useState(true);
@@ -81,33 +98,57 @@ export function MenusPage({ session }) {
           setExpanded(new Set(allIds(nextMenus)));
           expandedApplicationId.current = applicationId;
         }
-        if (canLoadResources) {
-          const resourcesResult = await searchResources(
-            {
-              filter: { applicationId: Number(applicationId), isActive: true },
-              sorts: [{ column: 2, direction: 0 }],
-              page: 1,
-              pageSize: 100,
-            },
-            signal,
-          );
-          setResources(resourcesResult.items);
-        } else {
-          setResources([]);
-        }
       } catch (reason) {
         if (reason.name !== "AbortError") setError(reason.message);
       } finally {
         setLoading(false);
       }
     },
-    [applicationId, canLoadResources],
+    [applicationId],
   );
   useEffect(() => {
     const controller = new AbortController();
     load(controller.signal);
     return () => controller.abort();
   }, [load, reload]);
+  useEffect(() => {
+    if (!formOpen || !formApplicationId) {
+      setFormMenus([]);
+      setResources([]);
+      return undefined;
+    }
+    const controller = new AbortController();
+    setLookupsLoading(true);
+    const resourcesRequest = canLoadResources
+      ? searchResources(
+          {
+            filter: {
+              applicationId: Number(formApplicationId),
+              isActive: true,
+            },
+            sorts: [{ column: 2, direction: 0 }],
+            page: 1,
+            pageSize: 100,
+          },
+          controller.signal,
+        )
+      : Promise.resolve({ items: [] });
+    Promise.all([
+      getMenus(formApplicationId, controller.signal),
+      resourcesRequest,
+    ])
+      .then(([nextMenus, resourcesResult]) => {
+        setFormMenus(nextMenus);
+        setResources(resourcesResult.items);
+      })
+      .catch((reason) => {
+        if (reason.name !== "AbortError") setMutationError(reason);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLookupsLoading(false);
+      });
+    return () => controller.abort();
+  }, [canLoadResources, formApplicationId, formOpen]);
   const ids = useMemo(() => allIds(menus), [menus]);
   const submit = async (value) => {
     setPending(true);
@@ -144,7 +185,7 @@ export function MenusPage({ session }) {
     setOrderPendingIds((current) => new Set(current).add(menu.id));
     setError("");
     try {
-      await updateMenu(menu.id, {
+      const updatedMenu = await updateMenu(menu.id, {
         applicationId: menu.applicationId,
         parentId: menu.parentId,
         resourceId: menu.resourceId,
@@ -157,9 +198,15 @@ export function MenusPage({ session }) {
         isActive: menu.isActive,
         version: menu.version,
       });
-      await refreshNavigation();
+      setMenus((current) =>
+        updateMenuInTree(current, menu.id, {
+          ...updatedMenu,
+          sortOrder: updatedMenu?.sortOrder ?? sortOrder,
+          version: updatedMenu?.version ?? menu.version + 1,
+        }),
+      );
+      void refreshNavigation();
       setNotice(`Order for ${menu.name} updated.`);
-      setReload((key) => key + 1);
     } catch (reason) {
       setError(reason.message);
     } finally {
@@ -193,6 +240,7 @@ export function MenusPage({ session }) {
             onClick={() =>
               runIfPermitted(session, "Menus.Create", () => {
                 setForm(null);
+                setFormApplicationId(applicationId);
                 setMutationError(null);
                 setFormOpen(true);
               })
@@ -269,6 +317,7 @@ export function MenusPage({ session }) {
             onEdit={(value) =>
               runIfPermitted(session, "Menus.Update", () => {
                 setForm(value);
+                setFormApplicationId(String(value.applicationId));
                 setMutationError(null);
                 setFormOpen(true);
               })
@@ -288,12 +337,20 @@ export function MenusPage({ session }) {
         open={formOpen}
         menu={form}
         applicationId={Number(applicationId)}
-        menus={menus}
+        applications={applications}
+        menus={formMenus}
         resources={resources}
+        lookupsLoading={lookupsLoading}
         pending={pending}
         serverError={mutationError?.message}
         fieldErrors={mutationError?.errors}
         onClose={() => setFormOpen(false)}
+        onApplicationChange={(nextApplicationId) => {
+          setFormApplicationId(nextApplicationId);
+          setFormMenus([]);
+          setResources([]);
+          setMutationError(null);
+        }}
         onSubmit={submit}
       />
       <DeleteMenuDialog

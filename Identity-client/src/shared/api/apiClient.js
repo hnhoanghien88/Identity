@@ -1,9 +1,8 @@
 import {
   clearSession,
   getSession,
-  publishSession,
+  refreshSessionCoordinated,
 } from "../../features/auth/session";
-import { refreshSession } from "../../features/auth/api/refresh";
 
 const DEFAULT_ERROR_MESSAGE = "The request could not be completed.";
 const SESSION_EXPIRED_MESSAGE =
@@ -29,7 +28,7 @@ async function send(path, options, createError, retry) {
 
   if (response.status === 401 && retry) {
     try {
-      publishSession(await refreshSession());
+      await refreshSessionCoordinated(session?.accessToken);
     } catch {
       clearSession();
       throw createError(SESSION_EXPIRED_MESSAGE, 401);

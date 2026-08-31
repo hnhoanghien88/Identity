@@ -18,6 +18,12 @@
 - **Rationale**: Dữ liệu luôn động, contract ownership rõ và tránh duplicate query surface.
 - **Alternatives considered**: Endpoint form-metadata tổng hợp làm coupling cao; hard-coded options vi phạm yêu cầu.
 
+## Editing a Menu's Application
+
+- **Decision**: Form owns its selected Application and reloads both Parent/Menu and Resource lookups whenever that selection changes. The update command permits a cross-Application move only for a leaf Menu and revalidates the destination Application, Parent, Resource, and Code before saving.
+- **Rationale**: This makes create and edit consistent while preventing children from retaining a cross-Application Parent relationship. Aborting stale lookup requests prevents a slower previous selection from replacing current choices.
+- **Alternatives considered**: Cascading the whole branch was rejected because it changes multiple records and can invalidate descendant Resources/Codes; keeping Application immutable no longer satisfies the requested editing flow.
+
 ## Concurrency and delete
 
 - **Decision**: Thêm `Version` vào `menus`; update/delete compare-and-swap. Delete mềm chỉ cho leaf chưa xóa.
@@ -35,6 +41,12 @@
 - **Decision**: Dùng MUI primitives sẵn có để render tree table đệ quy, quản lý expanded IDs cục bộ và cung cấp `aria-expanded`, indentation, expand/collapse all.
 - **Rationale**: Không thêm dependency, giữ design system và đáp ứng keyboard/accessibility.
 - **Alternatives considered**: Thư viện tree-grid mới tăng supply-chain và styling cost; bảng phẳng không đáp ứng yêu cầu.
+## Inline Order commit behavior
+
+- **Decision**: Enter and blur both commit a changed integer Order; Escape restores the persisted Order. A submission guard deduplicates Enter followed by blur, and a successful response is merged into the matching tree node without refetching the table.
+- **Rationale**: Supporting both gestures matches fast keyboard and pointer workflows. Deduplication prevents duplicate writes, while a local immutable merge preserves expansion and ongoing edits with the server-returned Version.
+- **Alternatives considered**: Enter-only commit was rejected after requirement correction; refetching the full tree after every save remains rejected because it disrupts sequential editing.
+
 ## Null display and edit safety
 
 - **Decision**: Giữ `ResourceId`, `resourceName` và `Route` là giá trị trống trong model/form; chỉ render ký hiệu Unicode `—` tại ô bảng khi giá trị không được thiết lập.

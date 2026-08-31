@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 
 const empty = {
+  applicationId: "",
   parentId: "",
   resourceId: "",
   code: "",
@@ -35,12 +36,15 @@ export function MenuFormDialog({
   open,
   menu,
   applicationId,
+  applications,
   menus,
   resources,
+  lookupsLoading,
   pending,
   serverError,
   fieldErrors = {},
   onClose,
+  onApplicationChange,
   onSubmit,
 }) {
   const [value, setValue] = useState(empty);
@@ -51,16 +55,20 @@ export function MenuFormDialog({
         menu
           ? {
               ...menu,
+              applicationId: String(menu.applicationId),
               parentId: menu.parentId ?? "",
               resourceId: menu.resourceId ?? "",
               route: menu.route ?? "",
               icon: menu.icon ?? "",
             }
-          : empty,
+          : {
+              ...empty,
+              applicationId: String(applicationId || ""),
+            },
       );
       setErrors({});
     }
-  }, [open, menu]);
+  }, [applicationId, open, menu]);
   const descendants = new Set();
   const collect = (nodes, inside = false) =>
     nodes.forEach((node) => {
@@ -80,12 +88,13 @@ export function MenuFormDialog({
   });
   const submit = () => {
     const next = {};
+    if (!value.applicationId) next.applicationId = "Application is required.";
     if (!value.code?.trim()) next.code = "Code is required.";
     if (!value.name?.trim()) next.name = "Name is required.";
     setErrors(next);
     if (Object.keys(next).length) return;
     onSubmit({
-      applicationId,
+      applicationId: Number(value.applicationId),
       parentId: value.parentId ? Number(value.parentId) : null,
       resourceId: value.resourceId ? Number(value.resourceId) : null,
       code: value.code.trim(),
@@ -104,7 +113,34 @@ export function MenuFormDialog({
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           {serverError && <Alert severity="error">{serverError}</Alert>}
-          <TextField select label="Parent Menu" {...input("parentId")}>
+          <TextField
+            select
+            required
+            label="Application"
+            {...input("applicationId")}
+            onChange={(event) => {
+              const nextApplicationId = event.target.value;
+              setValue({
+                ...value,
+                applicationId: nextApplicationId,
+                parentId: "",
+                resourceId: "",
+              });
+              onApplicationChange(nextApplicationId);
+            }}
+          >
+            {applications.map((item) => (
+              <MenuItem key={item.id} value={item.id}>
+                {item.code} — {item.name}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            label="Parent Menu"
+            disabled={lookupsLoading || !value.applicationId}
+            {...input("parentId")}
+          >
             <MenuItem value="">Root</MenuItem>
             {parents.map((item) => (
               <MenuItem key={item.id} value={item.id}>
@@ -113,7 +149,12 @@ export function MenuFormDialog({
               </MenuItem>
             ))}
           </TextField>
-          <TextField select label="Resource" {...input("resourceId")}>
+          <TextField
+            select
+            label="Resource"
+            disabled={lookupsLoading || !value.applicationId}
+            {...input("resourceId")}
+          >
             <MenuItem value="">None</MenuItem>
             {resources.map((item) => (
               <MenuItem key={item.id} value={item.id}>

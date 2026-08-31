@@ -81,7 +81,7 @@ export function restoreSession() {
   if (restorePromise) return restorePromise;
 
   restorePromise = restoreFromAnotherTab()
-    .then((session) => session || refreshWithCrossTabLock())
+    .then((session) => session || refreshSessionCoordinated())
     .finally(() => {
       restorePromise = null;
     });
@@ -89,14 +89,21 @@ export function restoreSession() {
   return restorePromise;
 }
 
-async function refreshWithCrossTabLock() {
+export async function refreshSessionCoordinated(staleAccessToken = null) {
+  const replacement = getReplacementSession(staleAccessToken);
+  if (replacement) return replacement;
+
   if (!navigator.locks?.request) {
     return refreshAndPublish();
   }
 
   return navigator.locks.request(REFRESH_LOCK_NAME, async () => {
+    const replacement = getReplacementSession(staleAccessToken);
+    if (replacement) return replacement;
+
     const sharedSession = await restoreFromAnotherTab();
-    return sharedSession || refreshAndPublish();
+    return getReplacementSession(staleAccessToken, sharedSession)
+      || refreshAndPublish();
   });
 }
 
@@ -142,6 +149,12 @@ function isUsable(session) {
   return (
     Date.parse(session.accessTokenExpiresAtUtc) > Date.now() + EXPIRY_BUFFER_MS
   );
+}
+function getReplacementSession(staleAccessToken, session = currentSession) {
+  if (!isUsable(session)) return null;
+  return staleAccessToken && session.accessToken === staleAccessToken
+    ? null
+    : session;
 }
 function setRestorationBlocked(isBlocked) {
   restorationBlocked = isBlocked;

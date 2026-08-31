@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
   CircularProgress,
   IconButton,
@@ -28,10 +28,18 @@ const flattenMenus = (nodes, expanded, depth = 0) =>
 
 function InlineOrderCell({ menu, canEdit, pending, onChange }) {
   const [value, setValue] = useState(String(menu.sortOrder));
+  const submittedValue = useRef(null);
+  const wasPending = useRef(false);
 
   useEffect(() => {
     setValue(String(menu.sortOrder));
+    submittedValue.current = null;
   }, [menu.sortOrder]);
+
+  useEffect(() => {
+    if (wasPending.current && !pending) submittedValue.current = null;
+    wasPending.current = pending;
+  }, [pending]);
 
   if (!canEdit) return menu.sortOrder;
 
@@ -41,7 +49,10 @@ function InlineOrderCell({ menu, canEdit, pending, onChange }) {
       setValue(String(menu.sortOrder));
       return;
     }
-    if (next !== menu.sortOrder) onChange(menu, next);
+    if (next !== menu.sortOrder && submittedValue.current !== next) {
+      submittedValue.current = next;
+      onChange(menu, next);
+    }
   };
 
   return (
@@ -51,7 +62,7 @@ function InlineOrderCell({ menu, canEdit, pending, onChange }) {
       value={value}
       disabled={pending}
       onChange={(event) => setValue(event.target.value)}
-      onBlur={save}
+      onBlur={() => save()}
       onKeyDown={(event) => {
         if (event.key === "Enter") {
           event.preventDefault();

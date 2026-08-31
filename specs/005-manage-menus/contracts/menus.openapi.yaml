@@ -46,7 +46,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
     put:
-      summary: Update or move a menu
+      summary: Update or move a menu, including changing its application when it is a leaf
       security: [{ bearerAuth: [] }]
       parameters: [{ $ref: '#/components/parameters/MenuId' }]
       requestBody:
@@ -112,5 +112,4 @@ components:
     Unauthorized: { description: Authentication required }
     Forbidden: { description: Permission denied }
     NotFound: { description: Menu not found }
-    Conflict: { description: Duplicate, hierarchy, dependency or concurrency conflict }
-
+    Conflict: { description: Duplicate, hierarchy, non-leaf application move, dependency or concurrency conflict }

@@ -141,10 +141,10 @@ Select-String "CorrelationId=abc-123" Identity-api/src/Identity.Api/logs/applica
 
 - Các feature gọi một `apiFetch` dùng chung thay vì tự lặp lại cấu hình `fetch`.
 - Client tự động gắn access token hiện hành vào `Authorization: Bearer ...` và luôn dùng `credentials: "include"` để gửi refresh token trong HttpOnly cookie.
-- Khi API trả `401`, client gọi endpoint refresh, cập nhật session rồi retry request ban đầu đúng một lần; nếu refresh thất bại, session được xóa và User phải đăng nhập lại.
+- Khi API trả `401`, client đưa thao tác refresh qua cùng cross-tab coordinator, cập nhật session rồi retry request ban đầu đúng một lần; nếu refresh thất bại, session được xóa và User phải đăng nhập lại.
 - Login gửi `VITE_APPLICATION_CODE`; refresh và logout gọi lần lượt `POST /refresh?applicationCode=...` và `POST /logout?applicationCode=...` để server chọn đúng cookie của Application.
-- Refresh request được dùng chung qua một pending promise để tránh nhiều API cùng nhận `401` tạo ra nhiều lần refresh/rotation đồng thời.
-- Session được giữ trong memory và đồng bộ giữa các tab bằng `BroadcastChannel`; refresh giữa các tab được điều phối bằng Web Locks API khi trình duyệt hỗ trợ.
+- Trong một tab, refresh request được dùng chung qua một pending promise. Giữa các tab, mọi refresh do restore hoặc do `401` đều đi qua cùng Web Lock khi trình duyệt hỗ trợ, tránh gửi đồng thời một refresh-token cookie và kích hoạt reuse detection thu hồi cả token family.
+- Session được giữ trong memory và đồng bộ bằng `BroadcastChannel`. Sau khi giành refresh lock, tab kiểm tra lại session được tab khác phát; chỉ gọi `/refresh` nếu chưa có access token mới thay thế token đã gây ra `401`.
 - Lỗi Problem Details từ backend được chuẩn hóa nhưng vẫn được ánh xạ sang lớp lỗi riêng của từng feature.
 
 ## Runtime authorization theo Application

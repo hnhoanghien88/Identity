@@ -59,12 +59,13 @@ Người quản trị chỉnh sửa thông tin Menu, trạng thái hiển thị,
 1. **Given** Menu đang tồn tại, **When** người dùng cập nhật dữ liệu hợp lệ, **Then** đúng Menu được thay đổi và cây phản ánh kết quả mới.
 2. **Given** Menu có các nút con, **When** chuyển Menu sang Parent hợp lệ trong cùng Application, **Then** toàn bộ nhánh được chuyển và quan hệ bên trong nhánh không thay đổi.
 3. **Given** người dùng chọn chính Menu hoặc một hậu duệ của nó làm Parent, **When** lưu, **Then** hệ thống từ chối để không tạo chu trình.
-4. **Given** người dùng đổi Application của Menu đang có, **When** lưu, **Then** hệ thống từ chối và hướng dẫn tạo cấu trúc phù hợp trong Application đích.
+4. **Given** người dùng đổi Application của Menu đang có, **When** Application mới được chọn, **Then** danh sách Parent và Resource được tải lại theo Application mới, các lựa chọn không còn hợp lệ được xóa, và người dùng có thể lưu Menu vào Application mới sau khi hoàn tất dữ liệu hợp lệ.
 5. **Given** Menu đã bị người khác cập nhật hoặc xóa sau khi form được mở, **When** người dùng lưu dữ liệu cũ, **Then** hệ thống không ghi đè âm thầm và yêu cầu tải dữ liệu mới nhất.
 6. **Given** một Menu có cả Resource và Route không được thiết lập, **When** người dùng mở màn hình index, **Then** mỗi giá trị trống được hiển thị bằng dấu gạch ngang dài `—` dễ đọc và thao tác chỉnh sửa của Menu vẫn khả dụng.
 7. **Given** một Menu đang hiển thị `—` cho Resource hoặc Route chưa được thiết lập, **When** người dùng chọn chỉnh sửa, nhập hoặc giữ trống các trường tùy chọn rồi lưu dữ liệu hợp lệ, **Then** form mở bình thường, giá trị trống không bị chuyển thành chuỗi ký tự đại diện và Menu được cập nhật thành công.
-8. **Given** cây có nhiều Menu và người dùng có quyền cập nhật, **When** người dùng sửa SortOrder trực tiếp trên dòng rồi nhấn Enter hoặc rời ô, **Then** thứ tự mới được lưu, cây và điều hướng được tải lại theo thứ tự mới mà không cần mở form đầy đủ.
-9. **Given** người dùng đang sửa SortOrder trực tiếp, **When** nhập giá trị không phải số nguyên hoặc nhấn Escape, **Then** giá trị cũ được khôi phục và không có thay đổi nào được gửi.
+8. **Given** cây có nhiều Menu và người dùng có quyền cập nhật, **When** người dùng sửa SortOrder trực tiếp trên dòng rồi nhấn Enter hoặc rời ô, **Then** thứ tự mới được lưu và đúng dòng được cập nhật tại chỗ mà không tải lại toàn bộ bảng.
+9. **Given** người dùng đang sửa SortOrder trực tiếp, **When** nhập giá trị không phải số nguyên hoặc nhấn Escape, **Then** giá trị đã lưu gần nhất được khôi phục và không có thay đổi nào được gửi.
+10. **Given** một lần cập nhật SortOrder vừa thành công, **When** người dùng tiếp tục sửa Order của dòng khác, **Then** trạng thái mở/thu gọn, vị trí bảng và nội dung đang thao tác được giữ nguyên.
 
 ---
 
@@ -94,6 +95,8 @@ Người quản trị xóa một Menu không còn sử dụng sau khi thấy rõ
 - Cây có độ sâu lớn: mọi cấp hợp lệ vẫn được duyệt; giao diện giữ khả năng đọc và thao tác bằng bàn phím mà không cắt mất nút.
 - Nhiều nút cùng SortOrder: thứ tự hiển thị ổn định giữa các lần tải.
 - Đổi Application trên form tạo mới sau khi đã chọn Parent hoặc Resource: lựa chọn không còn hợp lệ được xóa và người dùng phải chọn lại.
+- Đổi Application trên form chỉnh sửa: Parent và Resource hiện tại bị xóa nếu không thuộc Application mới; danh sách thay thế chỉ chứa dữ liệu thuộc Application mới và Menu chỉ được lưu khi mọi quan hệ đều hợp lệ.
+- Resource đang tải khi người dùng đổi Application liên tiếp: chỉ kết quả của Application được chọn gần nhất được hiển thị; kết quả cũ không được ghi đè danh sách mới.
 - Resource đã ngừng hoạt động hoặc bị xóa sau khi form mở: lưu bị từ chối, không duy trì liên kết mới đến Resource không còn khả dụng.
 - Phiên đăng nhập hết hạn hoặc người dùng mất quyền trong khi thao tác: yêu cầu thất bại an toàn, không giả định đã lưu và hướng dẫn đăng nhập hoặc xin quyền lại.
 - Mạng tạm thời không khả dụng: dữ liệu form chưa gửi được giữ lại, lỗi có thể thử lại được hiển thị và thao tác lặp bị ngăn.
@@ -120,8 +123,8 @@ Người quản trị xóa một Menu không còn sử dụng sau khi thấy rõ
 - **FR-015**: SortOrder MUST là số nguyên; giá trị mặc định MUST là 0. IsVisible và trạng thái hoạt động MUST mặc định là bật khi tạo mới.
 - **FR-016**: Hệ thống MUST kiểm tra Parent tồn tại, chưa xóa, thuộc cùng Application và không tạo chu trình trước khi ghi nhận thao tác tạo hoặc cập nhật.
 - **FR-017**: Resource được chọn MUST tồn tại, chưa xóa, còn hoạt động và thuộc cùng Application với Menu tại thời điểm lưu.
-- **FR-018**: Người dùng có quyền MUST có thể cập nhật Parent, Resource, Code, Name, Route, Icon, SortOrder, IsVisible và trạng thái hoạt động của Menu.
-- **FR-019**: Application của Menu đã tồn tại MUST không được thay đổi; việc tổ chức Menu cho Application khác nằm trong thao tác tạo mới tại Application đích.
+- **FR-018**: Người dùng có quyền MUST có thể cập nhật Application, Parent, Resource, Code, Name, Route, Icon, SortOrder, IsVisible và trạng thái hoạt động của Menu.
+- **FR-019**: Form tạo và chỉnh sửa MUST cho phép chọn một Application còn khả dụng. Khi Application trên form thay đổi, hệ thống MUST tải lại Parent và Resource theo Application vừa chọn, đồng thời xóa Parent hoặc Resource đang chọn nếu chúng không còn hợp lệ trong Application mới.
 - **FR-020**: Khi đổi Parent hợp lệ, Menu và toàn bộ hậu duệ MUST giữ nguyên quan hệ nội bộ và xuất hiện tại vị trí mới sau lần đọc tiếp theo.
 - **FR-021**: Trước khi xóa, hệ thống MUST yêu cầu xác nhận với Code, Name và số nút con trực tiếp của Menu.
 - **FR-022**: Xóa Menu MUST là xóa mềm; Menu đã xóa MUST bị loại khỏi cây, danh sách Parent và các hoạt động nghiệp vụ mới theo mặc định.
@@ -134,7 +137,11 @@ Người quản trị xóa một Menu không còn sử dụng sau khi thấy rõ
 - **FR-029**: Giao diện MUST hỗ trợ bàn phím, focus nhìn thấy được, nhãn có ý nghĩa, trạng thái mở/thu gọn có thể nhận biết và bố cục dùng được trên các kích thước desktop/mobile được hỗ trợ.
 - **FR-030**: Khi Resource hoặc Route của Menu không có giá trị, màn hình index MUST hiển thị ký hiệu thay thế `—` cho trường tương ứng; MUST NOT hiển thị chuỗi lỗi mã hóa như `â€”` hoặc coi ký hiệu thay thế là dữ liệu thực.
 - **FR-031**: Menu có Resource và/hoặc Route không có giá trị MUST vẫn cho phép người dùng có quyền mở form chỉnh sửa, xem đúng trạng thái trống, cập nhật các trường hợp lệ và lưu; giá trị `—` dùng để hiển thị MUST NOT được đưa vào dữ liệu chỉnh sửa hoặc dữ liệu lưu.
-- **FR-032**: Người dùng có quyền cập nhật Menu MUST có thể sửa SortOrder trực tiếp trên từng dòng của tree grid; thao tác MUST chỉ chấp nhận số nguyên, hỗ trợ lưu bằng Enter hoặc khi rời ô, hỗ trợ hủy bằng Escape, hiển thị trạng thái đang lưu và vẫn áp dụng kiểm tra xung đột phiên bản hiện hành.
+- **FR-032**: Khi cập nhật Menu sang Application khác, hệ thống MUST xác thực Application đích còn khả dụng, Parent và Resource thuộc Application đích, Code duy nhất trong Application đích, Menu không còn nút con, và MUST ghi nhận thay đổi theo một giao dịch duy nhất hoặc không ghi nhận gì.
+- **FR-033**: Sau khi cập nhật Application thành công, cây đang hiển thị MUST được làm mới; Menu không còn xuất hiện trong cây Application nguồn và xuất hiện trong cây Application đích khi người dùng chọn Application đích.
+- **FR-034**: Người dùng có quyền cập nhật Menu MUST có thể sửa SortOrder trực tiếp trên từng dòng của tree grid; thao tác MUST gửi cập nhật khi người dùng nhấn Enter hoặc khi ô mất focus với một số nguyên đã thay đổi, hỗ trợ hủy bằng Escape và hiển thị trạng thái đang lưu.
+- **FR-035**: Khi Enter làm ô SortOrder mất focus, giao diện MUST chỉ gửi đúng một yêu cầu cập nhật cho giá trị đó.
+- **FR-036**: Sau khi cập nhật SortOrder thành công, giao diện MUST cập nhật SortOrder và Version của đúng Menu trong dữ liệu hiện tại, MUST NOT tải lại toàn bộ tree/table, và MUST giữ nguyên trạng thái mở/thu gọn để người dùng tiếp tục chỉnh sửa dòng khác.
 
 ### Key Entities
 
@@ -165,7 +172,7 @@ Người quản trị xóa một Menu không còn sử dụng sau khi thấy rõ
 - Feature tái sử dụng đăng nhập, phân quyền và audit hiện có; tên quyền chi tiết sẽ được xác định ở giai đoạn lập kế hoạch theo quy ước dự án.
 - Resource là liên kết tùy chọn; một Menu không gắn Resource vẫn hợp lệ, ví dụ nút dùng để nhóm các Menu con.
 - Menu con bắt buộc thuộc cùng Application với Menu cha; cây của các Application độc lập với nhau.
-- Application của Menu đã tạo là bất biến để tránh di chuyển ngầm cả nhánh và tạo liên kết chéo; sao chép cây giữa Applications nằm ngoài phạm vi.
+- Khi đổi Application của một Menu có con, toàn bộ nhánh con không tự động đổi Application; thao tác chỉ hợp lệ với Menu lá. Người dùng phải xử lý các Menu con trước để không tạo quan hệ chéo giữa Applications.
 - Xóa mềm từng Menu là hành vi mặc định; xóa cả nhánh, khôi phục và xem Menu đã xóa nằm ngoài phạm vi feature.
 - Cây không áp đặt giới hạn nghiệp vụ cứng về số cấp; mốc 20 cấp là quy mô kiểm chứng chất lượng, không phải giới hạn dữ liệu.
 - CQRS là ràng buộc bắt buộc cho thiết kế và triển khai tiếp theo: các trường hợp sử dụng đọc không thực hiện thay đổi, và mỗi thay đổi được biểu diễn bằng một yêu cầu nghiệp vụ riêng.

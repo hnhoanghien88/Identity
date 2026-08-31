@@ -93,4 +93,65 @@ describe("MenusTreeTable", () => {
 
     expect(onOrderChange).toHaveBeenCalledWith(tree[0], 12);
   });
+
+  it("saves Order on blur", async () => {
+    const onOrderChange = vi.fn();
+    render(
+      <MenusTreeTable
+        menus={tree}
+        expanded={new Set()}
+        onToggle={vi.fn()}
+        canEdit
+        onOrderChange={onOrderChange}
+      />,
+    );
+
+    const input = screen.getByRole("spinbutton", { name: "Order for Root" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "12");
+    await userEvent.tab();
+
+    expect(onOrderChange).toHaveBeenCalledWith(tree[0], 12);
+  });
+
+  it("restores Order on Escape without saving", async () => {
+    const onOrderChange = vi.fn();
+    render(
+      <MenusTreeTable
+        menus={tree}
+        expanded={new Set()}
+        onToggle={vi.fn()}
+        canEdit
+        onOrderChange={onOrderChange}
+      />,
+    );
+
+    const input = screen.getByRole("spinbutton", { name: "Order for Root" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "12{Escape}");
+
+    expect(onOrderChange).not.toHaveBeenCalled();
+    expect(input).toHaveValue(0);
+  });
+
+  it("does not submit twice when Enter is followed by blur", async () => {
+    const onOrderChange = vi.fn();
+    render(
+      <MenusTreeTable
+        menus={tree}
+        expanded={new Set()}
+        onToggle={vi.fn()}
+        canEdit
+        onOrderChange={onOrderChange}
+      />,
+    );
+
+    const input = screen.getByRole("spinbutton", { name: "Order for Root" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "12{Enter}");
+    await userEvent.tab();
+
+    expect(onOrderChange).toHaveBeenCalledTimes(1);
+    expect(onOrderChange).toHaveBeenCalledWith(tree[0], 12);
+  });
 });

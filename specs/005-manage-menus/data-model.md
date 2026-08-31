@@ -5,7 +5,7 @@
 | Field | Type / optionality | Rules |
 |---|---|---|
 | Id | unsigned identifier | Generated, immutable |
-| ApplicationId | required identifier | Existing, active, not deleted; immutable after create |
+| ApplicationId | required identifier | Existing, active, not deleted; editable only while the Menu has no active children |
 | ParentId | optional identifier | Existing Menu in same Application; not self/descendant; null means root |
 | ResourceId | optional identifier | Existing active Resource in same Application |
 | Code | required string, max 120 | Trimmed; unique case-insensitive per Application |
@@ -37,7 +37,7 @@ Active <-> Inactive
 Visible <-> Hidden
 Leaf -> Soft Deleted
 Parent A -> Parent B/root (same Application, acyclic)
+Application A -> Application B (leaf Menu only; Parent/Resource revalidated in B)
 ```
 
-`ApplicationId` cannot transition after creation. Soft-deleted records are not restored in this feature.
-
+`ApplicationId` may transition for a leaf Menu. The transition clears or replaces incompatible Parent/Resource choices and is rejected if the Menu has active children. Soft-deleted records are not restored in this feature.

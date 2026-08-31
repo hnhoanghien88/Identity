@@ -6,7 +6,7 @@
 
 ## Summary
 
-Bổ sung CRUD Menus theo CQRS và màn hình index dạng tree list đệ quy theo `ParentId`. Backend dùng Dapper cho query cây/lookup và EF Core cho commands qua MediatR/FluentValidation; bổ sung `Version` để chống ghi đè đồng thời, kiểm tra quan hệ cùng Application và ngăn chu trình. API trả cây theo Application cùng lookup Applications/Resources động. Frontend React/MUI thêm `/menus`, bộ chọn Application, tree table có expand/collapse và form CRUD accessible.
+Bổ sung CRUD Menus theo CQRS và màn hình index dạng tree list đệ quy theo `ParentId`. Backend dùng Dapper cho query cây/lookup và EF Core cho commands qua MediatR/FluentValidation; `Version` chống ghi đè đồng thời, kiểm tra quan hệ cùng Application và ngăn chu trình. Form tạo/chỉnh sửa cho chọn Application, tải lại cây Parent và Resources theo Application của form, và cho phép chuyển Menu lá sang Application khác sau khi xác thực toàn bộ quan hệ.
 
 ## Technical Context
 
@@ -17,7 +17,7 @@ Bổ sung CRUD Menus theo CQRS và màn hình index dạng tree list đệ quy t
 **Target Platform**: ASP.NET Core web API và modern desktop/mobile browsers  
 **Project Type**: Layered web API and React SPA  
 **Performance Goals**: 10.000 Menu/Application, cây sâu 20 cấp; 95% thao tác đọc/expand trong 2 giây  
-**Constraints**: CQRS; authorization fail-closed; parameterized SQL; no cycles; same-Application parent/resource; optimistic concurrency; soft delete; không thêm dependency  
+**Constraints**: CQRS; authorization fail-closed; parameterized SQL; no cycles; same-Application parent/resource; chỉ Menu lá được đổi Application; optimistic concurrency; soft delete; không thêm dependency
 **Scale/Scope**: Một màn hình, bốn endpoints chính, lookup dùng endpoints hiện có, một migration, backend/frontend tests
 
 ## Constitution Check
@@ -61,13 +61,26 @@ Identity-client/tests/menus/
 - Regression test render một Menu có Resource/Route `null`, xác nhận không có chuỗi mojibake và xác nhận callback Edit nhận đúng object ban đầu.
 
 - Query tree dùng SQL parameterized theo Application, trả toàn bộ rows hoạt động theo thứ tự ổn định; handler dựng cây O(n), cô lập orphan/cycle thành dữ liệu chẩn đoán an toàn.
-- Commands dùng EF/MediatR/FluentValidation; repository kiểm tra Application, Resource và Parent cùng scope, descendant cycle, duplicate Code và concurrency.
+- Commands dùng EF/MediatR/FluentValidation; repository kiểm tra Application đích, Resource và Parent cùng scope, descendant cycle, duplicate Code, leaf-only cross-Application move và concurrency.
 - `Version` unsigned mặc định 1; update/delete yêu cầu đúng Version và update tăng đúng một lần.
 - Soft delete chỉ cho leaf; các read/lookup mặc định loại `IsDeleted`; FK vẫn bảo vệ race cuối.
 - API policy `Menus.View/Create/Update/Delete`; response theo `ApiResponse`; lỗi 400/401/403/404/409 theo middleware/conventions hiện có.
-- Client tải Applications động, tải tree và Resources theo Application, loại self/descendants khỏi Parent options, giữ dữ liệu form khi retry và cung cấp keyboard tree semantics.
+- Client tải Applications động; khi Application trong form thay đổi, tải tree Parent và Resources theo lựa chọn đó, hủy kết quả lookup cũ, xóa lựa chọn phụ thuộc không hợp lệ, loại self/descendants khỏi Parent options và giữ dữ liệu nhập khi retry.
+
+## 2026-08-31 Design Update
+
+- The create/edit form owns an Application selection and reloads Parent/Menu and Resource lookups for that selection.
+- Update commands permit an Application change only for a leaf Menu, then validate the destination Application, Parent, Resource, destination-scoped Code uniqueness, and optimistic concurrency before saving.
+- Lookup requests are abortable so stale responses cannot overwrite choices for the latest Application.
+- The change stays within the existing CQRS/layer boundaries and adds no dependency or constitution exception.
+
+## 2026-08-31 Inline Order Update
+
+- Inline Order commits on Enter or blur; Escape restores the last persisted value, and a submission guard prevents an Enter-triggered blur from sending twice.
+- The existing update command remains the write contract. Its returned Menu data updates only the matching node and Version in client state.
+- The page does not refetch the Menu tree after an inline Order save, preserving expansion, scroll, focus continuity, and other rows being edited.
+- No schema, endpoint, dependency, or constitution exception is required.
 
 ## Complexity Tracking
 
 No constitution violations require justification.
-

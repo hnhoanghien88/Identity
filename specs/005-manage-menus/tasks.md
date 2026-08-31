@@ -83,6 +83,31 @@
 
 - [x] T041 [P] [US3] Add NULL Resource/Route display and edit regression coverage in `Identity-client/tests/menus/menus-tree.test.jsx`
 - [x] T042 [US3] Render the Unicode empty-value placeholder without mutating edit data in `Identity-client/src/features/menus/components/MenusTreeTable.jsx`
+
+## Phase 9: Editable Application and Scoped Resource Lookups (US3)
+
+**Goal**: Cho phép chọn Application trong form tạo/chỉnh sửa và luôn tải Parent/Resource theo Application của form.
+**Independent Test**: Mở form sửa Menu, đổi Application, xác nhận Parent/Resource cũ bị xóa, lookup mới chỉ thuộc Application vừa chọn; lưu Menu lá thành công và từ chối Menu còn con.
+
+- [x] T043 [P] [US3] Add update handler coverage for leaf and non-leaf Application changes in `Identity-api/tests/Identity.Application.Tests/Menus/UpdateMenuTests.cs`
+- [x] T044 [P] [US3] Add form Application selection and scoped Resource reload coverage in `Identity-client/tests/menus/menu-update.test.jsx` and `Identity-client/tests/menus/menus-page.test.jsx`
+- [x] T045 [US3] Permit validated leaf Menu Application changes in `Identity-api/src/Identity.Application/Menus/UpdateMenu/UpdateMenuCommandHandler.cs`
+- [x] T046 [US3] Add Application selection and dependent-field reset behavior in `Identity-client/src/features/menus/components/MenuFormDialog.jsx`
+- [x] T047 [US3] Load form Menu/Resource lookups by the form-selected Application in `Identity-client/src/features/menus/MenusPage.jsx`
+- [x] T048 Update design contracts and runnable validation in `specs/005-manage-menus/plan.md`, `specs/005-manage-menus/research.md`, `specs/005-manage-menus/data-model.md`, `specs/005-manage-menus/contracts/menus.openapi.yaml`, and `specs/005-manage-menus/quickstart.md`
+- [x] T049 Run targeted backend/frontend tests plus formatter, lint, and build gates from `specs/005-manage-menus/quickstart.md`
+
+## Phase 10: Inline Order Commit (US3)
+
+**Goal**: Lưu Order bằng Enter hoặc blur, chống gửi trùng và cập nhật đúng dòng tại chỗ mà không tải lại tree.
+**Independent Test**: Sửa Order rồi blur để xác nhận API gọi một lần; sửa lại, nhấn Enter rồi blur để xác nhận không gửi trùng, node/version cập nhật tại chỗ và `getMenus` không gọi lại.
+
+- [x] T050 [P] [US3] Add Enter, blur, deduplication, and Escape regression tests in `Identity-client/tests/menus/menus-tree.test.jsx`
+- [x] T051 [P] [US3] Add no-refetch inline Order integration coverage in `Identity-client/tests/menus/menus-page.test.jsx`
+- [x] T052 [US3] Implement Enter-or-blur commit with duplicate-submit protection in `Identity-client/src/features/menus/components/MenusTreeTable.jsx`
+- [x] T053 [US3] Merge saved Order and Version into the existing tree without reload in `Identity-client/src/features/menus/MenusPage.jsx`
+- [x] T054 Update inline Order design and validation guidance in `specs/005-manage-menus/spec.md`, `specs/005-manage-menus/plan.md`, `specs/005-manage-menus/research.md`, and `specs/005-manage-menus/quickstart.md`
+- [x] T055 Run targeted Menu tests, formatter, lint, and production build for the inline Order change
 ## Dependencies
 
 - Phase 1 â†’ Phase 2 â†’ user stories â†’ Polish.
@@ -91,6 +116,8 @@
 - US3 depends on US2 form/repository; US4 depends on US1 tree and shared repository.
 - Within each story, tests precede implementation; tasks touching the same file execute sequentially.
 - T041 precedes T042; the NULL regression reuses the completed US1 tree and US3 edit surfaces.
+- T043 and T044 precede T045-T047; T045 and T047 can proceed independently before integrated validation.
+- T050 and T051 precede T052-T053; local merge validation follows Enter-only cell behavior.
 
 ## Parallel Opportunities
 

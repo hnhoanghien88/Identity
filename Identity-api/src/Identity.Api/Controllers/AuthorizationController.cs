@@ -42,7 +42,7 @@ public sealed class AuthorizationController(
         if (!string.Equals(
                 User.FindFirstValue("application_code"),
                 requestedApplicationCode,
-                StringComparison.Ordinal))
+                StringComparison.OrdinalIgnoreCase))
             return Forbid();
 
         var application = await applications.GetAsync(
